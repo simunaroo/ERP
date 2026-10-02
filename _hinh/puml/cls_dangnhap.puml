@@ -1,0 +1,25 @@
+@startuml cls_dangnhap
+!include style.iuml
+hide empty members
+class AuthController {
+  + login(req, res)
+}
+class AuthService {
+  + dangNhap(username, matKhau)
+  - taoToken(user)
+}
+class UserRepository {
+  + findByUsername(username)
+}
+class User <<entity>> {
+  id : SERIAL
+  ho_ten : TEXT
+  username : TEXT
+  password_hash : TEXT
+  vai_tro : vai_tro_enum
+  trang_thai : trang_thai_hoat_dong_enum
+}
+AuthController --> AuthService
+AuthService --> UserRepository
+UserRepository ..> User
+@enduml

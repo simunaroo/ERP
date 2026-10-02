@@ -1,0 +1,186 @@
+@startuml erd
+!include style.iuml
+hide circle
+skinparam linetype ortho
+skinparam defaultFontSize 11
+
+entity users {
+  * id : SERIAL <<PK>>
+  --
+  ho_ten : TEXT
+  username : TEXT <<UK>>
+  password_hash : TEXT
+  vai_tro : vai_tro_enum
+  trang_thai : enum
+}
+entity khach_hang {
+  * id : SERIAL <<PK>>
+  --
+  ten : TEXT
+  sdt : TEXT
+  sale_phu_trach_id <<FK>>
+}
+entity don_hang {
+  * id : SERIAL <<PK>>
+  --
+  ma_don : TEXT <<UK>>
+  khach_hang_id <<FK>>
+  sale_id <<FK>>
+  vanhanh_phu_trach_id <<FK>>
+  trang_thai : enum
+  phuong_an_van_chuyen : TEXT
+  phuong_an_thi_cong : TEXT
+}
+entity don_hang_hinh_anh {
+  * id <<PK>>
+  --
+  don_hang_id <<FK>>
+  url : TEXT
+  loai : enum
+}
+entity don_hang_yeu_cau_sua {
+  * id <<PK>>
+  --
+  don_hang_id <<FK>>
+  sale_id <<FK>>
+  noi_dung : TEXT
+  trang_thai : enum
+}
+entity loai_vat_tu {
+  * id <<PK>>
+  --
+  ten : TEXT
+  nguon_goc : enum
+}
+entity vat_tu {
+  * id <<PK>>
+  --
+  ten : TEXT
+  loai_vat_tu_id <<FK>>
+  don_vi_tinh : TEXT
+}
+entity don_hang_vat_tu {
+  * id <<PK>>
+  --
+  don_hang_id <<FK>>
+  vat_tu_id <<FK>>
+  so_luong_can : NUMERIC
+}
+entity nha_cung_cap {
+  * id <<PK>>
+  --
+  ten : TEXT
+  ma_so_thue : TEXT
+  trang_thai : enum
+}
+entity ncc_stk {
+  * id <<PK>>
+  --
+  ncc_id <<FK>>
+  so_tk : TEXT
+  ten_ngan_hang : TEXT
+}
+entity ncc_bang_gia {
+  * id <<PK>>
+  --
+  ncc_id <<FK>>
+  vat_tu_id <<FK>>
+  don_gia : NUMERIC
+  ngay_hieu_luc : DATE
+  ngay_het_hieu_luc : DATE
+}
+entity de_xuat_mua_hang {
+  * id <<PK>>
+  --
+  don_hang_id <<FK>>
+  ncc_id <<FK>>
+  nguoi_tao_id <<FK>>
+  trang_thai : enum
+}
+entity de_xuat_mua_hang_ct {
+  * id <<PK>>
+  --
+  de_xuat_mua_hang_id <<FK>>
+  vat_tu_id <<FK>>
+  so_luong : NUMERIC
+  don_gia : NUMERIC
+}
+entity doi_tho {
+  * id <<PK>>
+  --
+  ten : TEXT
+  nang_luc : TEXT
+  trang_thai : enum
+}
+entity thi_cong {
+  * id <<PK>>
+  --
+  don_hang_id <<FK>>
+  doi_tho_id <<FK>>
+  nguoi_phu_trach_id <<FK>>
+  ngay_du_kien : DATE
+  trang_thai : enum
+}
+entity nghiem_thu {
+  * id <<PK>>
+  --
+  thi_cong_id <<FK>>
+  ngay_nghiem_thu : DATE
+  ket_qua : TEXT
+}
+entity de_xuat_chi {
+  * id <<PK>>
+  --
+  ncc_id <<FK>>
+  nguoi_tao_id <<FK>>
+  so_tien : NUMERIC
+  trang_thai : enum
+  telegram_message_id : TEXT
+}
+entity de_xuat_chi_muc {
+  * id <<PK>>
+  --
+  de_xuat_chi_id <<FK>>
+  de_xuat_mua_hang_id <<FK>>
+}
+entity de_xuat_chi_duyet_log {
+  * id <<PK>>
+  --
+  de_xuat_chi_id <<FK>>
+  telegram_user : TEXT
+  hanh_dong : enum
+  thoi_gian : TIMESTAMPTZ
+}
+entity phieu_thanh_toan {
+  * id <<PK>>
+  --
+  de_xuat_chi_id <<FK>>
+  ma_qr : TEXT
+  so_tien : NUMERIC
+  ngay_thanh_toan : DATE
+}
+
+users ||--o{ khach_hang
+users ||--o{ don_hang
+khach_hang ||--o{ don_hang
+don_hang ||--o{ don_hang_hinh_anh
+don_hang ||--o{ don_hang_yeu_cau_sua
+don_hang ||--o{ don_hang_vat_tu
+don_hang ||--o{ de_xuat_mua_hang
+don_hang ||--o{ thi_cong
+loai_vat_tu ||--o{ vat_tu
+vat_tu ||--o{ don_hang_vat_tu
+vat_tu ||--o{ ncc_bang_gia
+vat_tu ||--o{ de_xuat_mua_hang_ct
+nha_cung_cap ||--o{ ncc_stk
+nha_cung_cap ||--o{ ncc_bang_gia
+nha_cung_cap ||--o{ de_xuat_mua_hang
+nha_cung_cap ||--o{ de_xuat_chi
+de_xuat_mua_hang ||--|{ de_xuat_mua_hang_ct
+de_xuat_mua_hang ||--o{ de_xuat_chi_muc
+doi_tho ||--o{ thi_cong
+thi_cong ||--o{ nghiem_thu
+de_xuat_chi ||--|{ de_xuat_chi_muc
+de_xuat_chi ||--o{ de_xuat_chi_duyet_log
+de_xuat_chi ||--o{ phieu_thanh_toan
+@enduml

@@ -1,0 +1,29 @@
+@startuml seq_dangnhap
+!include style.iuml
+autonumber
+actor "Người dùng" as U
+boundary "Giao diện\n(React)" as FE
+control "AuthController" as C
+control "AuthService" as S
+entity "UserRepository" as R
+database "PostgreSQL" as DB
+
+U -> FE : Nhập username, mật khẩu
+FE -> C : POST /api/auth/login
+C -> S : dangNhap(username, matKhau)
+S -> R : findByUsername(username)
+R -> DB : SELECT * FROM users WHERE username = $1
+DB --> R : bản ghi user
+R --> S : user
+alt user tồn tại, active và bcrypt.compare() đúng
+  S -> S : jwt.sign({ id, vai_tro })
+  S --> C : { token, user }
+  C --> FE : 200 OK + token
+  FE -> FE : Lưu token (Zustand)
+  FE --> U : Chuyển tới màn hình theo vai trò
+else sai thông tin hoặc tài khoản bị khoá
+  S --> C : lỗi xác thực
+  C --> FE : 401 Unauthorized
+  FE --> U : Hiển thị thông báo lỗi
+end
+@enduml

@@ -1,0 +1,34 @@
+@startuml cls_duyetchi
+!include style.iuml
+hide empty members
+class TelegramWebhookController {
+  + handle(req, res)
+  - kiemTraSecretToken(req)
+}
+class DeXuatChiService {
+  + xuLyDuyet(id, hanhDong, telegramUser)
+}
+class TelegramClient {
+  + editMessageText(chatId, msgId, text)
+  + answerCallbackQuery(id, text)
+}
+class DeXuatChiRepository {
+  + capNhatTrangThaiCoDieuKien(id, hanhDong)
+}
+class DeXuatChi <<entity>> {
+  id : SERIAL
+  trang_thai : trang_thai_de_xuat_chi_enum
+}
+class DeXuatChiDuyetLog <<entity>> {
+  id : SERIAL
+  telegram_user : TEXT
+  hanh_dong : hanh_dong_duyet_enum
+  thoi_gian : TIMESTAMPTZ
+}
+TelegramWebhookController --> DeXuatChiService
+DeXuatChiService --> DeXuatChiRepository
+DeXuatChiService --> TelegramClient
+DeXuatChiRepository ..> DeXuatChi
+DeXuatChiRepository ..> DeXuatChiDuyetLog
+DeXuatChi "1" -- "0..*" DeXuatChiDuyetLog
+@enduml

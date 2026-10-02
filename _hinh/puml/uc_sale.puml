@@ -1,0 +1,24 @@
+@startuml uc_sale
+!include style.iuml
+left to right direction
+
+actor "Sale" as SALE
+
+rectangle "Phân hệ Sale" {
+  usecase "Đăng nhập" as L
+  usecase "Tạo đơn hàng" as U1
+  usecase "Xem và theo dõi\nđơn hàng" as U2
+  usecase "Gửi yêu cầu\nchỉnh sửa đơn hàng" as U3
+  usecase "Chăm sóc khách hàng\nđược phân công" as U4
+  usecase "Cập nhật thông tin\nkhách hàng" as U5
+}
+
+SALE --> U1
+SALE --> U2
+SALE --> U4
+U1 ..> L : <<include>>
+U2 ..> L : <<include>>
+U4 ..> L : <<include>>
+U3 ..> U2 : <<extend>>
+U5 ..> U4 : <<extend>>
+@enduml

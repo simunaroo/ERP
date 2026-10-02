@@ -1,0 +1,43 @@
+@startuml uc_tongquan
+!include style.iuml
+left to right direction
+
+actor "Người dùng" as ND
+actor "Sale" as SALE
+actor "Vận hành" as VH
+actor "Kế toán" as KT
+actor "Admin" as AD
+actor "Nhóm duyệt\nTelegram" as TG
+
+SALE -up-|> ND
+VH -up-|> ND
+KT -up-|> ND
+AD -up-|> ND
+
+rectangle "Hệ thống ERP chuỗi cung ứng & thi công NST" {
+  usecase "Đăng nhập" as UC_LOGIN
+  usecase "Quản lý đơn hàng" as UC_DH
+  usecase "Chăm sóc khách hàng" as UC_KH
+  usecase "Cập nhật phương án\nvận chuyển – thi công" as UC_PA
+  usecase "Quản lý thi công\n& nghiệm thu" as UC_TC
+  usecase "Quản lý NCC\n& bảng giá" as UC_NCC
+  usecase "Quản lý mua hàng" as UC_MH
+  usecase "Quản lý đề xuất chi" as UC_DXC
+  usecase "Thanh toán &\nđối soát công nợ" as UC_CN
+  usecase "Duyệt đề xuất chi" as UC_DUYET
+  usecase "Quản lý người dùng\n& danh mục" as UC_QT
+}
+
+ND --> UC_LOGIN
+SALE --> UC_KH
+SALE --> UC_DH
+VH --> UC_DH
+VH --> UC_PA
+VH --> UC_TC
+KT --> UC_NCC
+KT --> UC_MH
+KT --> UC_DXC
+KT --> UC_CN
+AD --> UC_QT
+UC_DUYET <-- TG
+@enduml

@@ -1,0 +1,50 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;color:#1f2937;background:#f3f4f6;width:1280px;height:760px;display:flex}
+.side{width:210px;background:#1e3a5f;color:#cbd5e1;padding:18px 0}
+.side .brand{color:#fff;font-weight:700;font-size:16px;padding:0 18px 16px;border-bottom:1px solid #2c4a72}
+.side .role{font-size:11px;padding:10px 18px;color:#93c5fd;text-transform:uppercase;letter-spacing:.06em}
+.side a{display:block;padding:9px 18px;color:#cbd5e1;text-decoration:none}
+.side a.on{background:#2c4a72;color:#fff;border-left:3px solid #60a5fa;padding-left:15px}
+.main{flex:1;display:flex;flex-direction:column}
+.top{height:52px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;padding:0 22px}
+.top h1{font-size:17px;font-weight:600}
+.top .user{color:#6b7280}
+.content{padding:20px 22px;overflow:hidden}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:16px;margin-bottom:14px}
+.toolbar{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+input,select,textarea{border:1px solid #d1d5db;border-radius:4px;padding:7px 9px;font:inherit;background:#fff}
+.btn{background:#2563eb;color:#fff;border:none;border-radius:4px;padding:8px 14px;font:inherit;font-weight:600}
+.btn.sec{background:#fff;color:#374151;border:1px solid #d1d5db}
+.btn.ok{background:#16a34a}
+table{width:100%;border-collapse:collapse}
+th{background:#f9fafb;text-align:left;padding:8px 10px;border-bottom:1px solid #e5e7eb;font-weight:600;color:#374151}
+td{padding:8px 10px;border-bottom:1px solid #f1f5f9}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600}
+.p-new{background:#dbeafe;color:#1d4ed8}.p-wip{background:#fef3c7;color:#92400e}.p-done{background:#dcfce7;color:#166534}.p-no{background:#fee2e2;color:#991b1b}.p-gray{background:#e5e7eb;color:#374151}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px 18px}
+.field label{display:block;font-weight:600;margin-bottom:5px;color:#374151}
+.field input,.field select,.field textarea{width:100%}
+.drop{border:2px dashed #cbd5e1;border-radius:6px;height:110px;display:flex;align-items:center;justify-content:center;color:#6b7280}
+.thumbs{display:flex;gap:8px;margin-top:8px}.thumbs div{width:90px;height:64px;background:#e2e8f0;border-radius:4px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+.stat{background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:14px}
+.stat .k{color:#6b7280;font-size:12px}.stat .v{font-size:20px;font-weight:700;margin-top:4px}
+h3{font-size:14px;margin-bottom:10px}
+</style></head><body>
+<div class="side"><div class="brand">ERP NST</div><div class="role">Kế toán</div><a class="on">Nhà cung cấp & bảng giá</a><a class="">Đề xuất mua hàng</a><a class="">Đề xuất chi</a><a class="">Công nợ NCC</a></div>
+<div class="main"><div class="top"><h1>Nhà cung cấp & bảng giá</h1><div class="user">Ngô Thanh Hương (Kế toán) · Đăng xuất</div></div>
+<div class="content">
+<div style="display:grid;grid-template-columns:300px 1fr;gap:14px">
+<div class="card"><div class="toolbar"><input placeholder="Tìm NCC..." style="flex:1"><button class="btn">+</button></div>
+<table><tr><th>Nhà cung cấp</th></tr>
+<tr><td style="background:#eff6ff;font-weight:600">Công ty Sàn Việt Phát</td></tr><tr><td>Tấm ốp Nano Hoàng Gia</td></tr>
+<tr><td>Vật liệu Minh Khang</td></tr><tr><td>SPC Floor Miền Nam</td></tr><tr><td>Ốp tường Đại Thành</td></tr></table></div>
+<div class="card"><h3>Bảng giá — Công ty Sàn Việt Phát</h3><div class="toolbar"><select><option>Đang hiệu lực</option></select><span style="flex:1"></span><button class="btn">+ Thêm giá</button></div>
+<table><tr><th>Vật tư</th><th class="num">Đơn giá (đ)</th><th>ĐVT</th><th>Hiệu lực từ</th><th>Đến</th></tr>
+<tr><td>Sàn SPC vân gỗ 4mm</td><td class="num">185.000</td><td>m²</td><td>01/09/2026</td><td>—</td></tr>
+<tr><td>Sàn SPC vân đá 5mm</td><td class="num">235.000</td><td>m²</td><td>01/09/2026</td><td>—</td></tr>
+<tr><td>Len chân tường PVC</td><td class="num">32.000</td><td>md</td><td>15/08/2026</td><td>—</td></tr>
+<tr style="color:#9ca3af"><td>Sàn SPC vân gỗ 4mm</td><td class="num">175.000</td><td>m²</td><td>01/06/2026</td><td>31/08/2026</td></tr></table>
+<p style="color:#6b7280;margin-top:10px">Giá cũ được giữ lại để tra cứu lịch sử; đề xuất mua lưu đơn giá tại thời điểm mua.</p></div></div></div></div></body></html>

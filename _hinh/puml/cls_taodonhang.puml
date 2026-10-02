@@ -1,0 +1,40 @@
+@startuml cls_taodonhang
+!include style.iuml
+hide empty members
+class DonHangController {
+  + create(req, res)
+  + list(req, res)
+}
+class DonHangService {
+  + taoDonHang(saleId, data)
+  - sinhMaDon()
+}
+class DonHangRepository {
+  + create(donHang)
+  + findBySale(saleId)
+}
+class DonHang <<entity>> {
+  id : SERIAL
+  ma_don : TEXT
+  khach_hang_id : INTEGER
+  sale_id : INTEGER
+  trang_thai : trang_thai_don_hang_enum
+  dia_chi_cong_trinh : TEXT
+}
+class KhachHang <<entity>> {
+  id : SERIAL
+  ten : TEXT
+  sdt : TEXT
+  sale_phu_trach_id : INTEGER
+}
+class User <<entity>> {
+  id : SERIAL
+  ho_ten : TEXT
+  vai_tro : vai_tro_enum
+}
+DonHangController --> DonHangService
+DonHangService --> DonHangRepository
+DonHangRepository ..> DonHang
+KhachHang "1" -- "0..*" DonHang : đặt
+User "1" -- "0..*" DonHang : tạo
+@enduml

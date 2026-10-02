@@ -1,0 +1,32 @@
+@startuml seq_lichthicong
+!include style.iuml
+autonumber
+actor "Vận hành" as U
+boundary "Giao diện\n(React)" as FE
+control "ThiCongController" as C
+control "ThiCongService" as S
+entity "DoiThoRepository" as RT
+entity "ThiCongRepository" as R
+database "PostgreSQL" as DB
+
+U -> FE : Chọn đơn hàng, nhấn "Lập lịch thi công"
+FE -> C : GET /api/doi-tho?trang_thai=active
+C -> S : layDoiThoKhaDung()
+S -> RT : findActive()
+RT -> DB : SELECT * FROM doi_tho\nWHERE trang_thai = 'active'
+DB --> RT : danh sách đội thợ
+RT --> S : doiTho[]
+S --> C : doiTho[]
+C --> FE : 200 OK
+U -> FE : Chọn đội thợ, ngày dự kiến, nhấn "Lưu"
+FE -> C : POST /api/thi-cong
+C -> S : lapLich(userId, donHangId, doiThoId, ngayDuKien)
+S -> S : kiểm tra đơn đã có phương án thi công
+S -> R : create(thiCong)
+R -> DB : INSERT INTO thi_cong (...)\ntrang_thai = 'lap_lich'
+DB --> R : bản ghi mới
+R --> S : thiCong
+S --> C : thiCong
+C --> FE : 201 Created
+FE --> U : Hiển thị lịch thi công đã tạo
+@enduml

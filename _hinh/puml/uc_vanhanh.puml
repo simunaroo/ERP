@@ -1,0 +1,29 @@
+@startuml uc_vanhanh
+!include style.iuml
+left to right direction
+
+actor "Vận hành" as VH
+
+rectangle "Phân hệ Vận hành" {
+  usecase "Đăng nhập" as L
+  usecase "Cập nhật phương án\nvận chuyển – thi công" as U1
+  usecase "Tải lên hình ảnh\nmặt bằng" as U1a
+  usecase "Xử lý yêu cầu\nchỉnh sửa đơn" as U2
+  usecase "Lập lịch thi công" as U3
+  usecase "Chọn đội thợ" as U3a
+  usecase "Ghi nhận nghiệm thu" as U4
+  usecase "Đính kèm ảnh\nnghiệm thu" as U4a
+}
+
+VH --> U1
+VH --> U2
+VH --> U3
+VH --> U4
+U1 ..> L : <<include>>
+U2 ..> L : <<include>>
+U3 ..> L : <<include>>
+U4 ..> L : <<include>>
+U1a ..> U1 : <<extend>>
+U3 ..> U3a : <<include>>
+U4a ..> U4 : <<extend>>
+@enduml

@@ -1,0 +1,36 @@
+@startuml seq_dexuatmua
+!include style.iuml
+autonumber
+actor "Kế toán" as U
+boundary "Giao diện\n(React)" as FE
+control "MuaHangController" as C
+control "MuaHangService" as S
+entity "VatTuRepository" as RV
+entity "BangGiaRepository" as RG
+entity "DeXuatMuaRepository" as R
+database "PostgreSQL" as DB
+
+U -> FE : Chọn đơn hàng
+FE -> C : GET /api/mua-hang/vat-tu-can-mua?don_hang_id=
+C -> S : layVatTuCanMua(donHangId)
+S -> RV : findByDonHang(donHangId)
+RV -> DB : SELECT ... JOIN loai_vat_tu\nWHERE nguon_goc = 'mua_ngoai'
+DB --> RV : danh sách vật tư mua ngoài
+RV --> S : vatTu[]
+S --> C : vatTu[]
+C --> FE : 200 OK
+U -> FE : Chọn NCC, nhấn "Tạo đề xuất mua"
+FE -> C : POST /api/mua-hang/de-xuat
+C -> S : taoDeXuatMua(userId, payload)
+S -> RG : layGiaHienHanh(nccId, vatTuIds, ngayHienTai)
+RG -> DB : SELECT don_gia FROM ncc_bang_gia\nWHERE ngay_hieu_luc <= now()\nAND (ngay_het_hieu_luc IS NULL OR ...)
+DB --> RG : đơn giá hiện hành
+RG --> S : bangGia
+S -> R : createWithDetails(deXuat, chiTiet)
+R -> DB : BEGIN; INSERT de_xuat_mua_hang;\nINSERT de_xuat_mua_hang_ct (snapshot don_gia); COMMIT
+DB --> R : OK
+R --> S : deXuat
+S --> C : deXuat
+C --> FE : 201 Created
+FE --> U : Thông báo tạo đề xuất thành công
+@enduml

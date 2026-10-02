@@ -1,0 +1,26 @@
+@startuml seq_taodonhang
+!include style.iuml
+autonumber
+actor "Sale" as U
+boundary "Giao diện\n(React)" as FE
+control "auth middleware" as M
+control "DonHangController" as C
+control "DonHangService" as S
+entity "DonHangRepository" as R
+database "PostgreSQL" as DB
+
+U -> FE : Nhập thông tin đơn, nhấn "Lưu"
+FE -> M : POST /api/don-hang\n(Authorization: Bearer token)
+M -> M : verify JWT, gắn req.user
+M -> C : next()
+C -> C : kiểm tra vai_tro = 'sale'
+C -> S : taoDonHang(req.user.id, req.body)
+S -> S : kiểm tra dữ liệu bắt buộc,\nsinh ma_don
+S -> R : create(donHang)
+R -> DB : INSERT INTO don_hang (...)\nVALUES (...) RETURNING *
+DB --> R : bản ghi mới (trang_thai = 'moi')
+R --> S : donHang
+S --> C : donHang
+C --> FE : 201 Created
+FE --> U : Thông báo tạo đơn thành công
+@enduml

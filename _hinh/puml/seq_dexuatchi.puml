@@ -1,0 +1,30 @@
+@startuml seq_dexuatchi
+!include style.iuml
+autonumber
+actor "Kế toán" as U
+boundary "Giao diện\n(React)" as FE
+control "DeXuatChiController" as C
+control "DeXuatChiService" as S
+entity "DeXuatChiRepository" as R
+database "PostgreSQL" as DB
+participant "Telegram\nBot API" as TG
+
+U -> FE : Chọn NCC và các đề xuất mua cần thanh toán
+FE -> C : POST /api/de-xuat-chi\n{ ncc_id, de_xuat_mua_ids[] }
+C -> S : taoDeXuatChi(userId, nccId, deXuatMuaIds)
+S -> R : tinhTongTien(deXuatMuaIds)
+R -> DB : SELECT SUM(so_luong * don_gia)\nFROM de_xuat_mua_hang_ct WHERE ...
+DB --> R : tổng tiền
+R --> S : soTien
+S -> R : createWithItems(deXuatChi, deXuatMuaIds)
+R -> DB : BEGIN; INSERT de_xuat_chi;\nINSERT de_xuat_chi_muc; COMMIT
+DB --> R : deXuatChi (trang_thai = 'cho_duyet')
+R --> S : deXuatChi
+S -> TG : sendMessage(chat_id, nội dung,\ninline_keyboard [Duyệt | Từ chối])
+TG --> S : message_id
+S -> R : capNhatTelegramMessageId(id, message_id)
+R -> DB : UPDATE de_xuat_chi SET telegram_message_id = ...
+S --> C : deXuatChi
+C --> FE : 201 Created
+FE --> U : Thông báo đã gửi duyệt qua Telegram
+@enduml

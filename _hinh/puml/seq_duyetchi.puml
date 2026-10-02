@@ -1,0 +1,30 @@
+@startuml seq_duyetchi
+!include style.iuml
+autonumber
+actor "Thành viên\nnhóm Telegram" as U
+participant "Telegram\nBot API" as TG
+control "TelegramWebhookController" as C
+control "DeXuatChiService" as S
+entity "DeXuatChiRepository" as R
+database "PostgreSQL" as DB
+
+U -> TG : Bấm nút "Duyệt" / "Từ chối"
+TG -> C : POST /api/webhook/telegram\n(callback_query, header secret token)
+C -> C : kiểm tra X-Telegram-Bot-Api-Secret-Token
+alt secret token sai
+  C --> TG : 401 (bỏ qua, không xử lý)
+else secret token hợp lệ
+  C -> S : xuLyDuyet(deXuatChiId, hanhDong, telegramUser)
+  S -> R : capNhatTrangThaiCoDieuKien(id, hanhDong)
+  R -> DB : BEGIN;\nUPDATE de_xuat_chi SET trang_thai = $2\nWHERE id = $1 AND trang_thai = 'cho_duyet';\nINSERT de_xuat_chi_duyet_log; COMMIT
+  DB --> R : số dòng cập nhật
+  alt 1 dòng được cập nhật
+    R --> S : thành công
+    S -> TG : editMessageText("Đã duyệt bởi ...")
+  else 0 dòng (đã được xử lý trước đó)
+    R --> S : bỏ qua
+    S -> TG : answerCallbackQuery("Đề xuất đã được xử lý")
+  end
+  C --> TG : 200 OK
+end
+@enduml

@@ -1,0 +1,39 @@
+@startuml seq_thanhtoan
+!include style.iuml
+autonumber
+actor "Kế toán" as U
+boundary "Giao diện\n(React)" as FE
+control "CongNoController" as C
+control "CongNoService" as S
+entity "ThanhToanRepository" as R
+database "PostgreSQL" as DB
+
+U -> FE : Chọn đề xuất chi đã duyệt
+FE -> C : POST /api/thanh-toan/qr { de_xuat_chi_id }
+C -> S : taoMaQR(deXuatChiId)
+S -> R : layThongTinNhanTien(deXuatChiId)
+R -> DB : SELECT ... FROM de_xuat_chi\nJOIN ncc_stk ...
+DB --> R : số tiền, STK nhà cung cấp
+R --> S : thongTin
+S -> S : sinh chuỗi VietQR
+S --> C : ma_qr
+C --> FE : 200 OK (ảnh QR)
+U -> FE : Xác nhận đã chuyển khoản
+FE -> C : POST /api/thanh-toan
+C -> S : ghiNhanThanhToan(deXuatChiId)
+S -> R : create(phieuThanhToan)
+R -> DB : BEGIN; INSERT phieu_thanh_toan;\nUPDATE de_xuat_chi SET trang_thai = 'da_thanh_toan'; COMMIT
+DB --> R : OK
+C --> FE : 201 Created
+U -> FE : Mở báo cáo công nợ NCC
+FE -> C : GET /api/cong-no?ncc_id=
+C -> S : tinhCongNo(nccId)
+S -> R : tongDaMua(nccId), tongDaTra(nccId)
+R -> DB : SELECT SUM(...) FROM de_xuat_mua_hang_ct ...\nSELECT SUM(so_tien) FROM phieu_thanh_toan ...
+DB --> R : tổng đã mua, tổng đã trả
+R --> S : số liệu
+S -> S : công nợ = đã mua − đã trả
+S --> C : báo cáo công nợ
+C --> FE : 200 OK
+FE --> U : Hiển thị công nợ hiện tại
+@enduml

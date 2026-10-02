@@ -1,0 +1,12 @@
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecase {
+  BackgroundColor white
+  BorderColor black
+}
+skinparam ArrowColor black

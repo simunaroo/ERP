@@ -1,0 +1,19 @@
+# Repo cong ty (du lieu nhay cam, co .git rieng) - KHONG duoc day len
+ERP/
+
+# Bao cao cua nguoi khac, chi dung lam mau
+KTPM-*.docx
+KTPM_*.docx
+
+# File tam cua Word
+~$*
+~WRL*.tmp
+
+# Thu vien cai bang npm (cai lai duoc bang npm install)
+node_modules/
+
+# File cong cu nang, tai lai duoc
+_hinh/plantuml.jar
+
+# Cau hinh rieng may cua Claude Code
+.claude/settings.local.json

@@ -1,0 +1,48 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;font-size:13px;color:#1f2937;background:#f3f4f6;width:1280px;height:760px;display:flex}
+.side{width:210px;background:#1e3a5f;color:#cbd5e1;padding:18px 0}
+.side .brand{color:#fff;font-weight:700;font-size:16px;padding:0 18px 16px;border-bottom:1px solid #2c4a72}
+.side .role{font-size:11px;padding:10px 18px;color:#93c5fd;text-transform:uppercase;letter-spacing:.06em}
+.side a{display:block;padding:9px 18px;color:#cbd5e1;text-decoration:none}
+.side a.on{background:#2c4a72;color:#fff;border-left:3px solid #60a5fa;padding-left:15px}
+.main{flex:1;display:flex;flex-direction:column}
+.top{height:52px;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;padding:0 22px}
+.top h1{font-size:17px;font-weight:600}
+.top .user{color:#6b7280}
+.content{padding:20px 22px;overflow:hidden}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:16px;margin-bottom:14px}
+.toolbar{display:flex;gap:8px;margin-bottom:12px;align-items:center}
+input,select,textarea{border:1px solid #d1d5db;border-radius:4px;padding:7px 9px;font:inherit;background:#fff}
+.btn{background:#2563eb;color:#fff;border:none;border-radius:4px;padding:8px 14px;font:inherit;font-weight:600}
+.btn.sec{background:#fff;color:#374151;border:1px solid #d1d5db}
+.btn.ok{background:#16a34a}
+table{width:100%;border-collapse:collapse}
+th{background:#f9fafb;text-align:left;padding:8px 10px;border-bottom:1px solid #e5e7eb;font-weight:600;color:#374151}
+td{padding:8px 10px;border-bottom:1px solid #f1f5f9}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.pill{display:inline-block;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600}
+.p-new{background:#dbeafe;color:#1d4ed8}.p-wip{background:#fef3c7;color:#92400e}.p-done{background:#dcfce7;color:#166534}.p-no{background:#fee2e2;color:#991b1b}.p-gray{background:#e5e7eb;color:#374151}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px 18px}
+.field label{display:block;font-weight:600;margin-bottom:5px;color:#374151}
+.field input,.field select,.field textarea{width:100%}
+.drop{border:2px dashed #cbd5e1;border-radius:6px;height:110px;display:flex;align-items:center;justify-content:center;color:#6b7280}
+.thumbs{display:flex;gap:8px;margin-top:8px}.thumbs div{width:90px;height:64px;background:#e2e8f0;border-radius:4px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+.stat{background:#fff;border:1px solid #e5e7eb;border-radius:6px;padding:14px}
+.stat .k{color:#6b7280;font-size:12px}.stat .v{font-size:20px;font-weight:700;margin-top:4px}
+h3{font-size:14px;margin-bottom:10px}
+</style></head><body>
+<div class="side"><div class="brand">ERP NST</div><div class="role">Kế toán</div><a class="">Nhà cung cấp & bảng giá</a><a class="">Đề xuất mua hàng</a><a class="">Đề xuất chi</a><a class="on">Công nợ NCC</a></div>
+<div class="main"><div class="top"><h1>Công nợ nhà cung cấp</h1><div class="user">Ngô Thanh Hương (Kế toán) · Đăng xuất</div></div>
+<div class="content">
+<div class="stats"><div class="stat"><div class="k">Tổng công nợ hiện tại</div><div class="v">148.350.000 đ</div></div>
+<div class="stat"><div class="k">Đề xuất chi chờ duyệt (Telegram)</div><div class="v">3</div></div>
+<div class="stat"><div class="k">Đã thanh toán tháng này</div><div class="v">92.400.000 đ</div></div></div>
+<div class="card"><div class="toolbar"><h3 style="margin:0">Công nợ theo NCC</h3><span style="flex:1"></span><button class="btn sec">Xuất báo cáo</button><button class="btn">+ Tạo đề xuất chi</button></div>
+<table><tr><th>Nhà cung cấp</th><th class="num">Tổng đã mua</th><th class="num">Đã thanh toán</th><th class="num">Còn nợ</th><th>Đề xuất chi gần nhất</th></tr>
+<tr><td>Công ty Sàn Việt Phát</td><td class="num">186.500.000</td><td class="num">124.000.000</td><td class="num">62.500.000</td><td><span class="pill p-wip">Chờ duyệt</span></td></tr>
+<tr><td>Tấm ốp Nano Hoàng Gia</td><td class="num">98.200.000</td><td class="num">54.000.000</td><td class="num">44.200.000</td><td><span class="pill p-done">Đã duyệt</span></td></tr>
+<tr><td>Vật liệu Minh Khang</td><td class="num">41.650.000</td><td class="num">0</td><td class="num">41.650.000</td><td><span class="pill p-wip">Chờ duyệt</span></td></tr>
+<tr><td>SPC Floor Miền Nam</td><td class="num">35.000.000</td><td class="num">35.000.000</td><td class="num">0</td><td><span class="pill p-gray">Đã thanh toán</span></td></tr>
+<tr><td>Ốp tường Đại Thành</td><td class="num">12.300.000</td><td class="num">12.300.000</td><td class="num">0</td><td><span class="pill p-no">Từ chối</span></td></tr></table></div></div></div></body></html>

@@ -1,0 +1,33 @@
+@startuml uc_ketoan
+!include style.iuml
+left to right direction
+
+actor "Kế toán" as KT
+actor "Nhóm duyệt\nTelegram" as TG
+
+rectangle "Phân hệ Kế toán – Mua hàng – Công nợ" {
+  usecase "Quản lý NCC\nvà bảng giá" as U1
+  usecase "Đối soát công nợ NCC" as U6
+  usecase "Xuất báo cáo công nợ" as U6a
+  usecase "Tạo đề xuất mua hàng" as U2
+  usecase "Phân tích vật tư\ncần mua ngoài" as U2a
+  usecase "Tạo đề xuất chi" as U3
+  usecase "Gửi thông báo\nduyệt qua Telegram" as U3a
+  usecase "Duyệt / từ chối\nđề xuất chi" as U4
+  usecase "Thanh toán qua mã QR" as U5
+  usecase "Đăng nhập" as L
+}
+
+KT --> U1
+KT --> U6
+KT --> U2
+KT --> U3
+KT --> U5
+U1 ..> L : <<include>>
+U2 ..> L : <<include>>
+U3 ..> L : <<include>>
+U2 ..> U2a : <<include>>
+U3 ..> U3a : <<include>>
+U6a ..> U6 : <<extend>>
+U4 <-- TG
+@enduml

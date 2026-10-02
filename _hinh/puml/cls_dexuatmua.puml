@@ -1,0 +1,53 @@
+@startuml cls_dexuatmua
+!include style.iuml
+hide empty members
+class MuaHangController {
+  + layVatTuCanMua(req, res)
+  + taoDeXuat(req, res)
+}
+class MuaHangService {
+  + layVatTuCanMua(donHangId)
+  + taoDeXuatMua(userId, payload)
+}
+class VatTuRepository {
+  + findMuaNgoaiByDonHang(donHangId)
+}
+class BangGiaRepository {
+  + layGiaHienHanh(nccId, vatTuIds, ngay)
+}
+class DeXuatMuaRepository {
+  + createWithDetails(deXuat, chiTiet)
+}
+class DeXuatMuaHang <<entity>> {
+  id : SERIAL
+  don_hang_id : INTEGER
+  ncc_id : INTEGER
+  trang_thai : trang_thai_mua_hang_enum
+}
+class DeXuatMuaHangCT <<entity>> {
+  id : SERIAL
+  vat_tu_id : INTEGER
+  so_luong : NUMERIC
+  don_gia : NUMERIC
+}
+class NccBangGia <<entity>> {
+  ncc_id : INTEGER
+  vat_tu_id : INTEGER
+  don_gia : NUMERIC
+  ngay_hieu_luc : DATE
+}
+class VatTu <<entity>> {
+  id : SERIAL
+  ten : TEXT
+  loai_vat_tu_id : INTEGER
+}
+MuaHangController --> MuaHangService
+MuaHangService --> VatTuRepository
+MuaHangService --> BangGiaRepository
+MuaHangService --> DeXuatMuaRepository
+DeXuatMuaRepository ..> DeXuatMuaHang
+DeXuatMuaHang "1" *-- "1..*" DeXuatMuaHangCT
+VatTu "1" -- "0..*" DeXuatMuaHangCT
+VatTu "1" -- "0..*" NccBangGia
+BangGiaRepository ..> NccBangGia
+@enduml

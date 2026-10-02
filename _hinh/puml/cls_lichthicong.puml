@@ -1,0 +1,43 @@
+@startuml cls_lichthicong
+!include style.iuml
+hide empty members
+class ThiCongController {
+  + create(req, res)
+  + listDoiTho(req, res)
+}
+class ThiCongService {
+  + lapLich(userId, donHangId, doiThoId, ngay)
+  + layDoiThoKhaDung()
+}
+class ThiCongRepository {
+  + create(thiCong)
+}
+class DoiThoRepository {
+  + findActive()
+}
+class ThiCong <<entity>> {
+  id : SERIAL
+  don_hang_id : INTEGER
+  doi_tho_id : INTEGER
+  ngay_du_kien : DATE
+  trang_thai : trang_thai_thi_cong_enum
+}
+class DoiTho <<entity>> {
+  id : SERIAL
+  ten : TEXT
+  nang_luc : TEXT
+  trang_thai : trang_thai_hoat_dong_enum
+}
+class NghiemThu <<entity>> {
+  id : SERIAL
+  ngay_nghiem_thu : DATE
+  ket_qua : TEXT
+}
+ThiCongController --> ThiCongService
+ThiCongService --> ThiCongRepository
+ThiCongService --> DoiThoRepository
+ThiCongRepository ..> ThiCong
+DoiThoRepository ..> DoiTho
+DoiTho "1" -- "0..*" ThiCong : thực hiện
+ThiCong "1" -- "0..*" NghiemThu
+@enduml

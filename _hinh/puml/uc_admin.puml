@@ -1,0 +1,24 @@
+@startuml uc_admin
+!include style.iuml
+left to right direction
+
+actor "Admin" as AD
+
+rectangle "Phân hệ Quản trị" {
+  usecase "Đăng nhập" as L
+  usecase "Quản lý tài khoản\nngười dùng" as U1
+  usecase "Gán vai trò\n(phân quyền)" as U1a
+  usecase "Khoá tài khoản" as U1b
+  usecase "Quản lý loại vật tư" as U2
+  usecase "Quản lý đội thợ" as U3
+}
+
+AD --> U1
+AD --> U2
+AD --> U3
+U1 ..> L : <<include>>
+U2 ..> L : <<include>>
+U3 ..> L : <<include>>
+U1 ..> U1a : <<include>>
+U1b ..> U1 : <<extend>>
+@enduml

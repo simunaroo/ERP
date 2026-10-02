@@ -1,0 +1,42 @@
+@startuml cls_thanhtoan
+!include style.iuml
+hide empty members
+class CongNoController {
+  + taoQR(req, res)
+  + ghiNhanThanhToan(req, res)
+  + baoCao(req, res)
+}
+class CongNoService {
+  + taoMaQR(deXuatChiId)
+  + ghiNhanThanhToan(deXuatChiId)
+  + tinhCongNo(nccId)
+}
+class ThanhToanRepository {
+  + layThongTinNhanTien(deXuatChiId)
+  + create(phieu)
+  + tongDaMua(nccId)
+  + tongDaTra(nccId)
+}
+class PhieuThanhToan <<entity>> {
+  id : SERIAL
+  de_xuat_chi_id : INTEGER
+  ma_qr : TEXT
+  so_tien : NUMERIC
+  ngay_thanh_toan : DATE
+}
+class DeXuatChi <<entity>> {
+  id : SERIAL
+  ncc_id : INTEGER
+  so_tien : NUMERIC
+}
+class NccStk <<entity>> {
+  ncc_id : INTEGER
+  so_tk : TEXT
+  ten_ngan_hang : TEXT
+}
+CongNoController --> CongNoService
+CongNoService --> ThanhToanRepository
+ThanhToanRepository ..> PhieuThanhToan
+DeXuatChi "1" -- "0..*" PhieuThanhToan
+ThanhToanRepository ..> NccStk
+@enduml

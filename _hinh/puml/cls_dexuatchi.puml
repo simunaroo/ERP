@@ -1,0 +1,39 @@
+@startuml cls_dexuatchi
+!include style.iuml
+hide empty members
+class DeXuatChiController {
+  + create(req, res)
+}
+class DeXuatChiService {
+  + taoDeXuatChi(userId, nccId, deXuatMuaIds)
+}
+class TelegramClient {
+  + sendMessage(chatId, text, keyboard)
+}
+class DeXuatChiRepository {
+  + tinhTongTien(deXuatMuaIds)
+  + createWithItems(deXuatChi, ids)
+  + capNhatTelegramMessageId(id, msgId)
+}
+class DeXuatChi <<entity>> {
+  id : SERIAL
+  ncc_id : INTEGER
+  so_tien : NUMERIC
+  trang_thai : trang_thai_de_xuat_chi_enum
+  telegram_message_id : TEXT
+}
+class DeXuatChiMuc <<entity>> {
+  de_xuat_chi_id : INTEGER
+  de_xuat_mua_hang_id : INTEGER
+}
+class DeXuatMuaHang <<entity>> {
+  id : SERIAL
+  ncc_id : INTEGER
+}
+DeXuatChiController --> DeXuatChiService
+DeXuatChiService --> DeXuatChiRepository
+DeXuatChiService --> TelegramClient
+DeXuatChiRepository ..> DeXuatChi
+DeXuatChi "1" *-- "1..*" DeXuatChiMuc
+DeXuatMuaHang "1" -- "0..*" DeXuatChiMuc
+@enduml
