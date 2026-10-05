@@ -1,0 +1,178 @@
+/* Phong cach theo ERP chinh thuc cua doanh nghiep: nen kem, sidebar sang, chu 13px.
+   Mau dinh nghia bang bien CSS -> che do toi chi can doi bien, khong phai ghi de tung phan tu. */
+:root {
+  --bg: #f5f5f3;
+  --surface: #ffffff;
+  --sidebar: #faf9f5;
+  --sidebar-card: #f0efea;
+  --border: #e5e5e2;
+  --border-input: #d5d5d2;
+  --row-line: #eeede8;
+  --text: #1a1a1a;
+  --text-strong: #111111;
+  --text-muted: #666666;
+  --text-soft: #555555;
+  --primary: #111111;
+  --primary-text: #ffffff;
+  --link: #2563eb;
+  --danger: #dc2626;
+  --error-bg: #fdecea;  --error-text: #c2410c;
+  --ok-bg: #eaf3de;     --ok-text: #3f6212;
+  --p-new-bg: #dbeafe;  --p-new: #1d4ed8;
+  --p-wip-bg: #fef3c7;  --p-wip: #92400e;
+  --p-done-bg: #dcfce7; --p-done: #166534;
+  --p-gray-bg: #f0efea; --p-gray: #555555;
+  color-scheme: light;
+}
+body.dark {
+  --bg: #0b1220;
+  --surface: #111827;
+  --sidebar: #0f172a;
+  --sidebar-card: #1e293b;
+  --border: #1f2937;
+  --border-input: #374151;
+  --row-line: #1f2937;
+  --text: #e5e7eb;
+  --text-strong: #f1f5f9;
+  --text-muted: #94a3b8;
+  --text-soft: #cbd5e1;
+  --primary: #f1f5f9;
+  --primary-text: #0b1220;
+  --link: #60a5fa;
+  --error-bg: #3b1d1d;  --error-text: #fca5a5;
+  --ok-bg: #14321f;     --ok-text: #86efac;
+  --p-new-bg: #15294a;  --p-new: #93c5fd;
+  --p-wip-bg: #3a2f12;  --p-wip: #fcd34d;
+  --p-done-bg: #14321f; --p-done: #86efac;
+  --p-gray-bg: #1e293b; --p-gray: #cbd5e1;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); font-size: 13px; }
+button, input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
+a { color: var(--link); text-decoration: none; }
+h1 { font-size: 18px; font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; color: var(--text-strong); }
+h3 { font-size: 14px; font-weight: 600; margin-bottom: 10px; color: var(--text-strong); }
+
+/* ---------- Khung trang ---------- */
+.shell { display: flex; min-height: 100vh; }
+.erp-sidebar {
+  width: 200px; flex-shrink: 0; background: var(--sidebar); border-right: 1px solid var(--border);
+  padding: 12px 8px; display: flex; flex-direction: column; position: sticky; top: 0; height: 100vh; overflow-y: auto;
+}
+.erp-sidebar .brand { padding: 8px 12px 12px; font-weight: 600; color: var(--text-strong); }
+.erp-sidebar .user-card { padding: 8px 12px; margin: 0 4px 10px; background: var(--sidebar-card); border-radius: 6px; }
+.erp-sidebar .user-card b { display: block; color: var(--text-strong); }
+.erp-sidebar .user-card span { font-size: 11px; color: var(--text-muted); }
+.erp-sidebar nav { flex: 1; }
+.erp-sidebar nav a {
+  display: flex; align-items: center; gap: 10px; padding: 8px 12px; margin: 1px 0; border-radius: 8px;
+  color: var(--text-soft);
+}
+.erp-sidebar nav a:hover { background: var(--sidebar-card); }
+.erp-sidebar nav a.active { background: var(--surface); color: var(--text-strong); font-weight: 500; }
+.erp-sidebar .logout {
+  margin: 8px 4px 0; padding: 8px 12px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 8px; cursor: pointer; text-align: left;
+}
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.topbar { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--border); }
+.topbar .crumb { color: var(--text-muted); }
+.topbar .crumb b { color: var(--text-strong); }
+.icon-btn {
+  width: 32px; height: 32px; padding: 0; background: transparent; border: 1px solid var(--border);
+  border-radius: 6px; cursor: pointer; font-size: 16px; line-height: 1; display: inline-flex; align-items: center; justify-content: center;
+}
+.erp-hamburger { display: none; }
+.ml-auto { margin-left: auto; }
+.content { flex: 1; min-width: 0; padding: 20px; }
+
+/* ---------- Thanh phan ---------- */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin-bottom: 14px; }
+.toolbar { display: flex; gap: 8px; margin-bottom: 12px; align-items: center; flex-wrap: wrap; }
+.grow { flex: 1; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 18px; }
+.span2 { grid-column: 1 / 3; }
+.field label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+.field input, .field select, .field textarea { width: 100%; }
+.actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+.mt { margin-top: 10px; }
+
+input, select, textarea { border: 1px solid var(--border-input); border-radius: 6px; padding: 7px 12px; background: var(--surface); }
+input:disabled, textarea:disabled { background: var(--sidebar); color: var(--text-muted); }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--link); outline-offset: 1px; }
+.search { width: 280px; max-width: 100%; }
+
+.btn {
+  display: inline-block; background: var(--primary); color: var(--primary-text); border: 1px solid var(--primary);
+  border-radius: 6px; padding: 7px 14px; font-weight: 500; cursor: pointer;
+}
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.sec { background: var(--surface); color: var(--text-soft); border-color: var(--border-input); }
+.link { background: none; border: none; color: var(--link); cursor: pointer; padding: 0; }
+.link.danger { color: var(--danger); }
+
+/* Bang: khung vien bo goc, header nen kem dinh khi cuon */
+.table-wrap { border: 1px solid var(--border); border-radius: 10px; overflow: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th {
+  padding: 8px 10px; text-align: left; font-weight: 500; color: var(--text-muted); background: var(--sidebar);
+  border-bottom: 1px solid var(--border); white-space: nowrap; position: sticky; top: 0;
+}
+td { padding: 7px 10px; border-top: 1px solid var(--row-line); vertical-align: middle; }
+tbody tr:first-child td { border-top: none; }
+tbody tr:hover td { background: var(--sidebar); }
+.num { text-align: right; font-variant-numeric: tabular-nums; }
+td.num input { width: 110px; text-align: right; }
+.center { text-align: center; }
+.nowrap { white-space: nowrap; }
+
+.pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.p-new { background: var(--p-new-bg); color: var(--p-new); }
+.p-wip { background: var(--p-wip-bg); color: var(--p-wip); }
+.p-done { background: var(--p-done-bg); color: var(--p-done); }
+.p-gray { background: var(--p-gray-bg); color: var(--p-gray); }
+
+.kv { display: grid; grid-template-columns: 110px 1fr; gap: 8px; }
+.kv dt { color: var(--text-muted); }
+.list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.list li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.muted { color: var(--text-muted); }
+.small { font-size: 12px; }
+.error { background: var(--error-bg); color: var(--error-text); padding: 8px 12px; border-radius: 8px; margin-bottom: 12px; }
+.success { background: var(--ok-bg); color: var(--ok-text); padding: 8px 12px; border-radius: 8px; margin-bottom: 12px; }
+.pager { display: flex; align-items: center; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+.loading { opacity: .55; transition: opacity .15s; }
+
+.ai-card textarea { width: 100%; resize: vertical; margin-top: 8px; }
+.ai-result { margin-top: 10px; }
+.ai-warn { list-style: none; background: var(--p-wip-bg); color: var(--p-wip); border-radius: 8px; padding: 8px 12px; display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+
+/* ---------- Dang nhap ---------- */
+.login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
+.login-box { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 32px; width: 360px; max-width: 100%; }
+.login-box h2 { margin-bottom: 4px; color: var(--text-strong); }
+.login-box .sub { font-size: 12px; color: var(--text-muted); margin-bottom: 20px; }
+.login-box label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 4px; }
+.login-box input { width: 100%; padding: 10px 12px; border-radius: 8px; margin-bottom: 12px; font-size: 14px; }
+.login-box .btn { width: 100%; padding: 10px 14px; border-radius: 8px; font-size: 14px; margin-top: 4px; }
+.login-box .hint { font-size: 11px; color: var(--text-muted); margin-top: 14px; }
+
+/* ---------- Mobile: sidebar truot tu trai + lop phu ---------- */
+@media (max-width: 768px) {
+  .erp-sidebar {
+    position: fixed; left: 0; top: 0; width: 80%; max-width: 280px; z-index: 50;
+    transform: translateX(-100%); transition: transform .25s ease; box-shadow: 2px 0 12px rgba(0, 0, 0, .15);
+  }
+  body.sidebar-open .erp-sidebar { transform: translateX(0); }
+  body.sidebar-open::after { content: ''; position: fixed; inset: 0; background: rgba(0, 0, 0, .4); z-index: 49; }
+  .erp-hamburger { display: inline-flex; }
+  .topbar { padding: 10px 12px; }
+  .content { padding: 12px; }
+  .grid2 { grid-template-columns: 1fr; }
+  .span2 { grid-column: auto; }
+  .search { width: 100%; }
+  td { white-space: nowrap; }
+}
+@media (prefers-reduced-motion: reduce) { .erp-sidebar { transition: none; } }
