@@ -2,7 +2,7 @@ import { query } from '../../config/db.js';
 
 export async function khachHang(saleId) {
   const { rows } = await query(
-    `SELECT id, ten, sdt, dia_chi FROM khach_hang
+    `SELECT id, ten, sdt, dia_chi, nhom_khach_hang, trang_thai_cham_soc FROM khach_hang
       WHERE ($1::int IS NULL OR sale_phu_trach_id = $1)
       ORDER BY ten`,
     [saleId],

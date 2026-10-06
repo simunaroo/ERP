@@ -7,13 +7,13 @@ INSERT INTO users (ho_ten, username, password_hash, vai_tro) VALUES
   ('Bùi Văn Quân',    'vanhanh1', '$2b$10$UEwUsyxonOHE/Xnxy56azuGbw42mqhooshMQqO6DKEGi/cIFQu1W6', 'van_hanh'),
   ('Ngô Thanh Hương', 'ketoan1',  '$2b$10$UEwUsyxonOHE/Xnxy56azuGbw42mqhooshMQqO6DKEGi/cIFQu1W6', 'ke_toan');
 
-INSERT INTO khach_hang (ten, sdt, dia_chi, sale_phu_trach_id, trang_thai_cham_soc) VALUES
-  ('Nguyễn Văn Hùng', '0901000001', 'Căn hộ B2-1205, Quận 7, TP.HCM', 2, 'chot'),
-  ('Trần Thị Mai',    '0901000002', 'Ngõ 45 Trần Thái Tông, Cầu Giấy, Hà Nội', 2, 'chot'),
-  ('Lê Quốc Bảo',     '0901000003', 'Khu đô thị Sala, TP. Thủ Đức', 3, 'chot'),
-  ('Phạm Minh Tuấn',  '0901000004', 'Văn Quán, Hà Đông, Hà Nội', 3, 'dang_tu_van'),
-  ('Vũ Thị Thanh',    '0901000005', 'Chung cư Ecopark, Văn Giang, Hưng Yên', 2, 'da_bao_gia'),
-  ('Đặng Minh Khoa',  '0901000006', 'Số 18 Nguyễn Hữu Thọ, Quận 7, TP.HCM', 2, 'moi');
+INSERT INTO khach_hang (ten, sdt, dia_chi, sale_phu_trach_id, trang_thai_cham_soc, nhom_khach_hang) VALUES
+  ('Nguyễn Văn Hùng', '0901000001', 'Căn hộ B2-1205, Quận 7, TP.HCM', 2, 'chot', 'nha_dan'),
+  ('Trần Thị Mai',    '0901000002', 'Ngõ 45 Trần Thái Tông, Cầu Giấy, Hà Nội', 2, 'chot', 'nha_dan'),
+  ('Lê Quốc Bảo',     '0901000003', 'Khu đô thị Sala, TP. Thủ Đức', 3, 'chot', 'nha_thau'),
+  ('Phạm Minh Tuấn',  '0901000004', 'Văn Quán, Hà Đông, Hà Nội', 3, 'dang_tu_van', 'nha_dan'),
+  ('Vũ Thị Thanh',    '0901000005', 'Chung cư Ecopark, Văn Giang, Hưng Yên', 2, 'da_bao_gia', 'nha_dan'),
+  ('Đặng Minh Khoa',  '0901000006', 'Số 18 Nguyễn Hữu Thọ, Quận 7, TP.HCM', 2, 'moi', 'doi_tac');
 
 INSERT INTO khach_hang_cham_soc (khach_hang_id, sale_id, trang_thai, noi_dung, created_at) VALUES
   (1, 2, 'dang_tu_van', 'Khách hỏi sàn SPC cho căn hộ 2 phòng ngủ, đã gửi catalogue.', '2026-09-26 10:00+07'),
@@ -62,17 +62,28 @@ INSERT INTO doi_tho (ten, sdt, nang_luc) VALUES
   ('Đội anh Phong', '0903000002', 'Tấm ốp, trần'),
   ('Đội anh Khải',  '0903000003', 'Cửa nhôm, cửa gỗ');
 
-INSERT INTO don_hang (ma_don, khach_hang_id, sale_id, vanhanh_phu_trach_id, trang_thai, dia_chi_cong_trinh, phuong_an_van_chuyen, phuong_an_thi_cong, created_at) VALUES
-  ('DH-2610-001', 1, 2, 4, 'dang_xu_ly', 'Căn hộ B2-1205, Quận 7, TP.HCM',
+INSERT INTO don_hang (ma_don, khach_hang_id, sale_id, vanhanh_phu_trach_id, trang_thai, hinh_thuc, ma_hop_dong, ngay_chot, ngay_yc_lap_dat,
+                      tinh_thanh, phuong_xa, dia_chi_cong_trinh, phi_van_chuyen, phu_thu, chiet_khau_pct, tien_coc, ngay_coc, ty_le_tam_ung,
+                      dieu_khoan_nghiem_thu, phuong_an_van_chuyen, phuong_an_thi_cong, created_at) VALUES
+  ('DH-2610-001', 1, 2, 4, 'dang_xu_ly', 'hoan_thien', 'HĐ-1001', '2026-10-01', '2026-10-07',
+     'TP. Hồ Chí Minh', 'Phường Tân Thuận', 'Căn hộ B2-1205', 0, 500000, 5, 5000000, '2026-10-01', 80,
+     'so_m2_thi_cong',
      'NCC giao thẳng sàn + tấm ốp tới công trình; cửa xuất từ xưởng.', 'Ngày 1 lát sàn, ngày 2 ốp tường và lắp cửa.', '2026-10-01 09:15+07'),
-  ('DH-2610-002', 2, 2, NULL, 'moi', 'Ngõ 45 Trần Thái Tông, Cầu Giấy, Hà Nội', NULL, NULL, '2026-10-02 10:30+07'),
-  ('DH-2608-087', 3, 3, 4, 'hoan_tat', 'Khu đô thị Sala, TP. Thủ Đức',
-     'NCC giao thẳng.', 'Lát sàn 1 ngày.', '2026-08-14 14:00+07');
+  ('DH-2610-002', 2, 2, NULL, 'moi', 'vat_tu', NULL, '2026-10-02', '2026-10-09',
+     'Hà Nội', 'Phường Cầu Giấy', 'Ngõ 45 Trần Thái Tông', 300000, 0, 0, 2000000, '2026-10-02', 100,
+     'vat_tu_tieu_hao', NULL, NULL, '2026-10-02 10:30+07'),
+  ('DH-2608-087', 3, 3, 4, 'hoan_tat', 'hoan_thien', 'HĐ-0987', '2026-08-14', '2026-08-20',
+     'TP. Hồ Chí Minh', 'Phường An Khánh', 'Khu đô thị Sala', 0, 0, 0, 3000000, '2026-08-14', 80,
+     'so_m2_thi_cong', 'NCC giao thẳng.', 'Lát sàn 1 ngày.', '2026-08-14 14:00+07'),
+  ('DH-2610-003', 5, 2, NULL, 'nhap', 'hoan_thien', NULL, NULL, '2026-10-15',
+     'Hưng Yên', 'Xã Văn Giang', 'Chung cư Ecopark', 0, 0, 0, 0, NULL, 80,
+     NULL, NULL, NULL, '2026-10-04 16:10+07');
 
-INSERT INTO don_hang_vat_tu (don_hang_id, vat_tu_id, so_luong_can) VALUES
-  (1, 3, 42), (1, 5, 18), (1, 1, 2),
-  (2, 4, 30), (2, 2, 3),
-  (3, 3, 55);
+INSERT INTO don_hang_vat_tu (don_hang_id, vat_tu_id, so_luong_can, don_gia, ghi_chu, loai_thi_cong, dai_mm, rong_mm) VALUES
+  (1, 3, 42, 255000, 'Phòng khách + 2 phòng ngủ', NULL, NULL, NULL), (1, 5, 18, 230000, 'Phòng ngủ master', 'op_tuong_khong_xuong', 3000, 400), (1, 1, 2, 5800000, 'Cửa ban công', NULL, 2200, 1200),
+  (2, 4, 30, 320000, NULL, NULL, NULL, NULL), (2, 2, 3, 4200000, NULL, NULL, 2200, 900),
+  (3, 3, 55, 245000, NULL, NULL, NULL, NULL),
+  (4, 6, 22, 290000, 'Báo giá đang chờ khách xác nhận', 'op_tuong_co_xuong', 2440, 1220);
 
 INSERT INTO don_hang_yeu_cau_sua (don_hang_id, sale_id, noi_dung) VALUES
   (1, 2, 'Khách đổi tấm ốp phòng ngủ từ nano sang PVC vân đá.');

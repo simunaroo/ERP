@@ -44,6 +44,8 @@ Tài khoản demo (mật khẩu `123456`): `sale1`, `sale2`, `vanhanh1`, `ketoan
 - [x] Đơn hàng: danh sách, tạo đơn, chi tiết, phương án vận chuyển – thi công, yêu cầu chỉnh sửa
 - [x] Khách hàng: trạng thái chăm sóc, lịch sử chăm sóc
 - [x] Lên đơn nhanh bằng AI: đọc ảnh tin nhắn/phiếu ghi tay khi khách chốt; kèm nhập đơn thủ công
+- [x] Form nhập đơn đầy đủ: hình thức đơn, giá bán, chiết khấu, cọc, % tạm ứng, đơn nháp → chốt đơn
+- [x] Điều khoản nghiệm thu, loại thi công + kích thước từng dòng, link báo giá gửi khách (không cần đăng nhập)
 - [ ] NCC & bảng giá
 - [ ] Mua hàng
 - [ ] Thi công & nghiệm thu

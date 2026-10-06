@@ -1,5 +1,9 @@
 import pg from 'pg';
 
+// Cot DATE (ngay chot, ngay coc...) la ngay theo lich, khong co gio/mui gio. Mac dinh pg doi thanh Date
+// luc 00:00 gio may chu roi JSON xuat ra UTC -> o Viet Nam bi lui 1 ngay. Giu nguyen chuoi 'YYYY-MM-DD'.
+pg.types.setTypeParser(pg.types.builtins.DATE, (v) => v);
+
 // NUMERIC tra ve dang chuoi de khong mat do chinh xac tien te; doi sang so khi can tinh toan.
 export const pool = new pg.Pool({
   host: process.env.PG_HOST,
