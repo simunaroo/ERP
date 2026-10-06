@@ -5,6 +5,7 @@ import { VAI_TRO } from '../utils.js';
 
 // Chi liet ke module da lam; them dong khi hoan thanh module moi.
 const NAV_ITEMS = [
+  { path: '/khach-hang', label: 'Khách hàng', icon: '📇', vaiTro: ['sale', 'admin'] },
   { path: '/don-hang', label: 'Đơn hàng', icon: '📋', vaiTro: ['sale', 'van_hanh', 'ke_toan', 'admin'] },
 ];
 

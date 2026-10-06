@@ -240,7 +240,47 @@ export async function seedLon(conn) {
   await insertMany(db, 'phieu_thanh_toan', ['de_xuat_chi_id', 'ma_qr', 'so_tien', 'ngay_thanh_toan'],
     dxc.filter((c) => c.trangThai === 'da_thanh_toan').map((c) => [c.id, `VIETQR-DEMO-${c.id}`, c.tong, isoDate(addDays(c.ngay, int(2, 6)))]));
 
+  // ---- Cham soc khach hang ----
+  // Khach da co don: lich su moi -> tu van -> bao gia -> chot, truoc ngay don dau tien.
+  const donDauTien = {};
+  for (const d of donSpec) if (!donDauTien[d.kh.id]) donDauTien[d.kh.id] = d.ngay;
+  const NOI_DUNG_CS = {
+    dang_tu_van: ['Khách hỏi giá sàn SPC, đã gửi catalogue.', 'Tư vấn mẫu tấm ốp qua Zalo.', 'Hẹn khảo sát công trình cuối tuần.', 'Khách cần cửa nhôm cho ban công.'],
+    da_bao_gia: ['Đã gửi báo giá, chờ khách phản hồi.', 'Báo giá lần 2 sau khi khách giảm diện tích.', 'Gửi báo giá trọn gói vật tư + thi công.'],
+    chot: ['Khách đồng ý, đặt cọc 30%.', 'Chốt qua điện thoại.', 'Khách ký xác nhận báo giá.'],
+    khong_mua: ['Khách chọn bên khác vì giá.', 'Khách hoãn sửa nhà sang năm sau.', 'Không liên lạc được sau 3 lần gọi.'],
+  };
+  const logRows = [];
+  await db.query(`UPDATE khach_hang SET trang_thai_cham_soc = 'chot' WHERE id = ANY($1)`, [Object.keys(donDauTien).map(Number)]);
+  for (const [khId, ngayDon] of Object.entries(donDauTien)) {
+    const kh = khachHang.find((k) => k.id === Number(khId));
+    let t = addDays(ngayDon, -int(5, 20));
+    for (const tt of ['dang_tu_van', 'da_bao_gia', 'chot']) {
+      if (tt === 'da_bao_gia' && chance(0.2)) continue;
+      logRows.push([kh.id, kh.sale_phu_trach_id, tt, pick(NOI_DUNG_CS[tt]), t]);
+      t = addDays(t, int(1, 6));
+      if (t > ngayDon) t = ngayDon;
+    }
+  }
+
+  // Khach tiem nang chua chot (dang o cac giai doan cham soc).
+  const leads = Array.from({ length: 150 }, () => {
+    const tt = pick(['moi', 'moi', 'dang_tu_van', 'dang_tu_van', 'dang_tu_van', 'da_bao_gia', 'da_bao_gia', 'khong_mua']);
+    return { row: [hoTen(), sdt(), diaChi(), pick(sales), tt], tt };
+  });
+  const leadIds = await insertMany(db, 'khach_hang', ['ten', 'sdt', 'dia_chi', 'sale_phu_trach_id', 'trang_thai_cham_soc'], leads.map((l) => l.row));
+  leads.forEach((l, i) => {
+    if (l.tt === 'moi') return;
+    let t = addDays(HOM_NAY, -int(3, 60));
+    const chuoi = l.tt === 'dang_tu_van' ? ['dang_tu_van'] : l.tt === 'da_bao_gia' ? ['dang_tu_van', 'da_bao_gia'] : ['dang_tu_van', 'khong_mua'];
+    for (const tt of chuoi) {
+      logRows.push([leadIds[i], l.row[3], tt, pick(NOI_DUNG_CS[tt]), t]);
+      t = addDays(t, int(1, 5));
+    }
+  });
+  await insertMany(db, 'khach_hang_cham_soc', ['khach_hang_id', 'sale_id', 'trang_thai', 'noi_dung', 'created_at'], logRows);
+
   await db.query('COMMIT');
   await db.end();
-  return { don: SO_DON, khachHang: khRows.length, deXuatMua: dxm.length, deXuatChi: dxc.length };
+  return { don: SO_DON, khachHang: khRows.length + leads.length, deXuatMua: dxm.length, deXuatChi: dxc.length, nhatKyChamSoc: logRows.length };
 }

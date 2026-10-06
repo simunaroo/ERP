@@ -56,7 +56,7 @@ Mỗi vòng lặp ghi: mục tiêu, đã làm, yêu cầu thay đổi (và lý d
 
 ## Vòng 2 — Trợ lý AI nhập đơn (05 – 06/10/2026)
 
-**Mục tiêu:** đáp ứng yêu cầu tích hợp AI. Đổi tên đề tài thành *"Xây dựng hệ thống ERP quản lý chuỗi cung ứng và thi công có trợ lý AI hỗ trợ nghiệp vụ cho doanh nghiệp NST"*.
+**Mục tiêu:** đáp ứng yêu cầu tích hợp AI. Đổi tên đề tài thành *"Xây dựng hệ thống ERP quản lý chuỗi cung ứng và thi công tích hợp trợ lý AI cho doanh nghiệp NST"* (06/10/2026; bỏ cụm "hỗ trợ nghiệp vụ" vì AI hiện chỉ làm nhập đơn, tránh hứa rộng hơn thực tế).
 
 **Đã làm**
 - Endpoint `POST /api/tro-ly/trich-xuat-don` (chỉ Sale): nhận tin nhắn khách, gọi Gemini API, trả về bản nháp đơn hàng (khách hàng, địa chỉ, vật tư, số lượng, ghi chú) kèm danh sách cảnh báo.
@@ -72,6 +72,22 @@ Mỗi vòng lặp ghi: mục tiêu, đã làm, yêu cầu thay đổi (và lý d
 **Báo cáo cần cập nhật**
 - Chương 1: tên đề tài, mục 1.1 (lý do tích hợp AI), mục 1.6.2 (Gemini API, structured output).
 - Chương 2: thêm actor phụ "Dịch vụ AI (Gemini)", use case "Trích xuất đơn hàng bằng AI" + đặc tả, sơ đồ trình tự; yêu cầu phi chức năng về bảo vệ dữ liệu khi gọi AI.
+
+**Thay đổi yêu cầu (06/10/2026): AI gắn vào luồng chăm sóc khách**
+- Thêm trạng thái chăm sóc khách hàng (Mới → Đang tư vấn → Đã báo giá → Chốt / Không mua) và lịch sử chăm sóc (bảng `khach_hang_cham_soc`, migration `001`).
+- Khi Sale chuyển khách sang **Chốt**, hệ thống hỏi "Lên đơn ngay?": **✨ Lên đơn nhanh bằng AI** / **Nhập đơn thủ công** / **Để sau**.
+- "Lên đơn nhanh bằng AI" nhận **ảnh** (tối đa 3 ảnh: chụp tin nhắn, phiếu ghi tay, bảng khối lượng; chọn file, kéo thả hoặc Ctrl+V) và/hoặc ghi chú, gọi Gemini đọc ảnh rồi điền sẵn form. Trang Tạo đơn có 2 tab: AI và thủ công.
+- Kiểm thử: 12 kịch bản API khách hàng + 7 kịch bản kiểm tra ảnh + luồng giao diện đầy đủ (chốt khách → hộp thoại → tải ảnh → AI điền form → chặn lưu khi còn dòng chưa khớp → lưu đơn).
+
+**Quyết định thiết kế bổ sung**
+- Đi từ hồ sơ khách đã chốt thì khách hàng **đã biết**: không cần AI nhận diện khách, prompt dặn AI bỏ qua tên/SĐT.
+- Ảnh được **thu nhỏ trên trình duyệt** (cạnh dài 1600 px, JPEG) trước khi gửi: giảm dung lượng tải lên và số token AI phải đọc.
+- Chỉ route `/api/tro-ly` được nhận body tới 15 MB; các route khác giữ giới hạn 100 KB. Backend kiểm tra lại định dạng (JPG/PNG/WEBP), dung lượng (≤ 4 MB/ảnh), số ảnh.
+- Cập nhật trạng thái chăm sóc và ghi lịch sử trong **cùng một transaction**, nên không bao giờ có trạng thái mà thiếu lịch sử.
+- Dòng vật tư AI chưa khớp danh mục được tô vàng; không cho lưu đơn khi còn dòng như vậy, tránh mất vật tư mà không ai để ý.
+
+**Báo cáo cần cập nhật thêm**
+- Chương 2: use case "Chăm sóc khách hàng" (cập nhật trạng thái), "Lên đơn nhanh bằng AI" (đầu vào là ảnh), bảng `khach_hang_cham_soc`, ENUM `trang_thai_cham_soc_enum`, ERD.
 
 ---
 

@@ -1,4 +1,6 @@
-# ERP chuỗi cung ứng & thi công có trợ lý AI — Đồ án tốt nghiệp
+# Xây dựng hệ thống ERP quản lý chuỗi cung ứng và thi công tích hợp trợ lý AI cho doanh nghiệp NST
+
+Đồ án tốt nghiệp.
 
 Hệ thống ERP cho doanh nghiệp NST: Node.js/Express + PostgreSQL + React (Vite, Zustand), tích hợp trợ lý AI (Gemini API) hỗ trợ nhập đơn hàng.
 
@@ -21,7 +23,8 @@ cd backend
 npm install
 cp .env.example .env        # sửa PG_PASSWORD, JWT_SECRET cho phù hợp
 npm run db:reset            # tạo DB datn_erp từ sql/schema.sql + sql/seed.sql (dữ liệu nhỏ)
-# hoặc: npm run db:reset:lon  # thêm ~1.500 đơn hàng giả lập trong 12 tháng để demo
+# hoặc: npm run db:reset:lon  # thêm ~1.500 đơn hàng + ~150 khách đang chăm sóc, giả lập 12 tháng
+# DB đã có dữ liệu: npm run db:migrate  # áp các file sql/migrations (chỉ thêm, không xoá)
 npm run dev                 # http://localhost:4000
 
 # 2. Frontend (mở terminal khác)
@@ -39,7 +42,8 @@ Tài khoản demo (mật khẩu `123456`): `sale1`, `sale2`, `vanhanh1`, `ketoan
 - [x] Thiết kế CSDL (20 bảng)
 - [x] Đăng nhập (JWT + bcrypt), phân quyền theo vai trò
 - [x] Đơn hàng: danh sách, tạo đơn, chi tiết, phương án vận chuyển – thi công, yêu cầu chỉnh sửa
-- [x] Trợ lý AI nhập đơn (trích xuất đơn hàng từ tin nhắn khách)
+- [x] Khách hàng: trạng thái chăm sóc, lịch sử chăm sóc
+- [x] Lên đơn nhanh bằng AI: đọc ảnh tin nhắn/phiếu ghi tay khi khách chốt; kèm nhập đơn thủ công
 - [ ] NCC & bảng giá
 - [ ] Mua hàng
 - [ ] Thi công & nghiệm thu

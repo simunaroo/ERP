@@ -7,11 +7,22 @@ INSERT INTO users (ho_ten, username, password_hash, vai_tro) VALUES
   ('Bùi Văn Quân',    'vanhanh1', '$2b$10$UEwUsyxonOHE/Xnxy56azuGbw42mqhooshMQqO6DKEGi/cIFQu1W6', 'van_hanh'),
   ('Ngô Thanh Hương', 'ketoan1',  '$2b$10$UEwUsyxonOHE/Xnxy56azuGbw42mqhooshMQqO6DKEGi/cIFQu1W6', 'ke_toan');
 
-INSERT INTO khach_hang (ten, sdt, dia_chi, sale_phu_trach_id) VALUES
-  ('Nguyễn Văn Hùng', '0901000001', 'Căn hộ B2-1205, Quận 7, TP.HCM', 2),
-  ('Trần Thị Mai',    '0901000002', 'Ngõ 45 Trần Thái Tông, Cầu Giấy, Hà Nội', 2),
-  ('Lê Quốc Bảo',     '0901000003', 'Khu đô thị Sala, TP. Thủ Đức', 3),
-  ('Phạm Minh Tuấn',  '0901000004', 'Văn Quán, Hà Đông, Hà Nội', 3);
+INSERT INTO khach_hang (ten, sdt, dia_chi, sale_phu_trach_id, trang_thai_cham_soc) VALUES
+  ('Nguyễn Văn Hùng', '0901000001', 'Căn hộ B2-1205, Quận 7, TP.HCM', 2, 'chot'),
+  ('Trần Thị Mai',    '0901000002', 'Ngõ 45 Trần Thái Tông, Cầu Giấy, Hà Nội', 2, 'chot'),
+  ('Lê Quốc Bảo',     '0901000003', 'Khu đô thị Sala, TP. Thủ Đức', 3, 'chot'),
+  ('Phạm Minh Tuấn',  '0901000004', 'Văn Quán, Hà Đông, Hà Nội', 3, 'dang_tu_van'),
+  ('Vũ Thị Thanh',    '0901000005', 'Chung cư Ecopark, Văn Giang, Hưng Yên', 2, 'da_bao_gia'),
+  ('Đặng Minh Khoa',  '0901000006', 'Số 18 Nguyễn Hữu Thọ, Quận 7, TP.HCM', 2, 'moi');
+
+INSERT INTO khach_hang_cham_soc (khach_hang_id, sale_id, trang_thai, noi_dung, created_at) VALUES
+  (1, 2, 'dang_tu_van', 'Khách hỏi sàn SPC cho căn hộ 2 phòng ngủ, đã gửi catalogue.', '2026-09-26 10:00+07'),
+  (1, 2, 'da_bao_gia',  'Gửi báo giá sàn SPC + tấm ốp nano + 2 cửa Xingfa.', '2026-09-28 15:30+07'),
+  (1, 2, 'chot',        'Khách đồng ý, đặt cọc 30%.', '2026-10-01 09:00+07'),
+  (2, 2, 'dang_tu_van', 'Khách cần sàn vân đá cho phòng khách.', '2026-09-29 14:00+07'),
+  (2, 2, 'chot',        'Chốt qua điện thoại.', '2026-10-02 10:00+07'),
+  (5, 2, 'dang_tu_van', 'Khách quan tâm tấm ốp phòng ngủ, hẹn khảo sát.', '2026-10-03 09:30+07'),
+  (5, 2, 'da_bao_gia',  'Đã báo giá 22 m² tấm ốp PVC vân đá, chờ khách phản hồi.', '2026-10-04 16:00+07');
 
 INSERT INTO loai_vat_tu (ten, nguon_goc) VALUES
   ('Cửa',    'tu_san_xuat'),

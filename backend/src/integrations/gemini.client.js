@@ -3,7 +3,12 @@ import { AppError } from '../utils/AppError.js';
 const API = 'https://generativelanguage.googleapis.com/v1beta/models';
 
 // Goi Gemini va buoc tra ve JSON dung schema (structured output), khong phai doan van tu do.
-export async function sinhJson({ systemPrompt, userText, schema }) {
+// anh: [{ mime, data }] voi data la base64 (khong co tien to "data:...;base64,").
+export async function sinhJson({ systemPrompt, userText, anh = [], schema }) {
+  const parts = [
+    ...anh.map((a) => ({ inline_data: { mime_type: a.mime, data: a.data } })),
+    { text: userText },
+  ];
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new AppError(503, 'Chưa cấu hình GEMINI_API_KEY cho trợ lý AI');
   const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
@@ -15,7 +20,7 @@ export async function sinhJson({ systemPrompt, userText, schema }) {
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemPrompt }] },
-        contents: [{ role: 'user', parts: [{ text: userText }] }],
+        contents: [{ role: 'user', parts }],
         generationConfig: { temperature: 0, responseMimeType: 'application/json', responseSchema: schema },
       }),
       signal: AbortSignal.timeout(30000),

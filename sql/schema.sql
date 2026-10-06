@@ -15,6 +15,7 @@ CREATE TYPE trang_thai_mua_hang_enum AS ENUM ('cho_duyet', 'da_dat', 'da_giao');
 CREATE TYPE trang_thai_thi_cong_enum AS ENUM ('lap_lich', 'dang_thi_cong', 'da_nghiem_thu');
 CREATE TYPE trang_thai_de_xuat_chi_enum AS ENUM ('cho_duyet', 'da_duyet', 'tu_choi', 'da_thanh_toan');
 CREATE TYPE hanh_dong_duyet_enum AS ENUM ('duyet', 'tu_choi');
+CREATE TYPE trang_thai_cham_soc_enum AS ENUM ('moi', 'dang_tu_van', 'da_bao_gia', 'chot', 'khong_mua');
 
 -- =====================================================================
 -- MODULE 0 — NGUOI DUNG
@@ -38,7 +39,17 @@ CREATE TABLE khach_hang (
     sdt                 TEXT,
     dia_chi             TEXT,
     sale_phu_trach_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    trang_thai_cham_soc trang_thai_cham_soc_enum NOT NULL DEFAULT 'moi',
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE khach_hang_cham_soc (
+    id              SERIAL PRIMARY KEY,
+    khach_hang_id   INTEGER NOT NULL REFERENCES khach_hang(id) ON DELETE CASCADE,
+    sale_id         INTEGER NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    trang_thai      trang_thai_cham_soc_enum NOT NULL,
+    noi_dung        TEXT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE don_hang (
@@ -216,3 +227,5 @@ CREATE INDEX idx_de_xuat_mua_hang_don_hang ON de_xuat_mua_hang(don_hang_id);
 CREATE INDEX idx_de_xuat_mua_hang_ncc ON de_xuat_mua_hang(ncc_id);
 CREATE INDEX idx_de_xuat_chi_ncc ON de_xuat_chi(ncc_id);
 CREATE INDEX idx_thi_cong_don_hang ON thi_cong(don_hang_id);
+CREATE INDEX idx_kh_cham_soc_khach ON khach_hang_cham_soc(khach_hang_id);
+CREATE INDEX idx_khach_hang_sale ON khach_hang(sale_phu_trach_id);

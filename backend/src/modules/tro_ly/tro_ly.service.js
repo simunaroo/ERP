@@ -1,8 +1,12 @@
 import { AppError } from '../../utils/AppError.js';
 import * as danhMuc from '../danh_muc/danh_muc.repository.js';
+import * as khachHangRepo from '../khach_hang/khach_hang.repository.js';
 import { sinhJson } from '../../integrations/gemini.client.js';
 
 const SO_KY_TU_TOI_DA = 3000;
+const SO_ANH_TOI_DA = 3;
+const DUNG_LUONG_ANH_TOI_DA = 4 * 1024 * 1024; // 4 MB moi anh (sau khi giai ma base64)
+const MIME_HOP_LE = ['image/jpeg', 'image/png', 'image/webp'];
 
 const SCHEMA = {
   type: 'OBJECT',
@@ -27,20 +31,24 @@ const SCHEMA = {
   required: ['vat_tu'],
 };
 
-function taoPrompt(vatTu) {
+function taoPrompt(vatTu, daBietKhach) {
   const bang = vatTu.map((v) => `${v.id} | ${v.ten} | ${v.loai} | ${v.don_vi_tinh}`).join('\n');
-  return `Bạn là trợ lý nhập đơn hàng cho doanh nghiệp vật liệu hoàn thiện (cửa, sàn, tấm ốp).
-Đọc tin nhắn của khách và trích xuất thông tin đơn hàng.
+  return `Bạn là trợ lý lên đơn hàng cho doanh nghiệp vật liệu hoàn thiện (cửa, sàn, tấm ốp).
+Đầu vào có thể là ảnh chụp tin nhắn với khách, phiếu ghi tay, bảng khối lượng, kèm ghi chú của nhân viên.
+Trích xuất thông tin đơn hàng.
 
 Danh mục vật tư (id | tên | loại | đơn vị tính):
 ${bang}
 
 Quy tắc:
-- Mỗi vật tư khách nhắc tới là một phần tử trong "vat_tu"; "mo_ta_goc" chép đúng cụm từ khách viết.
+- Mỗi vật tư được nhắc tới là một phần tử trong "vat_tu"; "mo_ta_goc" chép đúng cụm từ trong ảnh/ghi chú.
 - "vat_tu_id": id trong danh mục khớp rõ ràng nhất. Nếu không chắc hoặc danh mục không có, để null — tuyệt đối không đoán.
-- "so_luong": theo đơn vị tính của danh mục (m², bộ...). Khách không nói số lượng thì để null.
-- "sdt": chỉ giữ chữ số. Không có thông tin nào thì để null, không tự bịa.
-- "ghi_chu": yêu cầu khác của khách (thời gian giao, lưu ý thi công), nếu có.`;
+- "so_luong": theo đơn vị tính của danh mục (m², bộ...). Không rõ số lượng thì để null. Nếu chỉ có kích thước, chỉ quy đổi khi phép tính rõ ràng.
+- Chữ viết tay khó đọc: chỉ trích phần đọc được chắc chắn.
+${daBietKhach
+    ? '- Khách hàng đã được xác định sẵn: để "ten_khach_hang" và "sdt" là null.'
+    : '- "sdt": chỉ giữ chữ số. Không có thì để null, không tự bịa.'}
+- "ghi_chu": yêu cầu khác (thời gian giao, lưu ý thi công), nếu có.`;
 }
 
 const chuanHoa = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().trim();
@@ -68,13 +76,37 @@ function khopKhachHang(trichXuat, dsKhach, canhBao) {
   return null;
 }
 
-export async function trichXuatDonHang(user, noiDung) {
-  const text = (noiDung || '').trim();
-  if (!text) throw new AppError(400, 'Vui lòng dán nội dung tin nhắn của khách');
+function kiemTraAnh(anh) {
+  if (!Array.isArray(anh)) return [];
+  if (anh.length > SO_ANH_TOI_DA) throw new AppError(400, `Tối đa ${SO_ANH_TOI_DA} ảnh mỗi lần`);
+  return anh.map((a, i) => {
+    if (!MIME_HOP_LE.includes(a?.mime)) throw new AppError(400, `Ảnh ${i + 1}: chỉ nhận JPG, PNG hoặc WEBP`);
+    if (typeof a.data !== 'string' || !/^[A-Za-z0-9+/=]+$/.test(a.data)) throw new AppError(400, `Ảnh ${i + 1}: dữ liệu không hợp lệ`);
+    if ((a.data.length * 3) / 4 > DUNG_LUONG_ANH_TOI_DA) throw new AppError(400, `Ảnh ${i + 1} vượt quá 4 MB`);
+    return { mime: a.mime, data: a.data };
+  });
+}
+
+export async function trichXuatDonHang(user, { noi_dung, anh, khach_hang_id } = {}) {
+  const text = (noi_dung || '').trim();
+  const dsAnh = kiemTraAnh(anh);
+  if (!text && dsAnh.length === 0) throw new AppError(400, 'Vui lòng tải ảnh hoặc nhập nội dung đơn hàng');
   if (text.length > SO_KY_TU_TOI_DA) throw new AppError(400, `Nội dung quá dài (tối đa ${SO_KY_TU_TOI_DA} ký tự)`);
 
-  const [vatTu, dsKhach] = await Promise.all([danhMuc.vatTu(), danhMuc.khachHang(user.id)]);
-  const kq = await sinhJson({ systemPrompt: taoPrompt(vatTu), userText: text, schema: SCHEMA });
+  // Di tu ho so khach vua chot: khach da biet, chi can kiem tra quyen.
+  let khachBiet = null;
+  if (khach_hang_id) {
+    khachBiet = await khachHangRepo.findById(Number(khach_hang_id));
+    if (!khachBiet || khachBiet.sale_phu_trach_id !== user.id) throw new AppError(403, 'Bạn không phụ trách khách hàng này');
+  }
+
+  const [vatTu, dsKhach] = await Promise.all([danhMuc.vatTu(), khachBiet ? [] : danhMuc.khachHang(user.id)]);
+  const kq = await sinhJson({
+    systemPrompt: taoPrompt(vatTu, Boolean(khachBiet)),
+    userText: text || 'Trích xuất đơn hàng từ các ảnh đính kèm.',
+    anh: dsAnh,
+    schema: SCHEMA,
+  });
 
   // Khong tin tuyet doi vao AI: kiem tra lai moi id va so luong truoc khi tra ve giao dien.
   const canhBao = [];
@@ -86,11 +118,12 @@ export async function trichXuatDonHang(user, noiDung) {
     if (vt && !soLuong) canhBao.push(`Chưa rõ số lượng cho "${it.mo_ta_goc}".`);
     return { mo_ta_goc: it.mo_ta_goc, vat_tu_id: vt ? vt.id : null, so_luong_can: soLuong };
   });
+  if (dong.length === 0) canhBao.push('Không tìm thấy vật tư nào trong nội dung, vui lòng nhập tay.');
 
-  const khach = khopKhachHang(kq, dsKhach, canhBao);
+  const khach = khachBiet || khopKhachHang(kq, dsKhach, canhBao);
   return {
     khach_hang_id: khach?.id ?? null,
-    khach_hang_trich_xuat: { ten: kq.ten_khach_hang || null, sdt: chiSo(kq.sdt) || null },
+    khach_hang_trich_xuat: khachBiet ? null : { ten: kq.ten_khach_hang || null, sdt: chiSo(kq.sdt) || null },
     dia_chi_cong_trinh: kq.dia_chi_cong_trinh || khach?.dia_chi || null,
     vat_tu: dong,
     ghi_chu: kq.ghi_chu || null,
