@@ -7,6 +7,7 @@ import { VAI_TRO } from '../utils.js';
 const NAV_ITEMS = [
   { path: '/khach-hang', label: 'Khách hàng', icon: '📇', vaiTro: ['sale', 'admin'] },
   { path: '/don-hang', label: 'Đơn hàng', icon: '📋', vaiTro: ['sale', 'van_hanh', 'ke_toan', 'admin'] },
+  { path: '/nha-cung-cap', label: 'Nhà cung cấp', icon: '🏭', vaiTro: ['ke_toan', 'van_hanh', 'admin'] },
 ];
 
 function docTheme() {

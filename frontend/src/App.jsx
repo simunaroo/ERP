@@ -8,6 +8,10 @@ import DonHangChiTiet from './pages/DonHangChiTiet.jsx';
 import KhachHangList from './pages/KhachHangList.jsx';
 import KhachHangChiTiet from './pages/KhachHangChiTiet.jsx';
 import BaoGia from './pages/BaoGia.jsx';
+import NhaCungCapList from './pages/NhaCungCapList.jsx';
+import NhaCungCapChiTiet from './pages/NhaCungCapChiTiet.jsx';
+import SoSanhGia from './pages/SoSanhGia.jsx';
+import PhanTichNcc from './pages/PhanTichNcc.jsx';
 
 function CanDangNhap({ children }) {
   const token = useAuthStore((s) => s.token);
@@ -28,6 +32,10 @@ export default function App() {
         <Route path="/don-hang/:id" element={<DonHangChiTiet />} />
         <Route path="/khach-hang" element={<KhachHangList />} />
         <Route path="/khach-hang/:id" element={<KhachHangChiTiet />} />
+        <Route path="/nha-cung-cap" element={<NhaCungCapList />} />
+        <Route path="/nha-cung-cap/so-sanh-gia" element={<SoSanhGia />} />
+        <Route path="/nha-cung-cap/phan-tich" element={<PhanTichNcc />} />
+        <Route path="/nha-cung-cap/:id" element={<NhaCungCapChiTiet />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

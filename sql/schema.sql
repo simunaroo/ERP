@@ -38,6 +38,8 @@ CREATE TABLE users (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE EXTENSION IF NOT EXISTS btree_gist; -- cho rang buoc EXCLUDE cua ncc_bang_gia
+
 -- =====================================================================
 -- MODULE 1 — DON HANG
 -- =====================================================================
@@ -175,8 +177,11 @@ CREATE TABLE ncc_bang_gia (
     vat_tu_id           INTEGER NOT NULL REFERENCES vat_tu(id) ON DELETE RESTRICT,
     don_gia             NUMERIC(12,2) NOT NULL CHECK (don_gia >= 0),
     ngay_hieu_luc       DATE NOT NULL,
-    ngay_het_hieu_luc   DATE,
-    CHECK (ngay_het_hieu_luc IS NULL OR ngay_het_hieu_luc > ngay_hieu_luc)
+    ngay_het_hieu_luc   DATE,                -- NULL = dang ap dung
+    CONSTRAINT ck_bang_gia_khoang_ngay CHECK (ngay_het_hieu_luc IS NULL OR ngay_het_hieu_luc >= ngay_hieu_luc),
+    -- Cung NCC + vat tu khong duoc co 2 muc gia chong thoi gian (can extension btree_gist).
+    CONSTRAINT ex_bang_gia_khong_chong EXCLUDE USING gist (
+        ncc_id WITH =, vat_tu_id WITH =, daterange(ngay_hieu_luc, ngay_het_hieu_luc, '[]') WITH &&)
 );
 
 -- =====================================================================
@@ -269,6 +274,8 @@ CREATE INDEX idx_don_hang_khach_hang ON don_hang(khach_hang_id);
 CREATE INDEX idx_don_hang_sale ON don_hang(sale_id);
 CREATE INDEX idx_ncc_bang_gia_vat_tu ON ncc_bang_gia(vat_tu_id);
 CREATE INDEX idx_ncc_bang_gia_ncc ON ncc_bang_gia(ncc_id);
+CREATE UNIQUE INDEX ux_ncc_ma_so_thue ON nha_cung_cap (ma_so_thue) WHERE ma_so_thue IS NOT NULL;
+CREATE INDEX idx_ncc_stk_ncc ON ncc_stk (ncc_id);
 CREATE INDEX idx_de_xuat_mua_hang_don_hang ON de_xuat_mua_hang(don_hang_id);
 CREATE INDEX idx_de_xuat_mua_hang_ncc ON de_xuat_mua_hang(ncc_id);
 CREATE INDEX idx_de_xuat_chi_ncc ON de_xuat_chi(ncc_id);

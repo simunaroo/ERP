@@ -6,6 +6,7 @@ const PG_ERRORS = {
   '23503': [400, 'Dữ liệu tham chiếu không tồn tại'],
   '23514': [400, 'Dữ liệu không thoả ràng buộc'],
   '22P02': [400, 'Giá trị không hợp lệ'],
+  '23P01': [409, 'Khoảng thời gian bị chồng với dữ liệu đã có'], // vi pham rang buoc EXCLUDE
 };
 
 export function errorHandler(err, req, res, next) {
