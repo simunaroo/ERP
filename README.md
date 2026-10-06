@@ -35,7 +35,14 @@ npm run dev                 # http://localhost:5173
 
 Trợ lý AI: tạo API key miễn phí tại Google AI Studio, thêm `GEMINI_API_KEY=...` vào `backend/.env`. Không có key thì phần còn lại vẫn chạy bình thường, chỉ nút "Trích xuất" báo chưa cấu hình.
 
-Tài khoản demo (mật khẩu `123456`): `sale1`, `sale2`, `vanhanh1`, `ketoan1`, `admin`.
+Tài khoản demo — mật khẩu là tên tài khoản + `123456` (ví dụ `doanha123456`):
+
+| Vai trò | Tài khoản |
+|---|---|
+| Kinh doanh (Sale) | `doanha`, `doanhb` (dữ liệu lớn: đến `doanhh`) |
+| Vận hành | `hanha` (dữ liệu lớn: `hanhb`, `hanhc`) |
+| Kế toán | `toana` (dữ liệu lớn: `toanb`) |
+| Admin | `ngocson` |
 
 ## Tiến độ
 
@@ -46,6 +53,8 @@ Tài khoản demo (mật khẩu `123456`): `sale1`, `sale2`, `vanhanh1`, `ketoan
 - [x] Lên đơn nhanh bằng AI: đọc ảnh tin nhắn/phiếu ghi tay khi khách chốt; kèm nhập đơn thủ công
 - [x] Form nhập đơn đầy đủ: hình thức đơn, giá bán, chiết khấu, cọc, % tạm ứng, đơn nháp → chốt đơn
 - [x] Điều khoản nghiệm thu, loại thi công + kích thước từng dòng, link báo giá gửi khách (không cần đăng nhập)
+- [x] Bộ lọc danh sách đơn hàng nhiều điều kiện (lọc ở server, lưu trên URL)
+- [x] Tiến độ đơn hàng: máy trạng thái 8 bước (Hoàn thiện) / 5 bước (Vật tư), lịch sử, huỷ đơn
 - [ ] NCC & bảng giá
 - [ ] Mua hàng
 - [ ] Thi công & nghiệm thu

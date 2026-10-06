@@ -6,5 +6,6 @@ const router = Router();
 router.use(xacThuc);
 router.get('/khach-hang', c.khachHang);
 router.get('/vat-tu', c.vatTu);
+router.get('/sale', c.sale);
 
 export default router;

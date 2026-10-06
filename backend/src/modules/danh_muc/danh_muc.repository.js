@@ -10,6 +10,11 @@ export async function khachHang(saleId) {
   return rows;
 }
 
+export async function sale() {
+  const { rows } = await query(`SELECT id, ho_ten FROM users WHERE vai_tro = 'sale' ORDER BY ho_ten`);
+  return rows;
+}
+
 export async function vatTu() {
   const { rows } = await query(
     `SELECT vt.id, vt.ten, vt.don_vi_tinh, vt.quy_cach, lvt.ten AS loai, lvt.nguon_goc

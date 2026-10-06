@@ -16,6 +16,14 @@ export async function update(req, res) {
   res.json(await service.suaDonNhap(req.user, Number(req.params.id), req.body));
 }
 
+export async function giaiDoan(req, res) {
+  res.json(await service.chuyenGiaiDoan(req.user, Number(req.params.id), req.body || {}));
+}
+
+export async function huy(req, res) {
+  res.json(await service.huyDon(req.user, Number(req.params.id), req.body || {}));
+}
+
 export async function baoGia(req, res) {
   res.json(await service.taoLinkBaoGia(req.user, Number(req.params.id), { taoMoi: req.body?.tao_moi === true }));
 }

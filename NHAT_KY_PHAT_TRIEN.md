@@ -145,6 +145,58 @@ Mỗi vòng lặp ghi: mục tiêu, đã làm, yêu cầu thay đổi (và lý d
 
 ---
 
+## Vòng 2.3 — Tài khoản demo + bộ lọc đơn hàng (06/10/2026)
+
+**Đã làm**
+- Nhân viên demo đặt tên theo bộ phận (Kinh Doanh A, Vận Hành A, Kế Toán A; Admin: Vương Ngọc Sơn). Tài khoản = tên đệm + tên không dấu (`doanha`, `ngocson`), mật khẩu = tài khoản + `123456`, mỗi người một hash bcrypt riêng.
+- Danh sách đơn có nút **⛃ Lọc (n)** giống ERP: hình thức, nhóm khách, Sale (ẩn với vai trò Sale), tỉnh/thành, nghiệm thu, công nợ (còn phải thu / đã đủ), khoảng ngày chốt, khoảng ngày lắp đặt, khoảng tổng đơn; chip hiển thị điều kiện đang lọc, bỏ từng cái; sắp xếp 5 kiểu; thêm cột "Còn phải thu".
+
+**Quyết định thiết kế**
+- ERP thật tải *toàn bộ* đơn về trình duyệt rồi lọc bằng JavaScript — chậm dần khi dữ liệu lớn. Ở đây lọc **trên server** (SQL `WHERE` + phân trang), trình duyệt chỉ nhận 20 dòng.
+- Điều kiện lọc lưu trên **URL** thay vì localStorage: Back/Forward đúng, gửi link cho đồng nghiệp là thấy đúng danh sách đã lọc.
+- Giá trị lọc truyền bằng tham số `$n` (chống SQL injection). Riêng `ORDER BY` không dùng được tham số nên chỉ nhận khoá trong danh sách trắng (`moi_nhat`, `tong_giam`...).
+- Sale gửi `sale_id` của người khác vẫn chỉ thấy đơn của mình — quyền xác định từ token ở server, không tin tham số client.
+- Bảng lọc là bản nháp, bấm "Áp dụng" mới gọi API (tránh gọi API mỗi lần gõ một chữ số ngày/tiền).
+
+**Kiểm thử:** 14 ca API, đối chiếu số đơn của từng bộ lọc với câu SQL đếm trực tiếp trên dữ liệu lớn; chụp giao diện desktop/điện thoại.
+
+---
+
+## Vòng 2.4 — Tiến độ đơn hàng (máy trạng thái) (06/10/2026)
+
+**Mục tiêu:** thanh tiến độ trên trang đơn hàng giống ERP, nhưng đặt lại tên bước cho rõ nghĩa và có luật chuyển bước.
+
+**Đặt lại tên so với ERP**
+
+| ERP | Đồ án | Lý do |
+|---|---|---|
+| Đơn hàng | Chốt đơn | Cả hệ thống đều là "đơn hàng"; mốc thật là lúc Sale chốt |
+| Bảng hỏi | Lên phương án | Nội dung bước là chốt phương án vận chuyển – thi công |
+| KLVT | Bóc khối lượng | Viết tắt nội bộ, người ngoài không hiểu |
+| Vận chuyển | Giao hàng | Mốc là hàng đến công trình |
+| Thanh toán thợ / lái xe | (gộp vào Quyết toán) | Trả thợ/nhà xe là một phần đối chiếu chi phí cuối đơn |
+| — | Nghiệm thu (thêm) | Căn cứ thu nốt tiền theo điều khoản, phải là mốc riêng |
+
+- Hoàn thiện: Chốt đơn → Lên phương án → Bóc khối lượng → Mua hàng → Giao hàng → Thi công → Nghiệm thu → Quyết toán (8 bước). Vật tư: Chốt đơn → Lên phương án → Mua hàng → Giao hàng → Quyết toán (5 bước). Huỷ được trước khi giao hàng.
+- **Thanh toán không phải một bước**: tiền thu rải rác (cọc → tạm ứng khi giao → phần còn lại sau nghiệm thu) nên là trục riêng (cột "Còn phải thu"), không xếp vào chuỗi.
+
+**Đã làm**
+- Migration `006` (trạng thái `huy` — tách file vì giá trị ENUM mới chưa dùng được trong cùng transaction), `007` (ENUM + cột `giai_doan`, bảng lịch sử `don_hang_giai_doan_log`, suy giai đoạn đơn cũ từ dữ liệu mua hàng/thi công).
+- Service: chuyển tiếp / lùi bước (bắt buộc lý do) / huỷ (bắt buộc lý do). Quyền theo bước: Vận hành xử lý các bước, **Quyết toán thuộc Kế toán**; Sale chỉ xem. Rời "Lên phương án" phải có phương án vận chuyển (+ thi công với đơn Hoàn thiện).
+- Giao diện: stepper (xong ✓ xanh / đang làm xanh dương / huỷ ✕ đỏ, tự cuộn tới bước hiện tại trên điện thoại), nút chuyển bước, lịch sử; danh sách có cột Tiến độ (nhãn + thanh %) và lọc theo tiến độ.
+
+**Quyết định thiết kế**
+- ERP tính tiến độ *tự động* từ dữ liệu (có bảng hỏi chưa, có phiếu xuất chưa…) + cho ghi đè tay. Đồ án chưa có các module đó nên dùng **máy trạng thái tường minh**: bảng `buoc kế tiếp hợp lệ` + kiểm tra ở Service; khi làm module Mua hàng/Thi công sẽ cho các module này tự đẩy bước.
+- **Khoá lạc quan**: `UPDATE ... WHERE id = $1 AND giai_doan = <bước đang thấy>` — hai người bấm cùng lúc thì người sau nhận 409 thay vì cùng ghi đè (đã test bấm đồng thời).
+- **Ràng buộc CHECK ở CSDL**: đơn nháp không có giai đoạn, đơn đã chốt bắt buộc có; đơn Vật tư không thể ở bước Thi công/Nghiệm thu — kể cả khi code có bug.
+
+**Kiểm thử:** 27 ca API (đi hết quy trình Hoàn thiện và Vật tư, sai quyền, thiếu phương án, lùi/huỷ thiếu lý do, huỷ sau giao hàng, bấm đồng thời, CHECK của CSDL, lọc theo tiến độ) + kiểm tra lịch sử sinh trong dữ liệu lớn khớp giai đoạn hiện tại và đúng thứ tự thời gian.
+
+**Lỗi phát hiện & bài học**
+- Dữ liệu giả: đơn tạo sau mốc "hôm nay" giả lập bị giới hạn thời gian → bước sau sớm hơn bước trước. Phát hiện nhờ câu SQL đối chiếu "log cuối = giai đoạn hiện tại". Bài học: dữ liệu sinh ra cũng cần được kiểm tra bằng truy vấn.
+
+---
+
 ## Vòng 3 — (dự kiến) Giai đoạn đơn hàng + NCC & bảng giá
 
 **Đề xuất đang cân nhắc**

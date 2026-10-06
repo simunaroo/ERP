@@ -39,7 +39,7 @@ export default function Login() {
         <input id="p" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
         {loi && <div className="error">{loi}</div>}
         <button className="btn" disabled={dangGui}>{dangGui ? 'Đang đăng nhập...' : 'Đăng nhập'}</button>
-        <p className="hint">Tài khoản demo: sale1 / vanhanh1 / ketoan1 / admin — mật khẩu 123456</p>
+        <p className="hint">Tài khoản demo: doanha / hanha / toana / ngocson — mật khẩu = tài khoản + 123456 (vd: doanha123456)</p>
       </form>
     </div>
   );

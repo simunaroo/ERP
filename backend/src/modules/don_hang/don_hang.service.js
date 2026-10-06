@@ -2,8 +2,10 @@ import crypto from 'crypto';
 import { withTransaction } from '../../config/db.js';
 import { AppError } from '../../utils/AppError.js';
 import * as repo from './don_hang.repository.js';
+import { BUOC, HUY_DUOC, NHAN, buocKe, vaiTroPhuTrach } from './giai_doan.js';
 
-const TRANG_THAI_DON = ['nhap', 'moi', 'dang_xu_ly', 'hoan_tat'];
+const TRANG_THAI_DON = ['nhap', 'moi', 'dang_xu_ly', 'hoan_tat', 'huy'];
+const GIAI_DOAN = [...BUOC.hoan_thien, 'hoan_tat', 'huy'];
 const HINH_THUC = ['hoan_thien', 'vat_tu'];
 const NGHIEM_THU = ['vat_tu_tieu_hao', 'so_m2_thi_cong', 'theo_hop_dong'];
 const LOAI_THI_CONG = ['op_tran_phang', 'op_tran_giat_cap', 'op_tuong_khong_xuong', 'op_tuong_co_xuong', 'khac'];
@@ -96,16 +98,42 @@ async function layDonCuaToi(user, id) {
   return don;
 }
 
-export async function danhSach(user, { trang_thai, hinh_thuc, q, page, limit }) {
+const NHOM_KHACH = ['nha_dan', 'nha_thau', 'doi_tac', 'khac'];
+const soOrNull = (v, ten) => {
+  if (v === '' || v === undefined) return null;
+  const n = Number(v);
+  if (!Number.isFinite(n) || n < 0) throw new AppError(400, `${ten} không hợp lệ`);
+  return n;
+};
+
+export async function danhSach(user, query) {
+  const { trang_thai, hinh_thuc, q, page, limit } = query;
   if (trang_thai && !TRANG_THAI_DON.includes(trang_thai)) throw new AppError(400, 'Trạng thái không hợp lệ');
   if (hinh_thuc && !HINH_THUC.includes(hinh_thuc)) throw new AppError(400, 'Hình thức không hợp lệ');
+  if (query.sap_xep && !repo.KHOA_SAP_XEP.includes(query.sap_xep)) throw new AppError(400, 'Kiểu sắp xếp không hợp lệ');
+  if (query.con_no && !['con', 'het'].includes(query.con_no)) throw new AppError(400, 'Bộ lọc công nợ không hợp lệ');
+  let saleLoc = null;
+  if (query.sale_id) {
+    saleLoc = Number(query.sale_id);
+    if (!Number.isInteger(saleLoc) || saleLoc <= 0) throw new AppError(400, 'Sale không hợp lệ');
+  }
   const trang = Math.max(1, parseInt(page, 10) || 1);
   const soDong = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
   const laSale = user.vai_tro === 'sale';
   // Sale thay don cua minh (ke ca nhap); vai tro khac khong thay don nhap.
   const { items, tong } = await repo.findAll({
-    saleId: laSale ? user.id : null, anNhap: !laSale, trangThai: trang_thai, hinhThuc: hinh_thuc,
-    tuKhoa: q?.trim() || null, limit: soDong, offset: (trang - 1) * soDong,
+    // Sale luon bi gioi han ve don cua minh, bo qua sale_id gui len (khong tin client).
+    saleId: laSale ? user.id : saleLoc, anNhap: !laSale, trangThai: trang_thai, hinhThuc: hinh_thuc,
+    giaiDoan: motTrong(query.giai_doan, GIAI_DOAN, 'Giai đoạn'),
+    tuKhoa: q?.trim() || null,
+    nhomKhach: motTrong(query.nhom_khach, NHOM_KHACH, 'Nhóm khách'),
+    tinhThanh: chuOrNull(query.tinh_thanh),
+    nghiemThu: motTrong(query.nghiem_thu, NGHIEM_THU, 'Điều khoản nghiệm thu'),
+    chotTu: ngayHopLe(query.chot_tu, 'Ngày chốt từ'), chotDen: ngayHopLe(query.chot_den, 'Ngày chốt đến'),
+    lapDatTu: ngayHopLe(query.lap_dat_tu, 'Ngày lắp đặt từ'), lapDatDen: ngayHopLe(query.lap_dat_den, 'Ngày lắp đặt đến'),
+    tongTu: soOrNull(query.tong_tu, 'Tổng đơn từ'), tongDen: soOrNull(query.tong_den, 'Tổng đơn đến'),
+    conNo: query.con_no || null, sapXep: query.sap_xep || 'moi_nhat',
+    limit: soDong, offset: (trang - 1) * soDong,
   });
   return { items, tong, page: trang, limit: soDong, soTrang: Math.max(1, Math.ceil(tong / soDong)) };
 }
@@ -115,8 +143,11 @@ export async function chiTiet(user, id) {
   // Don nhap chi chu don thay duoc; tra 404 (khong phai 403) de khong lo su ton tai cua don.
   if (!don || (don.trang_thai === 'nhap' && don.sale_id !== user.id)) throw new AppError(404, 'Không tìm thấy đơn hàng');
   if (user.vai_tro === 'sale' && don.sale_id !== user.id) throw new AppError(403, 'Bạn không phụ trách đơn hàng này');
-  const [vatTu, yeuCauSua] = await Promise.all([repo.findVatTu(id), repo.findYeuCauSua(id)]);
-  return { ...don, dieu_khoan_thanh_toan: dieuKhoanThanhToan(don.ty_le_tam_ung, don.hinh_thuc), vat_tu: vatTu, yeu_cau_sua: yeuCauSua };
+  const [vatTu, yeuCauSua, lichSu] = await Promise.all([repo.findVatTu(id), repo.findYeuCauSua(id), repo.findLichSuGiaiDoan(id)]);
+  return {
+    ...don, dieu_khoan_thanh_toan: dieuKhoanThanhToan(don.ty_le_tam_ung, don.hinh_thuc),
+    vat_tu: vatTu, yeu_cau_sua: yeuCauSua, lich_su_giai_doan: lichSu,
+  };
 }
 
 export async function taoDonHang(user, data) {
@@ -131,9 +162,11 @@ export async function taoDonHang(user, data) {
     const ma_don = await repo.sinhMaDon(client);
     const moi = await repo.create(client, {
       ...don, ma_don, khach_hang_id: Number(data.khach_hang_id), sale_id: user.id,
-      trang_thai: data.chot ? 'moi' : 'nhap', ngay_chot: data.chot ? new Date().toISOString().slice(0, 10) : null,
+      trang_thai: data.chot ? 'moi' : 'nhap', giai_doan: data.chot ? 'len_phuong_an' : null,
+      ngay_chot: data.chot ? new Date().toISOString().slice(0, 10) : null,
     });
     await repo.thayVatTu(client, moi.id, don.vat_tu);
+    if (data.chot) await repo.ghiLichSuGiaiDoan(client, { donHangId: moi.id, tu: null, den: 'len_phuong_an', nguoiId: user.id, ghiChu: 'Chốt đơn' });
     return moi;
   });
 }
@@ -146,7 +179,10 @@ export async function suaDonNhap(user, id, data) {
   await withTransaction(async (client) => {
     await repo.update(client, id, don);
     await repo.thayVatTu(client, id, don.vat_tu);
-    if (data.chot && !(await repo.chot(client, id))) throw new AppError(409, 'Đơn đã được chốt trước đó');
+    if (data.chot) {
+      if (!(await repo.chot(client, id))) throw new AppError(409, 'Đơn đã được chốt trước đó');
+      await repo.ghiLichSuGiaiDoan(client, { donHangId: id, tu: null, den: 'len_phuong_an', nguoiId: user.id, ghiChu: 'Chốt đơn' });
+    }
   });
   // Doc lai SAU khi commit: ket noi khac trong pool khong thay du lieu cua transaction chua commit.
   return repo.findById(id);
@@ -176,7 +212,60 @@ export async function guiYeuCauSua(user, id, noiDung) {
   if (!noiDung?.trim()) throw new AppError(400, 'Vui lòng nhập nội dung yêu cầu');
   const don = await layDonCuaToi(user, id);
   if (don.trang_thai === 'nhap') throw new AppError(400, 'Đơn nháp có thể sửa trực tiếp, không cần gửi yêu cầu');
+  if (don.trang_thai === 'huy') throw new AppError(400, 'Đơn đã huỷ');
   return repo.createYeuCauSua(id, user.id, noiDung.trim());
+}
+
+// Dieu kien de roi khoi mot buoc (kiem tra o Service, khong tin giao dien).
+function kiemTraRoiBuoc(don) {
+  if (don.giai_doan === 'len_phuong_an') {
+    const thieu = [];
+    if (!don.phuong_an_van_chuyen) thieu.push('phương án vận chuyển');
+    if (don.hinh_thuc === 'hoan_thien' && !don.phuong_an_thi_cong) thieu.push('phương án thi công');
+    if (thieu.length) throw new AppError(400, `Chưa thể chuyển bước, còn thiếu: ${thieu.join(', ')}`);
+  }
+}
+
+function kiemTraQuyen(user, giaiDoan) {
+  const canVaiTro = vaiTroPhuTrach(giaiDoan);
+  if (user.vai_tro !== 'admin' && user.vai_tro !== canVaiTro) {
+    throw new AppError(403, `Bước "${NHAN[giaiDoan]}" do ${canVaiTro === 'ke_toan' ? 'Kế toán' : 'Vận hành'} xử lý`);
+  }
+}
+
+async function luuChuyenBuoc(user, don, den, trangThai, ghiChu) {
+  await withTransaction(async (client) => {
+    const ok = await repo.chuyenGiaiDoan(client, don.id, {
+      tu: don.giai_doan, den, trangThai, vanHanhId: user.vai_tro === 'van_hanh' ? user.id : null,
+    });
+    if (!ok) throw new AppError(409, 'Đơn vừa được người khác cập nhật tiến độ, vui lòng tải lại trang');
+    await repo.ghiLichSuGiaiDoan(client, { donHangId: don.id, tu: don.giai_doan, den, nguoiId: user.id, ghiChu });
+  });
+  return chiTiet(user, don.id);
+}
+
+// huong: 'tiep' = hoan thanh buoc hien tai; 'lui' = tra ve buoc truoc (bat buoc ghi ly do).
+export async function chuyenGiaiDoan(user, id, { huong, ghi_chu }) {
+  if (!['tiep', 'lui'].includes(huong)) throw new AppError(400, 'Hướng chuyển không hợp lệ');
+  const don = await repo.findById(id);
+  if (!don || don.trang_thai === 'nhap') throw new AppError(404, 'Không tìm thấy đơn hàng');
+  if (['hoan_tat', 'huy'].includes(don.giai_doan)) throw new AppError(409, `Đơn đã ${NHAN[don.giai_doan].toLowerCase()}, không chuyển bước được`);
+  kiemTraQuyen(user, don.giai_doan);
+  const ghiChu = chuOrNull(ghi_chu);
+  const den = buocKe(don.hinh_thuc, don.giai_doan, huong);
+  if (!den) throw new AppError(400, 'Đơn đang ở bước đầu tiên, không lùi được nữa');
+  if (huong === 'lui' && !ghiChu) throw new AppError(400, 'Vui lòng ghi lý do lùi bước');
+  if (huong === 'tiep') kiemTraRoiBuoc(don);
+  return luuChuyenBuoc(user, don, den, den === 'hoan_tat' ? 'hoan_tat' : 'dang_xu_ly', ghiChu);
+}
+
+export async function huyDon(user, id, { ly_do }) {
+  const don = await repo.findById(id);
+  if (!don || don.trang_thai === 'nhap') throw new AppError(404, 'Không tìm thấy đơn hàng');
+  if (!HUY_DUOC.includes(don.giai_doan)) throw new AppError(409, 'Chỉ huỷ được đơn trước khi giao hàng');
+  const lyDo = chuOrNull(ly_do);
+  if (!lyDo) throw new AppError(400, 'Vui lòng ghi lý do huỷ đơn');
+  return luuChuyenBuoc(user, don, 'huy', 'huy', lyDo);
 }
 
 export async function xuLyYeuCauSua(donHangId, yeuCauId) {

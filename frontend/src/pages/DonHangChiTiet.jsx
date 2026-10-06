@@ -2,7 +2,15 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api, loiCua } from '../api/client.js';
 import { useAuthStore } from '../store/authStore.js';
-import { HINH_THUC, LOAI_THI_CONG, NGHIEM_THU, NHOM_KHACH, TRANG_THAI_DON, kichThuoc, ngay, ngayGio, tien } from '../utils.js';
+import TienDo from '../components/TienDo.jsx';
+import { BUOC_DON, GIAI_DOAN, HUY_DUOC, tinhTienDo, vaiTroPhuTrach, HINH_THUC, LOAI_THI_CONG, NGHIEM_THU, NHOM_KHACH, TRANG_THAI_DON, kichThuoc, ngay, ngayGio, tien } from '../utils.js';
+
+const BUOC_DON_CUA = (don) => BUOC_DON[don.hinh_thuc];
+// Mot dong lich su la "lui" neu buoc dich dung truoc buoc nguon trong quy trinh.
+const laLui = (don, l) => {
+  const ds = BUOC_DON_CUA(don);
+  return ds.indexOf(l.den_giai_doan) > -1 && ds.indexOf(l.den_giai_doan) < ds.indexOf(l.tu_giai_doan);
+};
 
 export default function DonHangChiTiet() {
   const { id } = useParams();
@@ -12,6 +20,7 @@ export default function DonHangChiTiet() {
   const [thongBao, setThongBao] = useState('');
   const [phuongAn, setPhuongAn] = useState({ phuong_an_van_chuyen: '', phuong_an_thi_cong: '' });
   const [noiDungSua, setNoiDungSua] = useState('');
+  const [ghiChuBuoc, setGhiChuBuoc] = useState('');
 
   const tai = useCallback(() => {
     api.get(`/don-hang/${id}`)
@@ -44,11 +53,25 @@ export default function DonHangChiTiet() {
     catch { setLoi('Trình duyệt không cho chép tự động — hãy bôi đen link để chép'); }
   };
 
+  const chuyenBuoc = (huong) => chay(async () => {
+    await api.post(`/don-hang/${id}/giai-doan`, { huong, ghi_chu: ghiChuBuoc });
+    setGhiChuBuoc('');
+  }, huong === 'tiep' ? 'Đã chuyển sang bước tiếp theo' : 'Đã lùi về bước trước')();
+  const huyDon = () => {
+    if (!window.confirm('Huỷ đơn này? Thao tác không hoàn tác được.')) return;
+    chay(async () => { await api.post(`/don-hang/${id}/huy`, { ly_do: ghiChuBuoc }); setGhiChuBuoc(''); }, 'Đã huỷ đơn')();
+  };
+
   if (!don) return loi ? <div className="error">{loi}</div> : <p className="muted">Đang tải...</p>;
   const tt = TRANG_THAI_DON[don.trang_thai];
   const laNhap = don.trang_thai === 'nhap';
   const hoanThien = don.hinh_thuc === 'hoan_thien';
   const diaChi = [don.dia_chi_cong_trinh, don.phuong_xa, don.tinh_thanh].filter(Boolean).join(', ');
+  const td = tinhTienDo(don);
+  const dongDon = ['hoan_tat', 'huy'].includes(don.giai_doan);
+  const duocChuyen = !laNhap && !dongDon && (vaiTro === 'admin' || vaiTro === vaiTroPhuTrach(don.giai_doan));
+  const duocHuy = duocChuyen && HUY_DUOC.includes(don.giai_doan) && vaiTro !== 'ke_toan';
+  const buocTruoc = td.soXong > 1 ? ['chot', ...BUOC_DON_CUA(don)][td.soXong - 1] : null;
 
   return (
     <>
@@ -65,6 +88,49 @@ export default function DonHangChiTiet() {
       )}
       {loi && <div className="error">{loi}</div>}
       {thongBao && <div className="success">{thongBao}</div>}
+
+      {!laNhap && (
+        <div className="card">
+          <div className="tien-do-dau">
+            <h3>Tiến độ đơn hàng</h3>
+            <span>
+              <span className={`pill ${td.huy ? 'p-lost' : don.giai_doan === 'hoan_tat' ? 'p-done' : 'p-wip'}`}>{td.nhan}</span>{' '}
+              <span className="muted small">{td.soXong}/{td.tong} bước ({td.pct}%)</span>
+            </span>
+          </div>
+          <TienDo don={don} />
+
+          {duocChuyen && (
+            <div className="tien-do-thao-tac">
+              <input className="grow" value={ghiChuBuoc} onChange={(e) => setGhiChuBuoc(e.target.value)}
+                placeholder="Ghi chú (bắt buộc khi lùi bước hoặc huỷ đơn)" aria-label="Ghi chú chuyển bước" />
+              <button className="btn" onClick={() => chuyenBuoc('tiep')}>
+                ✓ Xong «{GIAI_DOAN[don.giai_doan].nhan}» → {GIAI_DOAN[td.buocTiep].nhan}
+              </button>
+              {buocTruoc && <button className="btn sec" onClick={() => chuyenBuoc('lui')}>← Lùi về «{GIAI_DOAN[buocTruoc].nhan}»</button>}
+              {duocHuy && <button className="link danger" onClick={huyDon}>Huỷ đơn</button>}
+            </div>
+          )}
+          {!duocChuyen && !dongDon && (
+            <p className="muted small mt">Bước «{GIAI_DOAN[don.giai_doan].nhan}» do {vaiTroPhuTrach(don.giai_doan) === 'ke_toan' ? 'Kế toán' : 'Vận hành'} xử lý.</p>
+          )}
+
+          <details className="mt">
+            <summary className="small">Lịch sử tiến độ ({don.lich_su_giai_doan.length})</summary>
+            <ol className="timeline mt">
+              {don.lich_su_giai_doan.map((l) => (
+                <li key={l.id} className={l.den_giai_doan === 'huy' ? 'lui' : l.tu_giai_doan && laLui(don, l) ? 'lui' : ''}>
+                  <span className="small">
+                    {l.tu_giai_doan ? <>{GIAI_DOAN[l.tu_giai_doan].nhan} → </> : null}<b>{GIAI_DOAN[l.den_giai_doan].nhan}</b>
+                  </span>
+                  <span className="muted small">— {l.nguoi}, {ngayGio(l.created_at)}</span>
+                  {l.ghi_chu && <span className="small">“{l.ghi_chu}”</span>}
+                </li>
+              ))}
+            </ol>
+          </details>
+        </div>
+      )}
 
       <div className="grid2">
         <div className="card">
@@ -151,18 +217,18 @@ export default function DonHangChiTiet() {
             <div className={hoanThien ? 'grid2' : ''}>
               <div className="field">
                 <label htmlFor="vc">Phương án vận chuyển</label>
-                <textarea id="vc" rows="4" disabled={vaiTro !== 'van_hanh'} value={phuongAn.phuong_an_van_chuyen}
+                <textarea id="vc" rows="4" disabled={vaiTro !== 'van_hanh' || dongDon} value={phuongAn.phuong_an_van_chuyen}
                   onChange={(e) => setPhuongAn({ ...phuongAn, phuong_an_van_chuyen: e.target.value })} />
               </div>
               {hoanThien && (
                 <div className="field">
                   <label htmlFor="tc">Phương án thi công</label>
-                  <textarea id="tc" rows="4" disabled={vaiTro !== 'van_hanh'} value={phuongAn.phuong_an_thi_cong}
+                  <textarea id="tc" rows="4" disabled={vaiTro !== 'van_hanh' || dongDon} value={phuongAn.phuong_an_thi_cong}
                     onChange={(e) => setPhuongAn({ ...phuongAn, phuong_an_thi_cong: e.target.value })} />
                 </div>
               )}
             </div>
-            {vaiTro === 'van_hanh' && <div className="actions"><button className="btn" onClick={luuPhuongAn}>Lưu phương án</button></div>}
+            {vaiTro === 'van_hanh' && !dongDon && <div className="actions"><button className="btn" onClick={luuPhuongAn}>Lưu phương án</button></div>}
           </div>
 
           <div className="card">
@@ -179,7 +245,7 @@ export default function DonHangChiTiet() {
                 </li>
               ))}
             </ul>
-            {vaiTro === 'sale' && (
+            {vaiTro === 'sale' && don.giai_doan !== 'huy' && (
               <div className="toolbar mt">
                 <input className="grow" placeholder="Nhập nội dung cần Vận hành chỉnh sửa..." value={noiDungSua} onChange={(e) => setNoiDungSua(e.target.value)} />
                 <button className="btn" onClick={guiYeuCau}>Gửi yêu cầu</button>

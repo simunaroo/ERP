@@ -4,14 +4,40 @@ const COT_DON = ['hinh_thuc', 'ma_hop_dong', 'ngay_yc_lap_dat', 'tinh_thanh', 'p
   'phi_van_chuyen', 'phu_thu', 'chiet_khau_pct', 'tien_coc', 'ngay_coc', 'ty_le_tam_ung',
   'dieu_khoan_nghiem_thu', 'ghi_chu_van_chuyen'];
 
-export async function findAll({ saleId, anNhap, trangThai, hinhThuc, tuKhoa, limit, offset }) {
+// Cot sap xep: chi nhan khoa trong danh sach nay (ORDER BY khong dung duoc tham so $n,
+// nen tuyet doi khong ghep chuoi nguoi dung gui len vao SQL).
+const SAP_XEP = {
+  moi_nhat: 'dh.created_at DESC, dh.id DESC',
+  cu_nhat: 'dh.created_at ASC, dh.id ASC',
+  tong_giam: 't.tong_don DESC, dh.id DESC',
+  con_thu_giam: 't.con_phai_thu DESC, dh.id DESC',
+  lap_dat_gan: 'dh.ngay_yc_lap_dat ASC NULLS LAST, dh.id DESC',
+};
+export const KHOA_SAP_XEP = Object.keys(SAP_XEP);
+
+export async function findAll({
+  saleId, anNhap, trangThai, giaiDoan, hinhThuc, tuKhoa, nhomKhach, tinhThanh, nghiemThu,
+  chotTu, chotDen, lapDatTu, lapDatDen, tongTu, tongDen, conNo, sapXep, limit, offset,
+}) {
   const where = [];
   const params = [];
   const them = (sql, v) => { params.push(v); where.push(sql.replace('?', `$${params.length}`)); };
   if (saleId) them('dh.sale_id = ?', saleId);
   if (anNhap) where.push(`dh.trang_thai <> 'nhap'`);
   if (trangThai) them('dh.trang_thai = ?', trangThai);
+  if (giaiDoan) them('dh.giai_doan = ?', giaiDoan);
   if (hinhThuc) them('dh.hinh_thuc = ?', hinhThuc);
+  if (nhomKhach) them('kh.nhom_khach_hang = ?', nhomKhach);
+  if (tinhThanh) them('dh.tinh_thanh = ?', tinhThanh);
+  if (nghiemThu) them('dh.dieu_khoan_nghiem_thu = ?', nghiemThu);
+  if (chotTu) them('dh.ngay_chot >= ?', chotTu);
+  if (chotDen) them('dh.ngay_chot <= ?', chotDen);
+  if (lapDatTu) them('dh.ngay_yc_lap_dat >= ?', lapDatTu);
+  if (lapDatDen) them('dh.ngay_yc_lap_dat <= ?', lapDatDen);
+  if (tongTu !== null) them('t.tong_don >= ?', tongTu);
+  if (tongDen !== null) them('t.tong_don <= ?', tongDen);
+  if (conNo === 'con') where.push('t.con_phai_thu > 0');
+  if (conNo === 'het') where.push('t.con_phai_thu <= 0');
   if (tuKhoa) {
     params.push(`%${tuKhoa}%`);
     where.push(`(dh.ma_don ILIKE $${params.length} OR kh.ten ILIKE $${params.length} OR dh.ma_hop_dong ILIKE $${params.length})`);
@@ -25,10 +51,11 @@ export async function findAll({ saleId, anNhap, trangThai, hinhThuc, tuKhoa, lim
 
   const [{ rows }, { rows: dem }] = await Promise.all([
     query(
-      `SELECT dh.id, dh.ma_don, dh.trang_thai, dh.hinh_thuc, dh.tinh_thanh, dh.dia_chi_cong_trinh, dh.created_at,
-              kh.ten AS khach_hang, s.ho_ten AS sale, vh.ho_ten AS van_hanh, t.tong_don
+      `SELECT dh.id, dh.ma_don, dh.trang_thai, dh.giai_doan, dh.hinh_thuc, dh.tinh_thanh, dh.dia_chi_cong_trinh, dh.created_at,
+              dh.ngay_chot, dh.ngay_yc_lap_dat, kh.ten AS khach_hang, s.ho_ten AS sale, vh.ho_ten AS van_hanh,
+              t.tong_don, t.con_phai_thu
          ${from}
-        ORDER BY dh.created_at DESC, dh.id DESC
+        ORDER BY ${SAP_XEP[sapXep] || SAP_XEP.moi_nhat}
         LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
       [...params, limit, offset],
     ),
@@ -93,7 +120,7 @@ export async function sinhMaDon(client) {
 }
 
 export async function create(client, data) {
-  const cot = ['ma_don', 'khach_hang_id', 'sale_id', 'trang_thai', 'ngay_chot', ...COT_DON];
+  const cot = ['ma_don', 'khach_hang_id', 'sale_id', 'trang_thai', 'giai_doan', 'ngay_chot', ...COT_DON];
   const { rows } = await client.query(
     `INSERT INTO don_hang (${cot.join(', ')})
      VALUES (${cot.map((_, i) => `$${i + 1}`).join(', ')}) RETURNING *`,
@@ -125,11 +152,43 @@ export async function thayVatTu(client, donHangId, items) {
 // Chi chuyen tu nhap -> moi; dieu kien trang_thai trong WHERE chan viec chot 2 lan.
 export async function chot(client, id) {
   const { rows } = await client.query(
-    `UPDATE don_hang SET trang_thai = 'moi', ngay_chot = CURRENT_DATE
+    `UPDATE don_hang SET trang_thai = 'moi', giai_doan = 'len_phuong_an', ngay_chot = CURRENT_DATE
       WHERE id = $1 AND trang_thai = 'nhap' RETURNING *`,
     [id],
   );
   return rows[0] || null;
+}
+
+// Chuyen giai doan co "khoa lac quan": chi cap nhat neu don VAN dang o giai doan `tu`.
+// Hai nguoi bam cung luc -> nguoi sau nhan 0 dong va bao xung dot, thay vi ghi de nhau.
+export async function chuyenGiaiDoan(client, id, { tu, den, trangThai, vanHanhId }) {
+  const { rows } = await client.query(
+    `UPDATE don_hang
+        SET giai_doan = $3, trang_thai = $4,
+            vanhanh_phu_trach_id = COALESCE(vanhanh_phu_trach_id, $5)
+      WHERE id = $1 AND giai_doan = $2
+      RETURNING id`,
+    [id, tu, den, trangThai, vanHanhId],
+  );
+  return rows.length > 0;
+}
+
+export async function ghiLichSuGiaiDoan(client, { donHangId, tu, den, nguoiId, ghiChu }) {
+  await client.query(
+    `INSERT INTO don_hang_giai_doan_log (don_hang_id, tu_giai_doan, den_giai_doan, nguoi_id, ghi_chu)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [donHangId, tu, den, nguoiId, ghiChu],
+  );
+}
+
+export async function findLichSuGiaiDoan(donHangId) {
+  const { rows } = await query(
+    `SELECT l.id, l.tu_giai_doan, l.den_giai_doan, l.ghi_chu, l.created_at, u.ho_ten AS nguoi, u.vai_tro
+       FROM don_hang_giai_doan_log l JOIN users u ON u.id = l.nguoi_id
+      WHERE l.don_hang_id = $1 ORDER BY l.created_at, l.id`,
+    [donHangId],
+  );
+  return rows;
 }
 
 export async function datBaoGiaToken(id, token) {
@@ -152,7 +211,7 @@ export async function updatePhuongAn(id, vanHanhId, data) {
             phuong_an_thi_cong   = $3,
             vanhanh_phu_trach_id = $4,
             trang_thai = CASE WHEN trang_thai = 'moi' THEN 'dang_xu_ly' ELSE trang_thai END
-      WHERE id = $1 AND trang_thai <> 'nhap'
+      WHERE id = $1 AND trang_thai NOT IN ('nhap', 'huy', 'hoan_tat')
       RETURNING *`,
     [id, data.phuong_an_van_chuyen, data.phuong_an_thi_cong, vanHanhId],
   );
