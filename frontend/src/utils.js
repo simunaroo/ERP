@@ -3,7 +3,47 @@ export const TRANG_THAI_DON = {
   moi: { nhan: 'Mới', lop: 'p-new' },
   dang_xu_ly: { nhan: 'Đang xử lý', lop: 'p-wip' },
   hoan_tat: { nhan: 'Hoàn tất', lop: 'p-done' },
+  huy: { nhan: 'Huỷ', lop: 'p-lost' },
 };
+
+// Tien do don hang: khop voi backend/src/modules/don_hang/giai_doan.js
+export const BUOC_DON = {
+  hoan_thien: ['len_phuong_an', 'boc_khoi_luong', 'mua_hang', 'giao_hang', 'thi_cong', 'nghiem_thu', 'quyet_toan'],
+  vat_tu: ['len_phuong_an', 'mua_hang', 'giao_hang', 'quyet_toan'],
+};
+export const GIAI_DOAN = {
+  chot: { nhan: 'Chốt đơn' },
+  len_phuong_an: { nhan: 'Lên phương án' },
+  boc_khoi_luong: { nhan: 'Bóc khối lượng' },
+  mua_hang: { nhan: 'Mua hàng' },
+  giao_hang: { nhan: 'Giao hàng' },
+  thi_cong: { nhan: 'Thi công' },
+  nghiem_thu: { nhan: 'Nghiệm thu' },
+  quyet_toan: { nhan: 'Quyết toán' },
+  hoan_tat: { nhan: 'Hoàn tất' },
+  huy: { nhan: 'Huỷ' },
+};
+export const HUY_DUOC = ['len_phuong_an', 'boc_khoi_luong', 'mua_hang'];
+export const vaiTroPhuTrach = (gd) => (gd === 'quyet_toan' ? 'ke_toan' : 'van_hanh');
+
+// soXong = so buoc da xong tinh ca "Chot don"; don huy: dung o buoc dang lam luc huy (lay tu lich su neu co).
+export function tinhTienDo(don) {
+  const ds = ['chot', ...BUOC_DON[don.hinh_thuc]];
+  const gd = don.giai_doan;
+  let soXong = 0;
+  let huy = false;
+  if (gd === 'hoan_tat') soXong = ds.length;
+  else if (gd === 'huy') {
+    huy = true;
+    const luc = [...(don.lich_su_giai_doan || [])].reverse().find((l) => l.den_giai_doan === 'huy');
+    soXong = luc ? ds.indexOf(luc.tu_giai_doan) : 1;
+  } else if (gd) soXong = ds.indexOf(gd);
+  return {
+    soXong, tong: ds.length, huy, pct: Math.round((soXong / ds.length) * 100),
+    nhan: gd ? GIAI_DOAN[gd].nhan : 'Nháp',
+    buocTiep: gd && !huy && gd !== 'hoan_tat' ? (ds[soXong + 1] || 'hoan_tat') : null,
+  };
+}
 
 export const TRANG_THAI_CHAM_SOC = {
   moi: { nhan: 'Mới', lop: 'p-gray' },

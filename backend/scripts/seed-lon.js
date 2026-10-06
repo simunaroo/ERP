@@ -1,8 +1,10 @@
 // Sinh du lieu GIA LAP quy mo lon, chay sau schema.sql + seed.sql (xem db-reset.js --lon).
 // Moi ten nguoi, cong ty, so dien thoai, so tai khoan deu la ngau nhien, khong lay tu nguon that.
 import pg from 'pg';
+import bcrypt from 'bcryptjs';
 
-const DEMO_HASH = '$2b$10$UEwUsyxonOHE/Xnxy56azuGbw42mqhooshMQqO6DKEGi/cIFQu1W6';
+// Tai khoan demo: ten dem + ten, bo dau (Kinh Doanh C -> doanhc); mat khau = tai khoan + 123456.
+const nguoiDung = (hoTen, username, vaiTro) => [hoTen, username, bcrypt.hashSync(`${username}123456`, 10), vaiTro];
 const SO_DON = 1500;
 const NGAY_BAT_DAU = new Date('2025-10-01T08:00:00+07:00');
 const HOM_NAY = new Date('2026-10-05T08:00:00+07:00');
@@ -62,9 +64,11 @@ export async function seedLon(conn) {
 
   // ---- Nguoi dung ----
   const nguoiDungMoi = [];
-  for (let i = 3; i <= 8; i++) nguoiDungMoi.push([hoTen(), `sale${i}`, DEMO_HASH, 'sale']);
-  for (let i = 2; i <= 3; i++) nguoiDungMoi.push([hoTen(), `vanhanh${i}`, DEMO_HASH, 'van_hanh']);
-  nguoiDungMoi.push([hoTen(), 'ketoan2', DEMO_HASH, 'ke_toan']);
+  // Ten nhan vien theo bo phan + chu cai (Kinh Doanh C) de demo khong dung ten nguoi that.
+  const chu = (i) => String.fromCharCode(64 + i);
+  for (let i = 3; i <= 8; i++) nguoiDungMoi.push(nguoiDung(`Kinh Doanh ${chu(i)}`, `doanh${chu(i).toLowerCase()}`, 'sale'));
+  for (let i = 2; i <= 3; i++) nguoiDungMoi.push(nguoiDung(`Vận Hành ${chu(i)}`, `hanh${chu(i).toLowerCase()}`, 'van_hanh'));
+  nguoiDungMoi.push(nguoiDung('Kế Toán B', 'toanb', 'ke_toan'));
   await insertMany(db, 'users', ['ho_ten', 'username', 'password_hash', 'vai_tro'], nguoiDungMoi);
   const users = (await db.query('SELECT id, vai_tro FROM users')).rows;
   const sales = users.filter((u) => u.vai_tro === 'sale').map((u) => u.id);
@@ -144,6 +148,7 @@ export async function seedLon(conn) {
     d.trangThai = tuoi > 45 ? (chance(0.95) ? 'hoan_tat' : 'dang_xu_ly')
       : tuoi > 12 ? (chance(0.35) ? 'hoan_tat' : 'dang_xu_ly')
         : (chance(0.55) ? 'moi' : 'dang_xu_ly');
+    if (d.trangThai !== 'moi' && tuoi > 7 && chance(0.03)) d.trangThai = 'huy'; // ~3% don huy giua chung
     const thang = isoDate(d.ngay).slice(2, 7).replace('-', '');
     demThang[thang] = (demThang[thang] || 100) + 1;
     d.maDon = `DH-${thang}-${String(demThang[thang]).padStart(3, '0')}`;
@@ -152,7 +157,9 @@ export async function seedLon(conn) {
     const diaChiCt = chance(0.85) ? d.kh.dia_chi : diaChi();
     const tinh = /TP\.HCM|Thủ Đức|Bình Dương/.test(diaChiCt) ? 'TP. Hồ Chí Minh' : diaChiCt.split(', ').pop();
     return [
-      d.maDon, d.kh.id, d.kh.sale_phu_trach_id, d.vanHanh, d.trangThai, d.hinhThuc,
+      // giai_doan tam (CHECK bat buoc co khi da chot); tinh lai chinh xac sau khi co mua hang + thi cong.
+      d.maDon, d.kh.id, d.kh.sale_phu_trach_id, d.vanHanh, d.trangThai,
+      { moi: 'len_phuong_an', hoan_tat: 'hoan_tat', huy: 'huy' }[d.trangThai] || 'giao_hang', d.hinhThuc,
       chance(0.6) ? `HĐ-${int(1000, 9999)}` : null, isoDate(d.ngay), isoDate(addDays(d.ngay, int(5, 15))),
       tinh, diaChiCt,
       d.hinhThuc === 'vat_tu' ? pick([0, 300000, 500000, 800000]) : pick([0, 0, 500000]),
@@ -167,7 +174,7 @@ export async function seedLon(conn) {
     ];
   });
   const donIds = await insertMany(db, 'don_hang',
-    ['ma_don', 'khach_hang_id', 'sale_id', 'vanhanh_phu_trach_id', 'trang_thai', 'hinh_thuc', 'ma_hop_dong', 'ngay_chot', 'ngay_yc_lap_dat',
+    ['ma_don', 'khach_hang_id', 'sale_id', 'vanhanh_phu_trach_id', 'trang_thai', 'giai_doan', 'hinh_thuc', 'ma_hop_dong', 'ngay_chot', 'ngay_yc_lap_dat',
       'tinh_thanh', 'dia_chi_cong_trinh', 'phi_van_chuyen', 'phu_thu', 'chiet_khau_pct', 'tien_coc', 'ty_le_tam_ung', 'dieu_khoan_nghiem_thu',
       'phuong_an_van_chuyen', 'phuong_an_thi_cong', 'created_at'], donRows);
   donSpec.forEach((d, i) => { d.id = donIds[i]; });
@@ -195,7 +202,7 @@ export async function seedLon(conn) {
   // ---- De xuat mua hang: gom vat tu mua ngoai theo NCC re nhat tai ngay dat ----
   const dxm = []; // {don, ncc, ngay, trangThai, lines:[{vt,sl,gia}]}
   for (const d of donSpec) {
-    if (d.trangThai === 'moi') continue;
+    if (d.trangThai === 'moi' || d.trangThai === 'huy') continue;
     const ngayMua = addDays(d.ngay, int(1, 4));
     const theoNcc = {};
     for (const it of d.items.filter((x) => x.vt.nguon_goc === 'mua_ngoai')) {
@@ -217,7 +224,7 @@ export async function seedLon(conn) {
 
   // ---- Thi cong + nghiem thu ----
   // Don hinh thuc "Vat tu" chi giao hang, khong co thi cong.
-  const tcList = donSpec.filter((d) => d.trangThai !== 'moi' && d.hinhThuc === 'hoan_thien').map((d) => {
+  const tcList = donSpec.filter((d) => !['moi', 'huy'].includes(d.trangThai) && d.hinhThuc === 'hoan_thien').map((d) => {
     const duKien = addDays(d.ngay, int(5, 12));
     const trangThai = d.trangThai === 'hoan_tat' ? 'da_nghiem_thu' : (duKien < HOM_NAY ? 'dang_thi_cong' : 'lap_lich');
     return { d, duKien, trangThai };
@@ -300,7 +307,45 @@ export async function seedLon(conn) {
   });
   await insertMany(db, 'khach_hang_cham_soc', ['khach_hang_id', 'sale_id', 'trang_thai', 'noi_dung', 'created_at'], logRows);
 
+  // ---- Tien do don hang: giai doan hien tai suy tu du lieu mua hang / thi cong + lich su chuyen buoc ----
+  const BUOC = {
+    hoan_thien: ['len_phuong_an', 'boc_khoi_luong', 'mua_hang', 'giao_hang', 'thi_cong', 'nghiem_thu', 'quyet_toan'],
+    vat_tu: ['len_phuong_an', 'mua_hang', 'giao_hang', 'quyet_toan'],
+  };
+  const LY_DO_HUY = ['Khách đổi ý, hoàn cọc theo thoả thuận.', 'Khách chọn đơn vị khác.', 'Công trình tạm dừng vô thời hạn.'];
+  const tcTheoDon = new Map(tcList.map((t) => [t.d.id, t]));
+  const conDangMua = new Set(dxm.filter((x) => x.trangThai !== 'da_giao').map((x) => x.don));
+  const gdLog = [];
+  // Buoc sau: cong them vai ngay nhung khong vuot qua 'hom nay', va luon sau buoc truoc it nhat 1 phut.
+  const sau = (t, ngay) => new Date(Math.max(t.getTime() + 60000, Math.min(addDays(t, ngay).getTime(), HOM_NAY.getTime())));
+  for (const d of donSpec) {
+    const buoc = BUOC[d.hinhThuc];
+    if (d.trangThai === 'moi') d.giaiDoan = 'len_phuong_an';
+    else if (d.trangThai === 'hoan_tat' || d.trangThai === 'huy') d.giaiDoan = d.trangThai;
+    else if (tcTheoDon.get(d.id)?.trangThai === 'dang_thi_cong') d.giaiDoan = chance(0.3) ? 'nghiem_thu' : 'thi_cong';
+    else if (conDangMua.has(d.id)) d.giaiDoan = 'mua_hang';
+    else d.giaiDoan = (HOM_NAY - d.ngay) / NGAY_MS > 30 ? 'quyet_toan' : 'giao_hang';
+
+    const nguoiVh = d.vanHanh || pick(vanHanh);
+    let t = d.ngay;
+    gdLog.push([d.id, null, 'len_phuong_an', d.kh.sale_phu_trach_id, 'Chốt đơn', t]);
+    const den = d.giaiDoan === 'hoan_tat' ? buoc.length - 1
+      : d.giaiDoan === 'huy' ? int(0, buoc.indexOf('mua_hang')) : buoc.indexOf(d.giaiDoan);
+    for (let i = 1; i <= den; i++) {
+      t = sau(t, 0.2 + rand() * 3);
+      gdLog.push([d.id, buoc[i - 1], buoc[i], nguoiVh, null, t]);
+    }
+    if (d.giaiDoan === 'hoan_tat') gdLog.push([d.id, 'quyet_toan', 'hoan_tat', pick(keToan), 'Đã đối chiếu thanh toán.', sau(t, 0.5 + rand() * 4)]);
+    if (d.giaiDoan === 'huy') gdLog.push([d.id, buoc[den], 'huy', nguoiVh, pick(LY_DO_HUY), sau(t, 0.2 + rand() * 3)]);
+  }
+  await db.query(
+    `UPDATE don_hang dh SET giai_doan = v.gd::giai_doan_don_enum
+       FROM unnest($1::int[], $2::text[]) AS v(id, gd) WHERE dh.id = v.id`,
+    [donSpec.map((d) => d.id), donSpec.map((d) => d.giaiDoan)],
+  );
+  await insertMany(db, 'don_hang_giai_doan_log', ['don_hang_id', 'tu_giai_doan', 'den_giai_doan', 'nguoi_id', 'ghi_chu', 'created_at'], gdLog);
+
   await db.query('COMMIT');
   await db.end();
-  return { don: SO_DON, khachHang: khRows.length + leads.length, deXuatMua: dxm.length, deXuatChi: dxc.length, nhatKyChamSoc: logRows.length };
+  return { don: SO_DON, khachHang: khRows.length + leads.length, deXuatMua: dxm.length, deXuatChi: dxc.length, nhatKyChamSoc: logRows.length, lichSuTienDo: gdLog.length };
 }

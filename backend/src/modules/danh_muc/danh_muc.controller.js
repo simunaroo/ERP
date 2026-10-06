@@ -5,6 +5,10 @@ export async function khachHang(req, res) {
   res.json(await repo.khachHang(saleId));
 }
 
+export async function sale(req, res) {
+  res.json(await repo.sale());
+}
+
 export async function vatTu(req, res) {
   res.json(await repo.vatTu());
 }
