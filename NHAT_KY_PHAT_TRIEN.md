@@ -197,6 +197,52 @@ Mỗi vòng lặp ghi: mục tiêu, đã làm, yêu cầu thay đổi (và lý d
 
 ---
 
+## Vòng 3.1 — Module Nhà cung cấp & bảng giá (06/10/2026)
+
+**Đã làm**
+- API `/api/nha-cung-cap`: danh sách (tìm theo tên/MST, lọc trạng thái), chi tiết, thêm/sửa, ngừng hợp tác (xoá mềm), tài khoản ngân hàng, cập nhật giá, ngừng cung cấp mặt hàng, **so sánh giá tại một ngày** (dùng lại cho module Mua hàng).
+- Giao diện: danh sách NCC, chi tiết (thông tin, STK, bảng giá + lịch sử từng mặt hàng), tab So sánh giá (rẻ nhất, các NCC khác, % chênh lệch, đổi ngày để xem giá quá khứ).
+- Phân quyền: Kế toán/Admin sửa; Vận hành chỉ xem; Sale không thấy menu. Số tài khoản bị che (`••••7890`) với người không làm thanh toán.
+
+**Quyết định thiết kế**
+- **Giá lưu theo thời gian** (kiểu SCD loại 2): cập nhật giá = đóng giá cũ (hết hiệu lực trước ngày mới 1 ngày) + thêm dòng mới; không sửa/xoá giá cũ → tra được "ngày X mua của NCC này giá bao nhiêu". Không cho nhập giá hồi tố trước giá đang áp dụng.
+- **CSDL tự chặn giá chồng thời gian**: ràng buộc `EXCLUDE USING gist (ncc_id =, vat_tu_id =, daterange(...) &&)` (extension `btree_gist`). UNIQUE chỉ chặn trùng *giá trị*, EXCLUDE chặn trùng *khoảng*.
+- Hai kế toán cập nhật cùng lúc: `SELECT ... FOR UPDATE` khoá dòng giá đang mở, người sau phải đợi rồi bị từ chối (đã test) — khoá bi quan, khác khoá lạc quan ở module tiến độ.
+- NCC không xoá cứng vì đề xuất mua/công nợ tham chiếu → chỉ "ngừng hợp tác"; NCC ngừng hợp tác tự biến khỏi bảng so sánh.
+- Mã số thuế không trùng: `UNIQUE INDEX ... WHERE ma_so_thue IS NOT NULL` (unique một phần, cho phép nhiều NCC chưa có MST).
+
+**Kiểm thử:** 24 ca API (phân quyền, MST sai/trùng, che STK, đóng giá cũ đúng ngày, giá hồi tố, cập nhật đồng thời, EXCLUDE ở CSDL, tra giá quá khứ, NCC ngừng hợp tác) + chụp giao diện.
+
+**Lỗi phát hiện & bài học**
+- Migration 008 chạy lần 2 bị lỗi: ràng buộc EXCLUDE tạo kèm một *index* cùng tên nên PostgreSQL báo `duplicate_table` (42P07), không phải `duplicate_object`. Bài học: test migration bằng cách **chạy 2 lần liên tiếp**.
+
+---
+
+## Vòng 3.2 — Phân tích bán chạy & giá NCC có trợ lý AI (06/10/2026)
+
+**Mục tiêu:** Kế toán xem trong một kỳ (mặc định 30 ngày) vật tư nào bán chạy, nhà cung cấp nào giá hợp lý; AI viết nhận xét và đề xuất.
+
+**Đã làm**
+- `GET /api/phan-tich/tong-hop`: doanh thu, số đơn, tiền mua NCC so với kỳ trước cùng độ dài; vật tư bán chạy (số lượng, doanh thu, tăng trưởng, lãi gộp ước tính, NCC rẻ nhất); NCC theo **chỉ số giá** (giá từng mặt hàng / giá trung vị thị trường × 100), số mặt hàng rẻ nhất, đổi giá trong kỳ, tiền đã mua.
+- `POST /api/phan-tich/nhan-xet-ai`: Gemini đọc số liệu tổng hợp → tóm tắt, điểm nổi bật, đề xuất NCC, cảnh báo, việc nên làm.
+- Tab "📊 Phân tích & AI" (Kế toán/Admin): chọn kỳ nhanh, ô KPI, bảng có thanh doanh thu, khung AI.
+
+**Quyết định thiết kế — AI không được tự tính số**
+- **Hai lớp:** SQL tính mọi con số (kiểm thử được, chạy được khi không có AI); AI chỉ diễn giải.
+- **Hậu kiểm tự động:** bỏ dòng AI nhắc tới vật tư/NCC không có trong dữ liệu; trích mọi con số trong câu chữ AI và đối chiếu với dữ liệu đã gửi, số "lạ" được liệt kê cho người đọc (vd ngưỡng "trên 105" do AI tự đặt).
+- **Code định dạng số, không nhờ AI** (4526553000 → "4,53 tỷ"): định dạng là việc tất định, giao cho LLM dễ sai.
+- Server **tự tính lại số liệu** trước khi gửi AI, không nhận số từ trình duyệt (chặn sửa số để "lái" AI). Chỉ gửi số tổng hợp, không có tên/SĐT khách hàng.
+- **Bộ nhớ đệm 30 phút** theo kỳ + gộp request trùng (3 người bấm cùng lúc → 1 lượt gọi AI); "Phân tích lại" bỏ qua cache.
+- Dùng **trung vị** thay vì trung bình làm "giá thị trường": một NCC báo giá bất thường không kéo lệch chuẩn so sánh.
+
+**Sự cố khi tích hợp Gemini thật & cách xử lý**
+- `gemini-2.5-flash` trả 404 "no longer available to new users" → tính năng AI nhập đơn cũng đang hỏng. Không đoán tên model mà gọi API liệt kê model của key, đổi sang `gemini-3.8-flash`.
+- Model mới trả 503 (quá tải) liên tục → client Gemini **thử lại với thời gian chờ tăng dần** (0,8s → 1,6s), vẫn lỗi thì **chuyển model dự phòng** (`GEMINI_MODEL_DU_PHONG`), timeout cũng chuyển dự phòng; thông báo lỗi dễ hiểu cho người dùng.
+
+**Kiểm thử:** 18 ca (phân quyền, khoảng ngày sai/quá dài, kỳ trước đúng độ dài, doanh thu và chỉ số giá đối chiếu với SQL viết theo cách khác, AI giả lập có tên/số bịa bị bắt, cache, gộp request đồng thời, kỳ rỗng không tốn lượt AI) + gọi Gemini thật và chụp giao diện.
+
+---
+
 ## Vòng 3 — (dự kiến) Giai đoạn đơn hàng + NCC & bảng giá
 
 **Đề xuất đang cân nhắc**

@@ -310,3 +310,29 @@ details summary { cursor: pointer; color: var(--link); }
 .tien-do-nho .pill { align-self: flex-start; }
 .tien-do-nho .thanh { display: block; height: 4px; border-radius: 2px; background: var(--p-gray-bg); overflow: hidden; }
 .tien-do-nho .thanh span { display: block; height: 100%; background: #16a34a; }
+
+/* ---------- Nha cung cap ---------- */
+a.tab { text-decoration: none; display: inline-block; }
+.gia-re { display: flex; flex-direction: column; gap: 2px; color: var(--p-done); }
+.gia-khac { display: flex; flex-wrap: wrap; gap: 4px; }
+.gia-khac .chip { font-size: 12px; padding: 2px 8px; text-decoration: none; }
+.dong-lich-su td { background: var(--sidebar); }
+.hanh-dong .link + .link { margin-left: 12px; }
+
+/* ---------- Phan tich & AI ---------- */
+.kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+.kpi-nhan { font-size: 12px; color: var(--text-muted); }
+.kpi-so { font-size: 24px; font-weight: 700; color: var(--text-strong); font-variant-numeric: tabular-nums; }
+.bd { font-size: 12px; font-weight: 600; white-space: nowrap; }
+.bd-tang { color: var(--ok-text); }
+.bd-giam { color: var(--error-text); }
+.bd-ngang { color: var(--text-muted); }
+/* Thanh ngang 1 mau (do lon), dau thanh bo tron, nen nhat lam ray */
+.o-thanh { width: 120px; height: 6px; background: var(--p-gray-bg); border-radius: 3px; margin-bottom: 3px; }
+.thanh-ngang { display: block; height: 100%; background: var(--p-new); border-radius: 3px; }
+.ai-card { border-color: var(--p-new); }
+.ai-kq h4 { margin: 14px 0 6px; font-size: 13px; }
+.ai-kq ul { padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.ai-tom-tat { margin-top: 10px; font-size: 14px; line-height: 1.5; }
+.canh-bao-ai { margin-top: 10px; }
