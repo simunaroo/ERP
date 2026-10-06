@@ -3,6 +3,7 @@ import { AppError } from '../../utils/AppError.js';
 import * as repo from './khach_hang.repository.js';
 
 export const TRANG_THAI_CHAM_SOC = ['moi', 'dang_tu_van', 'da_bao_gia', 'chot', 'khong_mua'];
+const NHOM_KHACH = ['nha_dan', 'nha_thau', 'doi_tac', 'khac'];
 
 // Sale chi lam viec voi khach minh phu trach; Admin xem duoc tat ca.
 async function layKhachDuocPhep(user, id) {
@@ -31,11 +32,12 @@ export async function chiTiet(user, id) {
   return { ...kh, lich_su: lichSu, don_hang: donHang };
 }
 
-export async function taoKhach(user, { ten, sdt, dia_chi }) {
+export async function taoKhach(user, { ten, sdt, dia_chi, nhom_khach_hang = 'nha_dan' }) {
   if (!ten?.trim()) throw new AppError(400, 'Vui lòng nhập tên khách hàng');
+  if (!NHOM_KHACH.includes(nhom_khach_hang)) throw new AppError(400, 'Nhóm khách hàng không hợp lệ');
   const soDt = (sdt || '').replace(/\D/g, '');
   if (soDt && !/^0\d{9,10}$/.test(soDt)) throw new AppError(400, 'Số điện thoại không hợp lệ');
-  return repo.create({ ten: ten.trim(), sdt: soDt || null, dia_chi: dia_chi?.trim() || null, sale_phu_trach_id: user.id });
+  return repo.create({ ten: ten.trim(), sdt: soDt || null, dia_chi: dia_chi?.trim() || null, nhom_khach_hang, sale_phu_trach_id: user.id });
 }
 
 export async function ghiChamSoc(user, id, { trang_thai, noi_dung }) {

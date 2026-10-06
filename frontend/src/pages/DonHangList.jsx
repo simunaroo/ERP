@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api, loiCua } from '../api/client.js';
 import { useAuthStore } from '../store/authStore.js';
-import { TRANG_THAI_DON, ngay } from '../utils.js';
+import { HINH_THUC, TRANG_THAI_DON, ngay, tien } from '../utils.js';
 
 export default function DonHangList() {
   const vaiTro = useAuthStore((s) => s.user.vai_tro);
   const [params, setParams] = useSearchParams();
   const page = Number(params.get('page')) || 1;
   const trangThai = params.get('trang_thai') || '';
+  const hinhThuc = params.get('hinh_thuc') || '';
   const q = params.get('q') || '';
 
   const [oTim, setOTim] = useState(q);
@@ -35,12 +36,12 @@ export default function DonHangList() {
   useEffect(() => {
     const ctrl = new AbortController();
     setDangTai(true);
-    api.get('/don-hang', { params: { page, trang_thai: trangThai || undefined, q: q || undefined }, signal: ctrl.signal })
+    api.get('/don-hang', { params: { page, trang_thai: trangThai || undefined, hinh_thuc: hinhThuc || undefined, q: q || undefined }, signal: ctrl.signal })
       .then((r) => { setKq(r.data); setLoi(''); })
       .catch((e) => { if (!ctrl.signal.aborted) setLoi(loiCua(e)); })
       .finally(() => { if (!ctrl.signal.aborted) setDangTai(false); });
     return () => ctrl.abort();
-  }, [page, trangThai, q]);
+  }, [page, trangThai, hinhThuc, q]);
 
   const items = kq?.items || [];
 
@@ -52,7 +53,11 @@ export default function DonHangList() {
           <input className="search" placeholder="Tìm theo mã đơn, khách hàng..." value={oTim} onChange={(e) => setOTim(e.target.value)} />
           <select value={trangThai} onChange={(e) => capNhat({ trang_thai: e.target.value })}>
             <option value="">Tất cả trạng thái</option>
-            {Object.entries(TRANG_THAI_DON).map(([v, t]) => <option key={v} value={v}>{t.nhan}</option>)}
+            {Object.entries(TRANG_THAI_DON).filter(([v]) => v !== 'nhap' || vaiTro === 'sale').map(([v, t]) => <option key={v} value={v}>{t.nhan}</option>)}
+          </select>
+          <select aria-label="Hình thức" value={hinhThuc} onChange={(e) => capNhat({ hinh_thuc: e.target.value })}>
+            <option value="">Mọi hình thức</option>
+            {Object.entries(HINH_THUC).map(([v, h]) => <option key={v} value={v}>{h.nhan}</option>)}
           </select>
           <span className="grow" />
           {vaiTro === 'sale' && <Link className="btn" to="/don-hang/tao">+ Tạo đơn hàng</Link>}
@@ -61,21 +66,23 @@ export default function DonHangList() {
         <div className={`table-wrap ${dangTai ? 'loading' : ''}`}>
           <table>
             <thead>
-              <tr><th>Mã đơn</th><th>Khách hàng</th><th>Địa chỉ công trình</th><th>Sale</th><th>Vận hành</th><th>Trạng thái</th><th>Ngày tạo</th></tr>
+              <tr><th>Mã đơn</th><th>Khách hàng</th><th>Tỉnh/Thành</th><th>Hình thức</th><th className="num">Tổng đơn</th><th>Sale</th><th>Vận hành</th><th>Trạng thái</th><th>Ngày tạo</th></tr>
             </thead>
             <tbody>
               {items.map((d) => (
                 <tr key={d.id}>
                   <td className="nowrap"><Link to={`/don-hang/${d.id}`}>{d.ma_don}</Link></td>
                   <td>{d.khach_hang}</td>
-                  <td>{d.dia_chi_cong_trinh}</td>
+                  <td>{d.tinh_thanh || '—'}</td>
+                  <td>{HINH_THUC[d.hinh_thuc].nhan}</td>
+                  <td className="num nowrap">{tien(d.tong_don)}</td>
                   <td>{d.sale}</td>
                   <td>{d.van_hanh || '—'}</td>
                   <td className="nowrap"><span className={`pill ${TRANG_THAI_DON[d.trang_thai].lop}`}>{TRANG_THAI_DON[d.trang_thai].nhan}</span></td>
                   <td className="nowrap">{ngay(d.created_at)}</td>
                 </tr>
               ))}
-              {kq && items.length === 0 && <tr><td colSpan="7" className="muted center">Không có đơn hàng nào</td></tr>}
+              {kq && items.length === 0 && <tr><td colSpan="9" className="muted center">Không có đơn hàng nào</td></tr>}
             </tbody>
           </table>
         </div>

@@ -8,6 +8,7 @@ const SO_ANH_TOI_DA = 3;
 const DUNG_LUONG_ANH_TOI_DA = 4 * 1024 * 1024; // 4 MB moi anh (sau khi giai ma base64)
 const MIME_HOP_LE = ['image/jpeg', 'image/png', 'image/webp'];
 
+const LOAI_THI_CONG = ['op_tran_phang', 'op_tran_giat_cap', 'op_tuong_khong_xuong', 'op_tuong_co_xuong', 'khac'];
 const SCHEMA = {
   type: 'OBJECT',
   properties: {
@@ -22,6 +23,10 @@ const SCHEMA = {
           mo_ta_goc: { type: 'STRING' },
           vat_tu_id: { type: 'INTEGER', nullable: true },
           so_luong: { type: 'NUMBER', nullable: true },
+          don_gia: { type: 'NUMBER', nullable: true },
+          loai_thi_cong: { type: 'STRING', nullable: true, enum: LOAI_THI_CONG },
+          dai_mm: { type: 'INTEGER', nullable: true },
+          rong_mm: { type: 'INTEGER', nullable: true },
         },
         required: ['mo_ta_goc'],
       },
@@ -44,6 +49,9 @@ Quy tắc:
 - Mỗi vật tư được nhắc tới là một phần tử trong "vat_tu"; "mo_ta_goc" chép đúng cụm từ trong ảnh/ghi chú.
 - "vat_tu_id": id trong danh mục khớp rõ ràng nhất. Nếu không chắc hoặc danh mục không có, để null — tuyệt đối không đoán.
 - "so_luong": theo đơn vị tính của danh mục (m², bộ...). Không rõ số lượng thì để null. Nếu chỉ có kích thước, chỉ quy đổi khi phép tính rõ ràng.
+- "don_gia": giá bán MỘT đơn vị (VND) nếu có ghi trong ảnh/báo giá, ví dụ "250k/m2" là 250000. Không có thì null.
+- "loai_thi_cong" (chỉ cho tấm ốp): op_tran_phang = ốp trần phẳng, op_tran_giat_cap = trần giật cấp, op_tuong_khong_xuong = ốp tường không xương, op_tuong_co_xuong = ốp tường có xương, khac = kiểu khác. Không nhắc tới thì null.
+- "dai_mm", "rong_mm": kích thước ghi kèm dòng (ví dụ ô cửa 2200x900, mảng tường 3m x 2,4m), đổi ra milimét. Không có thì null.
 - Chữ viết tay khó đọc: chỉ trích phần đọc được chắc chắn.
 ${daBietKhach
     ? '- Khách hàng đã được xác định sẵn: để "ten_khach_hang" và "sdt" là null.'
@@ -116,7 +124,13 @@ export async function trichXuatDonHang(user, { noi_dung, anh, khach_hang_id } = 
     if (!vt) canhBao.push(`Không khớp được "${it.mo_ta_goc}" với danh mục vật tư, vui lòng chọn tay.`);
     const soLuong = Number(it.so_luong) > 0 ? Number(it.so_luong) : null;
     if (vt && !soLuong) canhBao.push(`Chưa rõ số lượng cho "${it.mo_ta_goc}".`);
-    return { mo_ta_goc: it.mo_ta_goc, vat_tu_id: vt ? vt.id : null, so_luong_can: soLuong };
+    const donGia = Number(it.don_gia) > 0 ? Number(it.don_gia) : null;
+    const mm = (v) => (Number.isInteger(v) && v > 0 && v < 100000 ? v : null);
+    return {
+      mo_ta_goc: it.mo_ta_goc, vat_tu_id: vt ? vt.id : null, so_luong_can: soLuong, don_gia: donGia,
+      loai_thi_cong: LOAI_THI_CONG.includes(it.loai_thi_cong) ? it.loai_thi_cong : null,
+      dai_mm: mm(it.dai_mm), rong_mm: mm(it.rong_mm),
+    };
   });
   if (dong.length === 0) canhBao.push('Không tìm thấy vật tư nào trong nội dung, vui lòng nhập tay.');
 

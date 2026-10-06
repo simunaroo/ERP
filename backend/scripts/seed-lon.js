@@ -72,8 +72,9 @@ export async function seedLon(conn) {
   const keToan = users.filter((u) => u.vai_tro === 'ke_toan').map((u) => u.id);
 
   // ---- Khach hang ----
-  const khRows = Array.from({ length: 420 }, () => [hoTen(), sdt(), diaChi(), pick(sales)]);
-  await insertMany(db, 'khach_hang', ['ten', 'sdt', 'dia_chi', 'sale_phu_trach_id'], khRows);
+  const nhomKhach = () => pick(['nha_dan', 'nha_dan', 'nha_dan', 'nha_dan', 'nha_dan', 'nha_thau', 'doi_tac', 'khac']);
+  const khRows = Array.from({ length: 420 }, () => [hoTen(), sdt(), diaChi(), pick(sales), nhomKhach()]);
+  await insertMany(db, 'khach_hang', ['ten', 'sdt', 'dia_chi', 'sale_phu_trach_id', 'nhom_khach_hang'], khRows);
   const khachHang = (await db.query('SELECT id, dia_chi, sale_phu_trach_id FROM khach_hang')).rows;
 
   // ---- Vat tu ----
@@ -147,25 +148,43 @@ export async function seedLon(conn) {
     demThang[thang] = (demThang[thang] || 100) + 1;
     d.maDon = `DH-${thang}-${String(demThang[thang]).padStart(3, '0')}`;
     d.vanHanh = d.trangThai === 'moi' ? null : pick(vanHanh);
+    d.hinhThuc = chance(0.35) ? 'vat_tu' : 'hoan_thien'; // gan ti le that: 384 hoan thien / 221 vat tu
+    const diaChiCt = chance(0.85) ? d.kh.dia_chi : diaChi();
+    const tinh = /TP\.HCM|Thủ Đức|Bình Dương/.test(diaChiCt) ? 'TP. Hồ Chí Minh' : diaChiCt.split(', ').pop();
     return [
-      d.maDon, d.kh.id, d.kh.sale_phu_trach_id, d.vanHanh, d.trangThai,
-      chance(0.85) ? d.kh.dia_chi : diaChi(),
+      d.maDon, d.kh.id, d.kh.sale_phu_trach_id, d.vanHanh, d.trangThai, d.hinhThuc,
+      chance(0.6) ? `HĐ-${int(1000, 9999)}` : null, isoDate(d.ngay), isoDate(addDays(d.ngay, int(5, 15))),
+      tinh, diaChiCt,
+      d.hinhThuc === 'vat_tu' ? pick([0, 300000, 500000, 800000]) : pick([0, 0, 500000]),
+      chance(0.2) ? pick([200000, 500000, 1000000]) : 0,
+      chance(0.25) ? pick([3, 5, 7, 10]) : 0,
+      chance(0.7) ? pick([2000000, 3000000, 5000000, 10000000]) : 0,
+      pick([80, 80, 80, 100, 70, 50]),
+      d.hinhThuc === 'vat_tu' ? 'vat_tu_tieu_hao' : pick(['so_m2_thi_cong', 'so_m2_thi_cong', 'vat_tu_tieu_hao', 'theo_hop_dong']),
       d.vanHanh ? pick(['NCC giao thẳng đến công trình, cửa xuất từ xưởng.', 'NCC giao thẳng, nhận hàng tại hầm.', 'Giao 2 đợt theo tiến độ thi công.']) : null,
-      d.vanHanh ? pick(['Thi công trong 1 ngày.', 'Lát sàn ngày 1, ốp tường ngày 2.', 'Thi công 2 ngày, làm ngoài giờ hành chính.', 'Lắp cửa trước, hoàn thiện sau.']) : null,
+      d.vanHanh && d.hinhThuc === 'hoan_thien' ? pick(['Thi công trong 1 ngày.', 'Lát sàn ngày 1, ốp tường ngày 2.', 'Thi công 2 ngày, làm ngoài giờ hành chính.', 'Lắp cửa trước, hoàn thiện sau.']) : null,
       d.ngay,
     ];
   });
   const donIds = await insertMany(db, 'don_hang',
-    ['ma_don', 'khach_hang_id', 'sale_id', 'vanhanh_phu_trach_id', 'trang_thai', 'dia_chi_cong_trinh', 'phuong_an_van_chuyen', 'phuong_an_thi_cong', 'created_at'], donRows);
+    ['ma_don', 'khach_hang_id', 'sale_id', 'vanhanh_phu_trach_id', 'trang_thai', 'hinh_thuc', 'ma_hop_dong', 'ngay_chot', 'ngay_yc_lap_dat',
+      'tinh_thanh', 'dia_chi_cong_trinh', 'phi_van_chuyen', 'phu_thu', 'chiet_khau_pct', 'tien_coc', 'ty_le_tam_ung', 'dieu_khoan_nghiem_thu',
+      'phuong_an_van_chuyen', 'phuong_an_thi_cong', 'created_at'], donRows);
   donSpec.forEach((d, i) => { d.id = donIds[i]; });
 
   // ---- Vat tu cua don ----
   const dvtRows = [];
   for (const d of donSpec) {
     d.items = sample(vatTu, int(1, 4)).map((v) => ({ vt: v, sl: v.nguon_goc === 'tu_san_xuat' ? int(1, 6) : int(8, 90) }));
-    for (const it of d.items) dvtRows.push([d.id, it.vt.id, it.sl]);
+    for (const it of d.items) {
+      // Gia ban: hang mua ngoai = gia NCC goc x 1,3-1,5; cua tu san xuat 3,5-7 trieu/bo.
+      const gia = it.vt.nguon_goc === 'mua_ngoai'
+        ? Math.round(giaGoc[it.vt.id] * (1.3 + rand() * 0.2) / 1000) * 1000
+        : int(35, 70) * 100000;
+      dvtRows.push([d.id, it.vt.id, it.sl, gia]);
+    }
   }
-  await insertMany(db, 'don_hang_vat_tu', ['don_hang_id', 'vat_tu_id', 'so_luong_can'], dvtRows);
+  await insertMany(db, 'don_hang_vat_tu', ['don_hang_id', 'vat_tu_id', 'so_luong_can', 'don_gia'], dvtRows);
 
   // ---- Yeu cau sua (khoang 8% don) ----
   const NOI_DUNG_SUA = ['Khách đổi màu tấm ốp phòng ngủ.', 'Tăng diện tích sàn thêm 5 m2.', 'Đổi lịch thi công sang cuối tuần.', 'Khách muốn đổi cửa sang loại 4 cánh.', 'Bổ sung len chân tường cho phòng khách.'];
@@ -197,7 +216,8 @@ export async function seedLon(conn) {
     dxm.flatMap((x) => x.lines.map((l) => [x.id, l.vt, l.sl, l.gia])));
 
   // ---- Thi cong + nghiem thu ----
-  const tcList = donSpec.filter((d) => d.trangThai !== 'moi').map((d) => {
+  // Don hinh thuc "Vat tu" chi giao hang, khong co thi cong.
+  const tcList = donSpec.filter((d) => d.trangThai !== 'moi' && d.hinhThuc === 'hoan_thien').map((d) => {
     const duKien = addDays(d.ngay, int(5, 12));
     const trangThai = d.trangThai === 'hoan_tat' ? 'da_nghiem_thu' : (duKien < HOM_NAY ? 'dang_thi_cong' : 'lap_lich');
     return { d, duKien, trangThai };

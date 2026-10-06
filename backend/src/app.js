@@ -5,6 +5,7 @@ import donHangRoutes from './modules/don_hang/don_hang.routes.js';
 import danhMucRoutes from './modules/danh_muc/danh_muc.routes.js';
 import khachHangRoutes from './modules/khach_hang/khach_hang.routes.js';
 import troLyRoutes from './modules/tro_ly/tro_ly.routes.js';
+import baoGiaRoutes from './modules/bao_gia/bao_gia.routes.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 
 export const app = express();
@@ -19,6 +20,7 @@ app.use('/api/don-hang', donHangRoutes);
 app.use('/api/danh-muc', danhMucRoutes);
 app.use('/api/khach-hang', khachHangRoutes);
 app.use('/api/tro-ly', troLyRoutes);
+app.use('/api/bao-gia', baoGiaRoutes); // cong khai, khong can dang nhap
 
 app.use((req, res) => res.status(404).json({ message: 'Không tìm thấy endpoint' }));
 app.use(errorHandler);

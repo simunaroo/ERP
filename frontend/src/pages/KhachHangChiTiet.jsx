@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, loiCua } from '../api/client.js';
 import { useAuthStore } from '../store/authStore.js';
-import { TRANG_THAI_CHAM_SOC, TRANG_THAI_DON, ngay, ngayGio } from '../utils.js';
+import { NHOM_KHACH, TRANG_THAI_CHAM_SOC, TRANG_THAI_DON, ngay, ngayGio } from '../utils.js';
 
 function HoiLenDon({ khachHangId, onDong }) {
   const navigate = useNavigate();
@@ -73,6 +73,7 @@ export default function KhachHangChiTiet() {
         <div className="card">
           <h3>Thông tin</h3>
           <dl className="kv">
+            <dt>Nhóm khách</dt><dd>{NHOM_KHACH[kh.nhom_khach_hang]}</dd>
             <dt>Số điện thoại</dt><dd>{kh.sdt || '—'}</dd>
             <dt>Địa chỉ</dt><dd>{kh.dia_chi || '—'}</dd>
             <dt>Sale phụ trách</dt><dd>{kh.sale}</dd>

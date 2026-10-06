@@ -169,6 +169,32 @@ td.num input { width: 110px; text-align: right; }
 .add-photo small { font-size: 10px; color: var(--text-muted); text-align: center; }
 .card textarea { width: 100%; resize: vertical; }
 
+/* Form don hang: cot chinh + o tong tien dinh ben phai */
+.form-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; align-items: start; }
+.form-summary { position: sticky; top: 12px; }
+.money { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; font-variant-numeric: tabular-nums; }
+.money dt { color: var(--text-muted); }
+.money dd { text-align: right; }
+.money .total { font-weight: 600; color: var(--text-strong); font-size: 15px; border-top: 1px solid var(--border); padding-top: 6px; }
+.summary-actions { display: flex; flex-direction: column; gap: 8px; margin: 14px 0 8px; }
+.summary-actions .btn { width: 100%; padding: 9px; }
+.radio-cards { display: flex; gap: 8px; flex-wrap: wrap; }
+.radio-card { flex: 1; min-width: 160px; display: flex; flex-direction: column; gap: 2px; border: 1px solid var(--border-input); border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+.radio-card { position: relative; }
+/* Phai cu the hon ".field label" (display:block, chu 12px xam) de the khong bi de mat bo cuc. */
+.field .radio-card { display: flex; flex-direction: column; font-size: 13px; color: var(--text); margin-bottom: 0; }
+.radio-card input { position: absolute; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+.radio-card.on { border-color: var(--text-strong); background: var(--sidebar); }
+.radio-card:focus-within { outline: 2px solid var(--link); outline-offset: 1px; }
+.readonly-box { background: var(--sidebar); border: 1px solid var(--border); border-radius: 6px; padding: 7px 12px; color: var(--text-soft); }
+.w-full { width: 100%; }
+td input.w-full { min-width: 140px; }
+.thi-cong select { min-width: 130px; }
+.kich-thuoc { display: flex; align-items: center; margin-top: 4px; }
+.kich-thuoc input { width: 78px; }
+.kich-thuoc span { margin: 0 4px; color: var(--text-muted); }
+.banner { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; background: var(--p-wip-bg); color: var(--p-wip); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; }
+
 /* Hop thoai */
 .modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, .4); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 100; }
 .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; width: 420px; max-width: 100%; box-shadow: 0 8px 24px rgba(0, 0, 0, .15); }
@@ -204,8 +230,33 @@ td.num input { width: 110px; text-align: right; }
   .topbar { padding: 10px 12px; }
   .content { padding: 12px; }
   .grid2 { grid-template-columns: 1fr; }
+  .form-layout { grid-template-columns: minmax(0, 1fr); }
+  .form-summary { position: static; }
   .span2 { grid-column: auto; }
   .search { width: 100%; }
   td { white-space: nowrap; }
 }
 @media (prefers-reduced-motion: reduce) { .erp-sidebar { transition: none; } }
+
+/* ---------- Trang bao gia cong khai (khach xem / in) ---------- */
+.bao-gia { max-width: 860px; min-height: 100vh; margin: 0 auto; padding: 24px 16px; background: var(--surface); }
+.bg-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; border-bottom: 2px solid var(--primary); padding-bottom: 12px; margin-bottom: 16px; }
+.bg-logo { font-size: 28px; font-weight: 800; letter-spacing: 2px; color: var(--primary); }
+.bg-title { text-align: right; }
+.bg-title h1 { margin: 0 0 4px; font-size: 22px; }
+.bg-info { margin-bottom: 16px; }
+.bg-money { max-width: 360px; margin: 16px 0 0 auto; }
+.bg-terms { margin-top: 16px; font-size: 13px; }
+.chi-mobile { display: none; }
+@media (max-width: 600px) {
+  .bao-gia .an-mobile { display: none; }
+  .bao-gia .chi-mobile { display: block; }
+  .bao-gia th { white-space: normal; }
+  .bao-gia td { padding: 7px 6px; white-space: normal; overflow-wrap: anywhere; }
+  .bao-gia td.nowrap { white-space: nowrap; }
+}
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; }
+  .bao-gia { padding: 0; max-width: none; }
+}

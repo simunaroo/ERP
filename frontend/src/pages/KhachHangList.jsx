@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api, loiCua } from '../api/client.js';
 import { useAuthStore } from '../store/authStore.js';
-import { TRANG_THAI_CHAM_SOC, ngay } from '../utils.js';
+import { NHOM_KHACH, TRANG_THAI_CHAM_SOC, ngay } from '../utils.js';
 
 function FormThemKhach({ onDong }) {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ ten: '', sdt: '', dia_chi: '' });
+  const [form, setForm] = useState({ ten: '', sdt: '', dia_chi: '', nhom_khach_hang: 'nha_dan' });
   const [loi, setLoi] = useState('');
   const [dangGui, setDangGui] = useState(false);
 
@@ -27,7 +27,11 @@ function FormThemKhach({ onDong }) {
           <input id="kh-ten" value={form.ten} onChange={(e) => setForm({ ...form, ten: e.target.value })} autoFocus /></div>
         <div className="field"><label htmlFor="kh-sdt">Số điện thoại</label>
           <input id="kh-sdt" value={form.sdt} onChange={(e) => setForm({ ...form, sdt: e.target.value })} /></div>
-        <div className="field span2"><label htmlFor="kh-dc">Địa chỉ</label>
+        <div className="field"><label htmlFor="kh-nhom">Nhóm khách hàng</label>
+          <select id="kh-nhom" value={form.nhom_khach_hang} onChange={(e) => setForm({ ...form, nhom_khach_hang: e.target.value })}>
+            {Object.entries(NHOM_KHACH).map(([v, t]) => <option key={v} value={v}>{t}</option>)}
+          </select></div>
+        <div className="field"><label htmlFor="kh-dc">Địa chỉ</label>
           <input id="kh-dc" value={form.dia_chi} onChange={(e) => setForm({ ...form, dia_chi: e.target.value })} /></div>
       </div>
       {loi && <div className="error mt">{loi}</div>}
@@ -91,11 +95,12 @@ export default function KhachHangList() {
         {loi && <div className="error">{loi}</div>}
         <div className="table-wrap">
           <table>
-            <thead><tr><th>Khách hàng</th><th>Số điện thoại</th><th>Địa chỉ</th>{vaiTro === 'admin' && <th>Sale</th>}<th>Trạng thái</th><th className="num">Đơn</th><th>Chăm sóc gần nhất</th></tr></thead>
+            <thead><tr><th>Khách hàng</th><th>Nhóm</th><th>Số điện thoại</th><th>Địa chỉ</th>{vaiTro === 'admin' && <th>Sale</th>}<th>Trạng thái</th><th className="num">Đơn</th><th>Chăm sóc gần nhất</th></tr></thead>
             <tbody>
               {(kq?.items || []).map((k) => (
                 <tr key={k.id}>
                   <td><Link to={`/khach-hang/${k.id}`}>{k.ten}</Link></td>
+                  <td className="nowrap">{NHOM_KHACH[k.nhom_khach_hang]}</td>
                   <td className="nowrap">{k.sdt || '—'}</td>
                   <td>{k.dia_chi || '—'}</td>
                   {vaiTro === 'admin' && <td>{k.sale}</td>}
@@ -104,7 +109,7 @@ export default function KhachHangList() {
                   <td className="nowrap">{k.lan_cham_soc_cuoi ? ngay(k.lan_cham_soc_cuoi) : <span className="muted">Chưa liên hệ</span>}</td>
                 </tr>
               ))}
-              {kq && kq.items.length === 0 && <tr><td colSpan="7" className="muted center">Không có khách hàng nào</td></tr>}
+              {kq && kq.items.length === 0 && <tr><td colSpan="8" className="muted center">Không có khách hàng nào</td></tr>}
             </tbody>
           </table>
         </div>

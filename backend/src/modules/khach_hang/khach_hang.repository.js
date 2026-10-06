@@ -19,7 +19,7 @@ export async function findAll({ saleId, trangThai, tuKhoa, limit, offset }) {
     ${where.length ? 'WHERE ' + where.join(' AND ') : ''}`;
   const [{ rows }, { rows: dem }] = await Promise.all([
     query(
-      `SELECT kh.id, kh.ten, kh.sdt, kh.dia_chi, kh.trang_thai_cham_soc, s.ho_ten AS sale,
+      `SELECT kh.id, kh.ten, kh.sdt, kh.dia_chi, kh.nhom_khach_hang, kh.trang_thai_cham_soc, s.ho_ten AS sale,
               (SELECT max(cs.created_at) FROM khach_hang_cham_soc cs WHERE cs.khach_hang_id = kh.id) AS lan_cham_soc_cuoi,
               (SELECT count(*)::int FROM don_hang dh WHERE dh.khach_hang_id = kh.id) AS so_don
          ${from}
@@ -60,8 +60,8 @@ export async function findDonHang(khachHangId) {
 
 export async function create(data) {
   const { rows } = await query(
-    `INSERT INTO khach_hang (ten, sdt, dia_chi, sale_phu_trach_id) VALUES ($1, $2, $3, $4) RETURNING *`,
-    [data.ten, data.sdt, data.dia_chi, data.sale_phu_trach_id],
+    `INSERT INTO khach_hang (ten, sdt, dia_chi, nhom_khach_hang, sale_phu_trach_id) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+    [data.ten, data.sdt, data.dia_chi, data.nhom_khach_hang, data.sale_phu_trach_id],
   );
   return rows[0];
 }
