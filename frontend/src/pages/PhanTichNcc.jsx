@@ -125,7 +125,7 @@ export default function PhanTichNcc() {
           <div className="kpi-row">
             <div className="kpi"><span className="kpi-nhan">Doanh thu vật tư</span><span className="kpi-so">{tienGon(th.tong.doanh_thu)}</span><BienDong pct={th.tong.doanh_thu_tang_pct} /></div>
             <div className="kpi"><span className="kpi-nhan">Số đơn chốt</span><span className="kpi-so">{th.tong.so_don}</span><BienDong pct={th.tong.so_don_tang_pct} /></div>
-            <div className="kpi"><span className="kpi-nhan">Tiền mua nhà cung cấp</span><span className="kpi-so">{tienGon(th.tong.tien_mua_ncc)}</span><span className="muted small">theo đề xuất mua trong kỳ</span></div>
+            <div className="kpi"><span className="kpi-nhan">Tiền mua nhà cung cấp</span><span className="kpi-so">{tienGon(th.tong.tien_mua_ncc)}</span><span className="muted small">quyết toán NCC đã duyệt trong kỳ</span></div>
           </div>
 
           <KhungAi tu={tu} den={den} />

@@ -11,12 +11,15 @@ const SAP_XEP = {
 };
 
 // Cac dieu kien trong nut "Loc". Khoa = ten tham so tren URL va tren API.
-function truongLoc(vaiTro, dsSale) {
+function truongLoc(vaiTro, dsSale, dsVanHanh) {
   return [
     { k: 'giai_doan', nhan: 'Tiến độ', kieu: 'chon', lua_chon: Object.entries(GIAI_DOAN).filter(([v]) => v !== 'chot').map(([v, g]) => [v, g.nhan]) },
     { k: 'hinh_thuc', nhan: 'Hình thức', kieu: 'chon', lua_chon: Object.entries(HINH_THUC).map(([v, h]) => [v, h.nhan]) },
     { k: 'nhom_khach', nhan: 'Nhóm khách hàng', kieu: 'chon', lua_chon: Object.entries(NHOM_KHACH) },
     ...(vaiTro === 'sale' ? [] : [{ k: 'sale_id', nhan: 'Sale', kieu: 'chon', lua_chon: dsSale.map((x) => [String(x.id), x.ho_ten]) }]),
+    ...(['sale', 'van_hanh'].includes(vaiTro) ? [] : [{ k: 'van_hanh_id', nhan: 'Vận hành phụ trách', kieu: 'chon', lua_chon: [
+      ['chua', 'Chưa phân công'],
+      ...dsVanHanh.map((x) => [String(x.id), x.ho_ten])] }]),
     { k: 'tinh_thanh', nhan: 'Tỉnh/Thành', kieu: 'chon', lua_chon: TINH_THANH.map((t) => [t, t]) },
     { k: 'nghiem_thu', nhan: 'Điều khoản nghiệm thu', kieu: 'chon', lua_chon: Object.entries(NGHIEM_THU) },
     { k: 'con_no', nhan: 'Công nợ khách', kieu: 'chon', lua_chon: [['con', 'Còn phải thu'], ['het', 'Đã thu đủ']] },
@@ -55,7 +58,8 @@ export default function DonHangList() {
   const q = params.get('q') || '';
   const sapXep = params.get('sap_xep') || 'moi_nhat';
   const [dsSale, setDsSale] = useState([]);
-  const truong = truongLoc(vaiTro, dsSale);
+  const [dsVanHanh, setDsVanHanh] = useState([]);
+  const truong = truongLoc(vaiTro, dsSale, dsVanHanh);
   const cacKhoa = truong.flatMap(khoaCua);
   const giaTriLoc = Object.fromEntries(cacKhoa.map((k) => [k, params.get(k) || '']));
   const chuoiLoc = cacKhoa.map((k) => `${k}=${giaTriLoc[k]}`).join('&'); // de useEffect so sanh
@@ -74,6 +78,7 @@ export default function DonHangList() {
 
   useEffect(() => {
     if (vaiTro !== 'sale') api.get('/danh-muc/sale').then((r) => setDsSale(r.data)).catch(() => {});
+    if (!['sale', 'van_hanh'].includes(vaiTro)) api.get('/danh-muc/van-hanh').then((r) => setDsVanHanh(r.data)).catch(() => {});
   }, [vaiTro]);
 
   useEffect(() => setOTim(q), [q]); // dong bo o tim khi bam Back/Forward
@@ -101,6 +106,7 @@ export default function DonHangList() {
   return (
     <>
       <h1>Đơn hàng</h1>
+      {vaiTro === 'van_hanh' && <p className="muted">Các đơn bạn phụ trách.</p>}
       <div className="card">
         <div className="toolbar">
           <input className="search" placeholder="Tìm theo mã đơn, khách hàng..." value={oTim} onChange={(e) => setOTim(e.target.value)} />

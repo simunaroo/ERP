@@ -24,7 +24,36 @@ export const GIAI_DOAN = {
   huy: { nhan: 'Huỷ' },
 };
 export const HUY_DUOC = ['len_phuong_an', 'boc_khoi_luong', 'mua_hang'];
-export const vaiTroPhuTrach = (gd) => (gd === 'quyet_toan' ? 'ke_toan' : 'van_hanh');
+// Giong ERP: Van hanh (dieu phoi) xu ly moi buoc tien do, ke ca chot quyet toan.
+export const vaiTroPhuTrach = () => 'van_hanh';
+
+// ---------- Mua hang / chi / thi cong (theo luong ERP) ----------
+export const TRANG_THAI_DONG_MUA = {
+  cho_xu_ly: { nhan: '⏳ Chưa chọn NCC', lop: 'p-gray' },
+  dang_hoi: { nhan: '🛒 Đã chọn NCC', lop: 'p-new' },
+  da_dat_hang: { nhan: '📦 Đã đặt hàng', lop: 'p-wip' },
+  san_hang: { nhan: '✅ Đã sẵn hàng', lop: 'p-done' },
+  da_lay_hang: { nhan: '🚚 Đã lấy hàng', lop: 'p-done' },
+  da_giao_hang: { nhan: '🏠 Đã giao hàng', lop: 'p-done' },
+  huy: { nhan: '❌ Huỷ', lop: 'p-lost' },
+};
+export const LOAI_CHI = { coc: 'Cọc', quyet_toan: 'Quyết toán', chi_bo_sung: 'Chi bổ sung', tra_cong: 'Trả công', ung_cong: 'Ứng công' };
+export const TRANG_THAI_CHI = {
+  cho_duyet: { nhan: 'Chờ duyệt', lop: 'p-wip' },
+  da_duyet: { nhan: 'Đã duyệt', lop: 'p-new' },
+  tu_choi: { nhan: 'Từ chối', lop: 'p-lost' },
+  thu_hoi: { nhan: 'Thu hồi', lop: 'p-gray' },
+  da_thanh_toan: { nhan: 'Đã chi', lop: 'p-done' },
+};
+export const LOAI_MBS = {
+  hang_hong: 'Hàng hỏng/xước/vỡ', giao_thieu_sai: 'NCC giao thiếu/sai', boc_khoi_luong_thieu: 'Bóc khối lượng thiếu',
+  tho_lam_hong: 'Thợ làm hỏng', khach_bo_sung: 'Khách bổ sung', mat_hang: 'Mất hàng', khac: 'Khác',
+};
+export const NGUON_TRACH_NHIEM = {
+  ncc: 'NCC', van_chuyen: 'Vận chuyển', tho: 'Thợ', khao_sat: 'Khảo sát/KLVT', sale: 'Sale',
+  khach_hang: 'Khách hàng', cong_ty: 'Công ty chịu', chua_xac_dinh: 'Chưa xác định',
+};
+export const LOAI_PHAT_SINH = { phat_sinh: 'Phát sinh (+)', phu_thu: 'Phụ thu (+)', giam_tru: 'Giảm trừ (−)', thu_ho: 'Thợ thu hộ' };
 
 // soXong = so buoc da xong tinh ca "Chot don"; don huy: dung o buoc dang lam luc huy (lay tu lich su neu co).
 export function tinhTienDo(don) {

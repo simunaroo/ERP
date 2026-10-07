@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { api, loiCua } from '../api/client.js';
 import { useAuthStore } from '../store/authStore.js';
 import TienDo from '../components/TienDo.jsx';
+import { ThiCongCuaDon } from './ThiCong.jsx';
 import { BUOC_DON, GIAI_DOAN, HUY_DUOC, tinhTienDo, vaiTroPhuTrach, HINH_THUC, LOAI_THI_CONG, NGHIEM_THU, NHOM_KHACH, TRANG_THAI_DON, kichThuoc, ngay, ngayGio, tien } from '../utils.js';
 
 const BUOC_DON_CUA = (don) => BUOC_DON[don.hinh_thuc];
@@ -21,6 +22,7 @@ export default function DonHangChiTiet() {
   const [phuongAn, setPhuongAn] = useState({ phuong_an_van_chuyen: '', phuong_an_thi_cong: '' });
   const [noiDungSua, setNoiDungSua] = useState('');
   const [ghiChuBuoc, setGhiChuBuoc] = useState('');
+  const [dsVanHanh, setDsVanHanh] = useState([]);
 
   const tai = useCallback(() => {
     api.get(`/don-hang/${id}`)
@@ -35,6 +37,7 @@ export default function DonHangChiTiet() {
   }, [id]);
 
   useEffect(tai, [tai]);
+  useEffect(() => { if (vaiTro === 'admin') api.get('/danh-muc/van-hanh').then((r) => setDsVanHanh(r.data)).catch(() => {}); }, [vaiTro]);
 
   const chay = (fn, thanhCong) => async () => {
     setLoi(''); setThongBao('');
@@ -57,6 +60,13 @@ export default function DonHangChiTiet() {
     await api.post(`/don-hang/${id}/giai-doan`, { huong, ghi_chu: ghiChuBuoc });
     setGhiChuBuoc('');
   }, huong === 'tiep' ? 'Đã chuyển sang bước tiếp theo' : 'Đã lùi về bước trước')();
+  // Admin chuyen don sang Van hanh khac: bat buoc ghi ly do (luu vao lich su phan cong).
+  const doiPhuTrach = (vhId) => {
+    const nguoi = dsVanHanh.find((v) => v.id === Number(vhId));
+    const lyDo = window.prompt(`Lý do chuyển đơn cho ${nguoi?.ho_ten}?`);
+    if (!lyDo) return;
+    chay(() => api.put(`/don-hang/${id}/phu-trach`, { van_hanh_id: Number(vhId), ly_do: lyDo }), `Đã chuyển đơn cho ${nguoi?.ho_ten}`)();
+  };
   const huyDon = () => {
     if (!window.confirm('Huỷ đơn này? Thao tác không hoàn tác được.')) return;
     chay(async () => { await api.post(`/don-hang/${id}/huy`, { ly_do: ghiChuBuoc }); setGhiChuBuoc(''); }, 'Đã huỷ đơn')();
@@ -69,7 +79,10 @@ export default function DonHangChiTiet() {
   const diaChi = [don.dia_chi_cong_trinh, don.phuong_xa, don.tinh_thanh].filter(Boolean).join(', ');
   const td = tinhTienDo(don);
   const dongDon = ['hoan_tat', 'huy'].includes(don.giai_doan);
-  const duocChuyen = !laNhap && !dongDon && (vaiTro === 'admin' || vaiTro === vaiTroPhuTrach(don.giai_doan));
+  // Van hanh chi thao tac duoc don minh phu trach (server cung chan — day chi de an nut).
+  const laPhuTrach = vaiTro !== 'van_hanh' || !don.vanhanh_phu_trach_id || don.vanhanh_phu_trach_id === toiId;
+  const vhThaoTac = vaiTro === 'van_hanh' && laPhuTrach;
+  const duocChuyen = !laNhap && !dongDon && laPhuTrach && (vaiTro === 'admin' || vaiTro === vaiTroPhuTrach(don.giai_doan));
   const duocHuy = duocChuyen && HUY_DUOC.includes(don.giai_doan) && vaiTro !== 'ke_toan';
   const buocTruoc = td.soXong > 1 ? ['chot', ...BUOC_DON_CUA(don)][td.soXong - 1] : null;
 
@@ -112,7 +125,7 @@ export default function DonHangChiTiet() {
             </div>
           )}
           {!duocChuyen && !dongDon && (
-            <p className="muted small mt">Bước «{GIAI_DOAN[don.giai_doan].nhan}» do {vaiTroPhuTrach(don.giai_doan) === 'ke_toan' ? 'Kế toán' : 'Vận hành'} xử lý.</p>
+            <p className="muted small mt">Bước «{GIAI_DOAN[don.giai_doan].nhan}» do {laPhuTrach ? 'Vận hành' : <b>{don.van_hanh}</b>} {laPhuTrach ? 'phụ trách đơn' : '(Vận hành phụ trách đơn)'} xử lý.</p>
           )}
 
           <details className="mt">
@@ -142,8 +155,27 @@ export default function DonHangChiTiet() {
             <dt>Ngày chốt</dt><dd>{don.ngay_chot ? ngay(don.ngay_chot) : 'Chưa chốt'}</dd>
             <dt>{hoanThien ? 'YC lắp đặt' : 'YC giao hàng'}</dt><dd>{don.ngay_yc_lap_dat ? ngay(don.ngay_yc_lap_dat) : '—'}</dd>
             <dt>Sale</dt><dd>{don.sale}</dd>
-            <dt>Vận hành</dt><dd>{don.van_hanh || 'Chưa tiếp nhận'}</dd>
+            <dt>Vận hành phụ trách</dt>
+            <dd>
+              {vaiTro === 'admin' && !dongDon ? (
+                <select aria-label="Vận hành phụ trách" value={don.vanhanh_phu_trach_id || ''} onChange={(e) => e.target.value && doiPhuTrach(e.target.value)}>
+                  {!don.vanhanh_phu_trach_id && <option value="">— Chưa phân công —</option>}
+                  {dsVanHanh.map((v) => <option key={v.id} value={v.id}>{v.ho_ten} ({v.so_don_dang_mo} đơn đang mở)</option>)}
+                </select>
+              ) : (don.van_hanh || <span className="error-text">Chưa phân công</span>)}
+              {don.vanhanh_phu_trach_id === toiId && <span className="pill p-wip"> Bạn</span>}
+            </dd>
           </dl>
+          {don.lich_su_phan_cong?.length > 0 && (
+            <details className="mt">
+              <summary className="small">Lịch sử phân công ({don.lich_su_phan_cong.length})</summary>
+              <ul className="small">
+                {don.lich_su_phan_cong.map((l) => (
+                  <li key={l.id}>{l.tu ? <>{l.tu} → </> : null}<b>{l.den}</b> <span className="muted">— {l.nguoi || 'Hệ thống'}, {ngayGio(l.created_at)}{l.ly_do ? ` · ${l.ly_do}` : ''}</span></li>
+                ))}
+              </ul>
+            </details>
+          )}
         </div>
         <div className="card">
           <h3>Thanh toán</h3>
@@ -210,6 +242,19 @@ export default function DonHangChiTiet() {
         </div>
       )}
 
+      {!laNhap && hoanThien && <ThiCongCuaDon donHangId={don.id} />}
+
+      {!laNhap && ['van_hanh', 'ke_toan', 'admin'].includes(vaiTro) && (
+        <div className="card">
+          <div className="tien-do-dau">
+            <h3>Mua hàng & chi</h3>
+            <Link className="btn sec" to={`/mua-hang/don/${don.id}`}>Chọn NCC, đề xuất chi →</Link>
+          </div>
+          <p className="muted small">Chọn nhà cung cấp cho từng dòng vật tư, theo dõi trạng thái hàng, đề xuất cọc/quyết toán NCC và mua bổ sung.</p>
+          {don.gia_tri_quyet_toan && <p className="small">Đã chốt quyết toán: <b>{tien(don.gia_tri_quyet_toan)}</b> — <Link to={`/thi-cong/quyet-toan/${don.id}`}>xem bảng quyết toán</Link></p>}
+        </div>
+      )}
+
       {!laNhap && (
         <>
           <div className="card">
@@ -217,18 +262,18 @@ export default function DonHangChiTiet() {
             <div className={hoanThien ? 'grid2' : ''}>
               <div className="field">
                 <label htmlFor="vc">Phương án vận chuyển</label>
-                <textarea id="vc" rows="4" disabled={vaiTro !== 'van_hanh' || dongDon} value={phuongAn.phuong_an_van_chuyen}
+                <textarea id="vc" rows="4" disabled={!vhThaoTac || dongDon} value={phuongAn.phuong_an_van_chuyen}
                   onChange={(e) => setPhuongAn({ ...phuongAn, phuong_an_van_chuyen: e.target.value })} />
               </div>
               {hoanThien && (
                 <div className="field">
                   <label htmlFor="tc">Phương án thi công</label>
-                  <textarea id="tc" rows="4" disabled={vaiTro !== 'van_hanh' || dongDon} value={phuongAn.phuong_an_thi_cong}
+                  <textarea id="tc" rows="4" disabled={!vhThaoTac || dongDon} value={phuongAn.phuong_an_thi_cong}
                     onChange={(e) => setPhuongAn({ ...phuongAn, phuong_an_thi_cong: e.target.value })} />
                 </div>
               )}
             </div>
-            {vaiTro === 'van_hanh' && !dongDon && <div className="actions"><button className="btn" onClick={luuPhuongAn}>Lưu phương án</button></div>}
+            {vhThaoTac && !dongDon && <div className="actions"><button className="btn" onClick={luuPhuongAn}>Lưu phương án</button></div>}
           </div>
 
           <div className="card">
@@ -239,7 +284,7 @@ export default function DonHangChiTiet() {
                 <li key={y.id}>
                   <span className={`pill ${y.trang_thai === 'da_xu_ly' ? 'p-done' : 'p-wip'}`}>{y.trang_thai === 'da_xu_ly' ? 'Đã xử lý' : 'Chờ xử lý'}</span>{' '}
                   {y.noi_dung} <span className="muted small">— {y.nguoi_gui}, {ngay(y.created_at)}</span>
-                  {vaiTro === 'van_hanh' && y.trang_thai === 'cho_xu_ly' && (
+                  {vhThaoTac && y.trang_thai === 'cho_xu_ly' && (
                     <button className="link" onClick={() => xuLyYeuCau(y.id)}>Đánh dấu đã xử lý</button>
                   )}
                 </li>

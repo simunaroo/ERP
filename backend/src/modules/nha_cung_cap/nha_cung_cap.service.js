@@ -78,6 +78,7 @@ export async function capNhatGia(id, { vat_tu_id, don_gia, ngay_hieu_luc }) {
   if (ncc.trang_thai !== 'active') throw new AppError(409, 'Nhà cung cấp đã ngừng hợp tác');
   const vt = await repo.vatTuMuaNgoai(Number(vat_tu_id));
   if (!vt) throw new AppError(400, 'Vật tư không tồn tại');
+  if (vt.trang_thai !== 'active') throw new AppError(400, `"${vt.ten}" đã ngừng kinh doanh`);
   if (vt.nguon_goc !== 'mua_ngoai') throw new AppError(400, `"${vt.ten}" do công ty tự sản xuất, không có giá nhà cung cấp`);
   const gia = Number(don_gia);
   if (!Number.isFinite(gia) || gia <= 0) throw new AppError(400, 'Đơn giá phải lớn hơn 0');

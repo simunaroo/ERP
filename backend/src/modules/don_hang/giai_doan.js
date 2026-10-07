@@ -13,8 +13,9 @@ export const NHAN = {
 // Chi huy duoc truoc khi giao hang: hang da den cong trinh thi phai xu ly bang quyet toan/phat sinh.
 export const HUY_DUOC = ['len_phuong_an', 'boc_khoi_luong', 'mua_hang'];
 
-// Ai duoc chuyen don RA KHOI buoc nay: buoc Quyet toan thuoc Ke toan, con lai thuoc Van hanh. Admin luon duoc.
-export const vaiTroPhuTrach = (giaiDoan) => (giaiDoan === 'quyet_toan' ? 'ke_toan' : 'van_hanh');
+// Ai duoc chuyen don RA KHOI buoc nay: giong ERP, Van hanh (dieu phoi) xu ly moi buoc ke ca chot quyet toan.
+// Admin luon duoc. Ke toan lam viec voi tien (de xuat chi, cong no), khong day tien do don.
+export const vaiTroPhuTrach = () => 'van_hanh';
 
 export function buocKe(hinhThuc, giaiDoan, huong) {
   const ds = BUOC[hinhThuc];

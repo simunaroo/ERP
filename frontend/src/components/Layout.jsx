@@ -2,12 +2,19 @@ import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore.js';
 import { VAI_TRO } from '../utils.js';
+import ThongBao from './ThongBao.jsx';
 
 // Chi liet ke module da lam; them dong khi hoan thanh module moi.
 const NAV_ITEMS = [
+  { path: '/', label: 'Tổng quan', icon: '🏠', vaiTro: ['sale', 'van_hanh', 'ke_toan', 'admin'] },
   { path: '/khach-hang', label: 'Khách hàng', icon: '📇', vaiTro: ['sale', 'admin'] },
   { path: '/don-hang', label: 'Đơn hàng', icon: '📋', vaiTro: ['sale', 'van_hanh', 'ke_toan', 'admin'] },
+  { path: '/mua-hang', label: 'Mua hàng', icon: '🛒', vaiTro: ['van_hanh', 'ke_toan', 'admin'] },
+  { path: '/thi-cong', label: 'Thi công', icon: '🛠️', vaiTro: ['van_hanh', 'ke_toan', 'admin'] },
+  { path: '/cong-no', label: 'Chi & công nợ', icon: '💰', vaiTro: ['ke_toan', 'admin'] },
+  { path: '/vat-tu', label: 'Danh mục vật tư', icon: '📦', vaiTro: ['van_hanh', 'ke_toan', 'admin'] },
   { path: '/nha-cung-cap', label: 'Nhà cung cấp', icon: '🏭', vaiTro: ['ke_toan', 'van_hanh', 'admin'] },
+  { path: '/nguoi-dung', label: 'Người dùng', icon: '👤', vaiTro: ['admin'] },
 ];
 
 function docTheme() {
@@ -38,7 +45,8 @@ export default function Layout() {
   }, []);
 
   const menu = NAV_ITEMS.filter((n) => n.vaiTro.includes(user.vai_tro));
-  const trangHienTai = menu.find((n) => pathname.startsWith(n.path))?.label ?? '';
+  const trangHienTai = pathname === '/doi-mat-khau' ? 'Đổi mật khẩu'
+    : menu.find((n) => (n.path === '/' ? pathname === '/' : pathname.startsWith(n.path)))?.label ?? '';
 
   const thoat = () => {
     logout();
@@ -51,11 +59,11 @@ export default function Layout() {
         <div className="brand">ERP NST</div>
         <div className="user-card">
           <b>{user.ho_ten}</b>
-          <span>{VAI_TRO[user.vai_tro]}</span>
+          <span>{VAI_TRO[user.vai_tro]} · <NavLink to="/doi-mat-khau" className="doi-mk">Đổi mật khẩu</NavLink></span>
         </div>
         <nav>
           {menu.map((n) => (
-            <NavLink key={n.path} to={n.path}>
+            <NavLink key={n.path} to={n.path} end={n.path === '/'}>
               <span aria-hidden="true">{n.icon}</span>
               <span>{n.label}</span>
             </NavLink>
@@ -68,7 +76,9 @@ export default function Layout() {
           <button className="icon-btn erp-hamburger" aria-label="Mở menu"
             onClick={() => document.body.classList.toggle('sidebar-open')}>☰</button>
           <span className="crumb">ERP NST &nbsp;/&nbsp; <b>{trangHienTai}</b></span>
-          <button className="icon-btn ml-auto" onClick={() => setDark((d) => !d)}
+          <span className="ml-auto" />
+          <ThongBao />
+          <button className="icon-btn" onClick={() => setDark((d) => !d)}
             aria-label={dark ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
             title={dark ? 'Chế độ sáng' : 'Chế độ tối'}>
             {dark ? '☀️' : '🌙'}

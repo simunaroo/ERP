@@ -74,10 +74,12 @@ export async function giaNcc({ tu, den }) {
         WHERE m.ngay_hieu_luc BETWEEN $1 AND $2
         GROUP BY m.ncc_id
      ), mua AS (
-       SELECT d.ncc_id, sum(ct.so_luong * ct.don_gia) AS tien, count(DISTINCT d.id)::int AS so_lan
-         FROM de_xuat_mua_hang d JOIN de_xuat_mua_hang_ct ct ON ct.de_xuat_mua_hang_id = d.id
-        WHERE d.created_at >= $1::date AND d.created_at < $2::date + 1
-        GROUP BY d.ncc_id
+       -- Tien hang da mua = de xuat quyet toan / chi bo sung DA DUYET trong ky (giong cach ERP ghi nhan tien hang).
+       SELECT c.ncc_id, sum(c.gia_tri_hang) AS tien, count(*)::int AS so_lan
+         FROM de_xuat_chi c
+        WHERE c.loai_chi IN ('quyet_toan', 'chi_bo_sung') AND c.trang_thai IN ('da_duyet', 'da_thanh_toan')
+          AND c.created_at >= $1::date AND c.created_at < $2::date + 1
+        GROUP BY c.ncc_id
      )
      SELECT n.id AS ncc_id, n.ten AS ncc, count(*)::int AS so_mat_hang,
             round(avg(g.don_gia / tv.trung_vi) * 100)::int AS chi_so_gia,
