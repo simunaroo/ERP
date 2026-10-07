@@ -24,6 +24,10 @@ export async function huy(req, res) {
   res.json(await service.huyDon(req.user, Number(req.params.id), req.body || {}));
 }
 
+export async function doiPhuTrach(req, res) {
+  res.json(await service.doiPhuTrach(req.user, Number(req.params.id), req.body || {}));
+}
+
 export async function baoGia(req, res) {
   res.json(await service.taoLinkBaoGia(req.user, Number(req.params.id), { taoMoi: req.body?.tao_moi === true }));
 }
@@ -38,7 +42,7 @@ export async function updatePhuongAn(req, res) {
 }
 
 export async function xuLyYeuCauSua(req, res) {
-  res.json(await service.xuLyYeuCauSua(Number(req.params.id), Number(req.params.ycId)));
+  res.json(await service.xuLyYeuCauSua(req.user, Number(req.params.id), Number(req.params.ycId)));
 }
 
 export async function createYeuCauSua(req, res) {

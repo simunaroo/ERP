@@ -85,7 +85,7 @@ export async function xoaStk(nccId, stkId) {
 
 export async function vatTuMuaNgoai(vatTuId) {
   const { rows } = await query(
-    `SELECT vt.id, vt.ten, lvt.nguon_goc FROM vat_tu vt JOIN loai_vat_tu lvt ON lvt.id = vt.loai_vat_tu_id WHERE vt.id = $1`,
+    `SELECT vt.id, vt.ten, vt.trang_thai, lvt.nguon_goc FROM vat_tu vt JOIN loai_vat_tu lvt ON lvt.id = vt.loai_vat_tu_id WHERE vt.id = $1`,
     [vatTuId],
   );
   return rows[0] || null;

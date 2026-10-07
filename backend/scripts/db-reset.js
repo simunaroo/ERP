@@ -31,6 +31,9 @@ for (const file of ['schema.sql', 'seed.sql']) {
   await db.query(fs.readFileSync(path.join(root, 'sql', file), 'utf8'));
   console.log(`Da chay sql/${file}`);
 }
+// schema.sql da la cau truc moi nhat -> danh dau moi migration "da chay" (baseline), npm run db:migrate se khong chay lai.
+const { danhDauDaChay } = await import('./migrate.js');
+await danhDauDaChay(db);
 await db.end();
 
 if (process.argv.includes('--lon')) {

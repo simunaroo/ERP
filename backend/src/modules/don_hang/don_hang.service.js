@@ -2,6 +2,8 @@ import crypto from 'crypto';
 import { withTransaction } from '../../config/db.js';
 import { AppError } from '../../utils/AppError.js';
 import * as repo from './don_hang.repository.js';
+import * as thongBao from '../thong_bao/thong_bao.service.js';
+import { vatTuDaNgung } from '../danh_muc/danh_muc.repository.js';
 import { BUOC, HUY_DUOC, NHAN, buocKe, vaiTroPhuTrach } from './giai_doan.js';
 
 const TRANG_THAI_DON = ['nhap', 'moi', 'dang_xu_ly', 'hoan_tat', 'huy'];
@@ -125,6 +127,8 @@ export async function danhSach(user, query) {
     // Sale luon bi gioi han ve don cua minh, bo qua sale_id gui len (khong tin client).
     saleId: laSale ? user.id : saleLoc, anNhap: !laSale, trangThai: trang_thai, hinhThuc: hinh_thuc,
     giaiDoan: motTrong(query.giai_doan, GIAI_DOAN, 'Giai đoạn'),
+    // Van hanh luon bi gioi han ve don minh phu trach, bo qua van_hanh_id gui len.
+    vanHanhId: vanHanhCua(user) ?? (query.van_hanh_id === 'chua' ? 'chua' : (Number(query.van_hanh_id) || null)),
     tuKhoa: q?.trim() || null,
     nhomKhach: motTrong(query.nhom_khach, NHOM_KHACH, 'Nhóm khách'),
     tinhThanh: chuOrNull(query.tinh_thanh),
@@ -143,11 +147,38 @@ export async function chiTiet(user, id) {
   // Don nhap chi chu don thay duoc; tra 404 (khong phai 403) de khong lo su ton tai cua don.
   if (!don || (don.trang_thai === 'nhap' && don.sale_id !== user.id)) throw new AppError(404, 'Không tìm thấy đơn hàng');
   if (user.vai_tro === 'sale' && don.sale_id !== user.id) throw new AppError(403, 'Bạn không phụ trách đơn hàng này');
-  const [vatTu, yeuCauSua, lichSu] = await Promise.all([repo.findVatTu(id), repo.findYeuCauSua(id), repo.findLichSuGiaiDoan(id)]);
+  if (user.vai_tro === 'van_hanh' && don.vanhanh_phu_trach_id !== user.id) throw new AppError(403, 'Bạn không phụ trách đơn hàng này');
+  const [vatTu, yeuCauSua, lichSu, phanCong] = await Promise.all([repo.findVatTu(id), repo.findYeuCauSua(id), repo.findLichSuGiaiDoan(id), repo.lichSuPhanCong(id)]);
   return {
     ...don, dieu_khoan_thanh_toan: dieuKhoanThanhToan(don.ty_le_tam_ung, don.hinh_thuc),
-    vat_tu: vatTu, yeu_cau_sua: yeuCauSua, lich_su_giai_doan: lichSu,
+    vat_tu: vatTu, yeu_cau_sua: yeuCauSua, lich_su_giai_doan: lichSu, lich_su_phan_cong: phanCong,
   };
+}
+
+// Luc chot: giao cho Van hanh it don dang mo nhat (chia deu tai). Khong co Van hanh nao -> de trong, Admin phan sau.
+async function phanCongTuDong(client, donHangId) {
+  const vh = await repo.chonVanHanhItViec(client);
+  if (!vh) return;
+  await repo.ganVanHanh(client, donHangId, { tu: null, den: vh, nguoiId: null, lyDo: 'Tự động: Vận hành ít đơn đang xử lý nhất' });
+  await thongBao.giaoDon(client, donHangId, { den: vh });
+}
+
+// Admin chuyen don sang Van hanh khac (nghi phep, qua tai...). Phien cua nguoi cu van dung duoc, nhung tu gio khong thao tac duoc don nay.
+export async function doiPhuTrach(user, id, { van_hanh_id, ly_do }) {
+  const den = Number(van_hanh_id);
+  const lyDo = chuOrNull(ly_do);
+  if (!lyDo) throw new AppError(400, 'Vui lòng ghi lý do chuyển phụ trách');
+  await withTransaction(async (client) => {
+    const { rows } = await client.query('SELECT id, trang_thai, vanhanh_phu_trach_id FROM don_hang WHERE id = $1 FOR UPDATE', [id]);
+    const don = rows[0];
+    if (!don || don.trang_thai === 'nhap') throw new AppError(404, 'Không tìm thấy đơn hàng');
+    const vh = (await client.query(`SELECT id FROM users WHERE id = $1 AND vai_tro = 'van_hanh' AND trang_thai = 'active'`, [den])).rows[0];
+    if (!vh) throw new AppError(400, 'Người nhận phải là Vận hành đang hoạt động');
+    if (don.vanhanh_phu_trach_id === den) throw new AppError(400, 'Đơn đã do người này phụ trách');
+    await repo.ganVanHanh(client, id, { tu: don.vanhanh_phu_trach_id, den, nguoiId: user.id, lyDo });
+    await thongBao.giaoDon(client, id, { den, tu: don.vanhanh_phu_trach_id, nguoiGayId: user.id, lyDo });
+  });
+  return chiTiet(user, id);
 }
 
 export async function taoDonHang(user, data) {
@@ -157,6 +188,8 @@ export async function taoDonHang(user, data) {
   }
   const don = chuanHoaDon(data);
   if (data.chot) kiemTraDuDeChot(don);
+  const ngung = await vatTuDaNgung(don.vat_tu.map((v) => v.vat_tu_id));
+  if (ngung.length) throw new AppError(400, `Vật tư đã ngừng kinh doanh: ${ngung.join(', ')}`);
 
   return withTransaction(async (client) => {
     const ma_don = await repo.sinhMaDon(client);
@@ -167,6 +200,7 @@ export async function taoDonHang(user, data) {
     });
     await repo.thayVatTu(client, moi.id, don.vat_tu);
     if (data.chot) await repo.ghiLichSuGiaiDoan(client, { donHangId: moi.id, tu: null, den: 'len_phuong_an', nguoiId: user.id, ghiChu: 'Chốt đơn' });
+    if (data.chot) await phanCongTuDong(client, moi.id);
     return moi;
   });
 }
@@ -176,12 +210,15 @@ export async function suaDonNhap(user, id, data) {
   if (hienTai.trang_thai !== 'nhap') throw new AppError(409, 'Đơn đã chốt, không sửa trực tiếp được — hãy gửi yêu cầu chỉnh sửa cho Vận hành');
   const don = chuanHoaDon(data);
   if (data.chot) kiemTraDuDeChot(don);
+  const ngung = await vatTuDaNgung(don.vat_tu.map((v) => v.vat_tu_id));
+  if (ngung.length) throw new AppError(400, `Vật tư đã ngừng kinh doanh: ${ngung.join(', ')}`);
   await withTransaction(async (client) => {
     await repo.update(client, id, don);
     await repo.thayVatTu(client, id, don.vat_tu);
     if (data.chot) {
       if (!(await repo.chot(client, id))) throw new AppError(409, 'Đơn đã được chốt trước đó');
       await repo.ghiLichSuGiaiDoan(client, { donHangId: id, tu: null, den: 'len_phuong_an', nguoiId: user.id, ghiChu: 'Chốt đơn' });
+      await phanCongTuDong(client, id);
     }
   });
   // Doc lai SAU khi commit: ket noi khac trong pool khong thay du lieu cua transaction chua commit.
@@ -203,6 +240,7 @@ export async function xoaDonNhap(user, id) {
 }
 
 export async function capNhatPhuongAn(user, id, data) {
+  await damBaoPhuTrach(user, id);
   const donHang = await repo.updatePhuongAn(id, user.id, data);
   if (!donHang) throw new AppError(404, 'Không tìm thấy đơn hàng');
   return donHang;
@@ -213,18 +251,47 @@ export async function guiYeuCauSua(user, id, noiDung) {
   const don = await layDonCuaToi(user, id);
   if (don.trang_thai === 'nhap') throw new AppError(400, 'Đơn nháp có thể sửa trực tiếp, không cần gửi yêu cầu');
   if (don.trang_thai === 'huy') throw new AppError(400, 'Đơn đã huỷ');
-  return repo.createYeuCauSua(id, user.id, noiDung.trim());
+  return withTransaction(async (client) => {
+    const yc = await repo.createYeuCauSua(id, user.id, noiDung.trim(), client);
+    await thongBao.gui(client, {
+      nguoiIds: [don.vanhanh_phu_trach_id], nguoiGayId: user.id, loai: 'yeu_cau_sua',
+      tieuDe: `${user.ho_ten} yêu cầu sửa đơn ${don.ma_don}`, noiDung: noiDung.trim(), link: `/don-hang/${id}`,
+    });
+    return yc;
+  });
 }
 
-// Dieu kien de roi khoi mot buoc (kiem tra o Service, khong tin giao dien).
-function kiemTraRoiBuoc(don) {
-  if (don.giai_doan === 'len_phuong_an') {
+// Dieu kien de roi khoi mot buoc (kiem tra o Service, khong tin giao dien) - theo luong ERP.
+async function kiemTraRoiBuoc(client, don) {
+  const gd = don.giai_doan;
+  if (gd === 'len_phuong_an') {
     const thieu = [];
     if (!don.phuong_an_van_chuyen) thieu.push('phương án vận chuyển');
     if (don.hinh_thuc === 'hoan_thien' && !don.phuong_an_thi_cong) thieu.push('phương án thi công');
     if (thieu.length) throw new AppError(400, `Chưa thể chuyển bước, còn thiếu: ${thieu.join(', ')}`);
   }
+  if (!['mua_hang', 'thi_cong', 'nghiem_thu', 'quyet_toan'].includes(gd)) return;
+  const dk = await repo.dieuKienRoiBuoc(client, don.id);
+  // Mua hang xong = 100% vat tu mua ngoai da san hang -> Van hanh "dang ky giao hang".
+  if (gd === 'mua_hang' && dk.dong_chua_san > 0) throw new AppError(400, `Còn ${dk.dong_chua_san} dòng vật tư chưa sẵn hàng — chưa đăng ký giao hàng được`);
+  if (gd === 'thi_cong' && (dk.so_giai_doan === 0 || dk.giai_doan_chua_xong > 0)) {
+    throw new AppError(400, 'Mọi giai đoạn thi công phải báo xong trước khi sang Nghiệm thu');
+  }
+  if (gd === 'nghiem_thu' && !don.nghiem_thu_luc) throw new AppError(400, 'Hãy nhập số lượng thực tế và bấm "Xác nhận nghiệm thu"');
+  if (gd === 'quyet_toan') throw new AppError(400, 'Dùng nút "Chốt quyết toán" để kết thúc đơn');
 }
+
+// Van hanh chi XEM va THAO TAC don minh phu trach (giong Sale chi thay don cua minh). Admin, Ke toan khong bi gioi han.
+// Don chua phan cong: Van hanh khong thay — Admin phan truoc.
+export async function damBaoPhuTrach(user, donHangId, client) {
+  if (user.vai_tro !== 'van_hanh') return;
+  const phuTrach = await repo.phuTrachCua(donHangId, client);
+  if (phuTrach === undefined) throw new AppError(404, 'Không tìm thấy đơn hàng');
+  if (phuTrach !== user.id) throw new AppError(403, 'Bạn không phụ trách đơn hàng này');
+}
+
+// Pham vi danh sach: Van hanh -> id cua minh, vai tro khac -> null (khong loc).
+export const vanHanhCua = (user) => (user.vai_tro === 'van_hanh' ? user.id : null);
 
 function kiemTraQuyen(user, giaiDoan) {
   const canVaiTro = vaiTroPhuTrach(giaiDoan);
@@ -233,13 +300,16 @@ function kiemTraQuyen(user, giaiDoan) {
   }
 }
 
-async function luuChuyenBuoc(user, don, den, trangThai, ghiChu) {
+async function luuChuyenBuoc(user, don, den, trangThai, ghiChu, kiemTra = false) {
   await withTransaction(async (client) => {
+    if (kiemTra) await kiemTraRoiBuoc(client, don);
     const ok = await repo.chuyenGiaiDoan(client, don.id, {
       tu: don.giai_doan, den, trangThai, vanHanhId: user.vai_tro === 'van_hanh' ? user.id : null,
     });
     if (!ok) throw new AppError(409, 'Đơn vừa được người khác cập nhật tiến độ, vui lòng tải lại trang');
     await repo.ghiLichSuGiaiDoan(client, { donHangId: don.id, tu: don.giai_doan, den, nguoiId: user.id, ghiChu });
+    if (don.giai_doan === 'giao_hang' && !['mua_hang', 'huy'].includes(den)) await repo.danhDauDaGiao(client, don.id);
+    await thongBao.tienDoDon(client, don.id, den, { nguoiGayId: user.id, ghiChu });
   });
   return chiTiet(user, don.id);
 }
@@ -251,25 +321,49 @@ export async function chuyenGiaiDoan(user, id, { huong, ghi_chu }) {
   if (!don || don.trang_thai === 'nhap') throw new AppError(404, 'Không tìm thấy đơn hàng');
   if (['hoan_tat', 'huy'].includes(don.giai_doan)) throw new AppError(409, `Đơn đã ${NHAN[don.giai_doan].toLowerCase()}, không chuyển bước được`);
   kiemTraQuyen(user, don.giai_doan);
+  await damBaoPhuTrach(user, id);
   const ghiChu = chuOrNull(ghi_chu);
   const den = buocKe(don.hinh_thuc, don.giai_doan, huong);
   if (!den) throw new AppError(400, 'Đơn đang ở bước đầu tiên, không lùi được nữa');
   if (huong === 'lui' && !ghiChu) throw new AppError(400, 'Vui lòng ghi lý do lùi bước');
-  if (huong === 'tiep') kiemTraRoiBuoc(don);
-  return luuChuyenBuoc(user, don, den, den === 'hoan_tat' ? 'hoan_tat' : 'dang_xu_ly', ghiChu);
+  return luuChuyenBuoc(user, don, den, den === 'hoan_tat' ? 'hoan_tat' : 'dang_xu_ly', ghiChu, huong === 'tiep');
+}
+
+// Module khac (Mua hang, Thi cong) tu day tien do don trong CUNG transaction cua no:
+// vd "nhan du hang" va "chuyen sang Giao hang" cung thanh cong hoac cung that bai.
+// Don khong con o buoc `tu` (nguoi khac da chuyen) -> bo qua, tra false.
+export async function tuDongChuyenBuoc(client, { donHangId, tu, den, nguoiId, ghiChu }) {
+  const ok = await repo.chuyenGiaiDoan(client, donHangId, {
+    tu, den, trangThai: den === 'hoan_tat' ? 'hoan_tat' : 'dang_xu_ly', vanHanhId: null,
+  });
+  if (ok) {
+    await repo.ghiLichSuGiaiDoan(client, { donHangId, tu, den, nguoiId, ghiChu });
+    if (tu === 'giao_hang' && !['mua_hang', 'huy'].includes(den)) await repo.danhDauDaGiao(client, donHangId);
+    await thongBao.tienDoDon(client, donHangId, den, { nguoiGayId: nguoiId, ghiChu });
+  }
+  return ok;
 }
 
 export async function huyDon(user, id, { ly_do }) {
   const don = await repo.findById(id);
   if (!don || don.trang_thai === 'nhap') throw new AppError(404, 'Không tìm thấy đơn hàng');
   if (!HUY_DUOC.includes(don.giai_doan)) throw new AppError(409, 'Chỉ huỷ được đơn trước khi giao hàng');
+  await damBaoPhuTrach(user, id);
   const lyDo = chuOrNull(ly_do);
   if (!lyDo) throw new AppError(400, 'Vui lòng ghi lý do huỷ đơn');
   return luuChuyenBuoc(user, don, 'huy', 'huy', lyDo);
 }
 
-export async function xuLyYeuCauSua(donHangId, yeuCauId) {
-  const yeuCau = await repo.danhDauDaXuLy(donHangId, yeuCauId);
-  if (!yeuCau) throw new AppError(409, 'Yêu cầu không tồn tại hoặc đã được xử lý');
-  return yeuCau;
+export async function xuLyYeuCauSua(user, donHangId, yeuCauId) {
+  await damBaoPhuTrach(user, donHangId);
+  return withTransaction(async (client) => {
+    const yeuCau = await repo.danhDauDaXuLy(donHangId, yeuCauId, client);
+    if (!yeuCau) throw new AppError(409, 'Yêu cầu không tồn tại hoặc đã được xử lý');
+    const { rows } = await client.query('SELECT ma_don FROM don_hang WHERE id = $1', [donHangId]);
+    await thongBao.gui(client, {
+      nguoiIds: [yeuCau.sale_id], nguoiGayId: user.id, loai: 'yeu_cau_sua_xong',
+      tieuDe: `Vận hành đã xử lý yêu cầu sửa đơn ${rows[0].ma_don}`, noiDung: yeuCau.noi_dung, link: `/don-hang/${donHangId}`,
+    });
+    return yeuCau;
+  });
 }

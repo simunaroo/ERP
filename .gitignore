@@ -17,3 +17,6 @@ _hinh/plantuml.jar
 
 # Cau hinh rieng may cua Claude Code
 .claude/settings.local.json
+
+# File nguoi dung tai len (anh bill chuyen khoan...)
+backend/uploads/

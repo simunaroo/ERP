@@ -243,6 +243,157 @@ Mỗi vòng lặp ghi: mục tiêu, đã làm, yêu cầu thay đổi (và lý d
 
 ---
 
+## Vòng 3.3 — Mua hàng, Thi công & nghiệm thu, Công nợ NCC + duyệt chi Telegram (06/10/2026)
+
+### Mua hàng (migration 009)
+- Tab "Cần mua": đơn đang ở bước Mua hàng + dòng vật tư **mua ngoài** (cửa tự sản xuất không hiện), số cần / đã đề xuất / đã nhận; mỗi dòng chọn NCC, mặc định NCC **rẻ nhất hôm nay** (dùng lại bảng giá theo thời gian). Một lần tạo tự **tách thành nhiều đề xuất theo NCC**.
+- Luồng: chờ đặt hàng → Kế toán đặt hàng → nhận hàng. **Nhận đủ mọi vật tư mua ngoài → đơn tự sang bước Giao hàng**, trong cùng transaction.
+- Giá **chụp lại lúc mua**: NCC tăng giá sau đó, đề xuất cũ giữ giá cũ.
+- `SELECT ... FOR UPDATE` trên đơn: 2 người cùng đề xuất mua thì người sau thấy số đã đề xuất mới nhất → không mua vượt. CHECK: trạng thái phải khớp mốc thời gian (đã giao ⇒ có ngày nhận hàng).
+- **Lỗi gặp:** `inconsistent types deduced for parameter $3` — cùng một tham số vừa gán vào cột ENUM vừa so sánh với chuỗi → ép kiểu `$3::trang_thai_mua_hang_enum`. Giao diện phát hiện vật tư chưa NCC nào báo giá vẫn bấm được "Tạo đề xuất" → bỏ qua dòng đó, khoá nút, gợi ý bổ sung bảng giá.
+
+### Thi công & nghiệm thu (migration 010)
+- Đội thợ (thêm, ngừng hoạt động, số việc đang mở); lịch thi công gom theo ngày; danh sách "Cần xếp lịch".
+- Luồng: xếp lịch → **Bắt đầu** (đơn tự sang Thi công) → **Báo xong** (đơn tự sang Nghiệm thu) → **Biên bản nghiệm thu**: Đạt → đơn sang Quyết toán; Không đạt (bắt buộc ghi hạng mục sửa) → đơn tự lùi về Thi công.
+- Điều khoản "nghiệm thu theo số m²" → bắt buộc nhập khối lượng thực tế. Kết quả nghiệm thu chuyển từ chữ tự do sang ENUM.
+- **Unique index một phần** `(don_hang_id) WHERE trang_thai <> 'da_nghiem_thu'`: mỗi đơn tối đa 1 đợt thi công đang mở. Trùng lịch đội thợ chỉ **cảnh báo** (409 → hỏi lại → gửi kèm xác nhận) vì đội có thể làm 2 việc nhỏ/ngày.
+- **Lỗ hổng nghiệp vụ phát hiện khi chạy giao diện:** bắt đầu thi công được cả khi đơn còn ở Mua hàng (chưa có hàng) → chặn, chỉ cho bắt đầu khi đơn ở Giao hàng/Thi công.
+
+### Công nợ NCC + duyệt chi Telegram (migration 011)
+- Công nợ phát sinh khi **nhận hàng**; mỗi NCC: còn nợ, tuổi nợ (≤30 / 31–60 / >60 ngày), chờ duyệt/chi, chưa lập đề xuất chi.
+- Luồng: Kế toán lập đề xuất chi (gom đề xuất mua đã nhận hàng, **số tiền server tự tính**) → gửi Telegram tin có nút ✅ Duyệt / ❌ Từ chối → giám đốc bấm → Kế toán thanh toán, hệ thống tạo **mã VietQR** đúng số tiền + nội dung CK. Không cấu hình Telegram thì Admin duyệt trên web. **Tách người lập (Kế toán) và người duyệt (Admin).**
+- Chống trả tiền 2 lần: **TRIGGER** chặn một đề xuất mua nằm trong 2 đề xuất chi còn hiệu lực (CHECK không tham chiếu được bảng khác) + `FOR UPDATE` khi lập (trigger không thấy giao dịch chưa commit). UNIQUE: mỗi đề xuất chi chỉ một phiếu thanh toán.
+- Bảo mật webhook: header secret so sánh **thời gian hằng số** (`timingSafeEqual`); chỉ username trong danh sách được duyệt (ai trong nhóm chat cũng thấy nút); callback phải khớp đúng message_id đã gửi; bấm lần 2 không có tác dụng (`UPDATE ... WHERE trang_thai = 'cho_duyet'`); escape HTML tên NCC/ghi chú; không gửi số tài khoản lên Telegram.
+- Gửi Telegram **sau khi commit**: Telegram lỗi không làm mất đề xuất chi. Máy cá nhân dùng **polling**, server thật dùng **webhook**.
+
+**Kiểm thử:** Mua hàng 20 ca, Thi công 26 ca, Công nợ 27 ca (Telegram giả lập: sai secret, người lạ bấm, callback giả, bấm 2 lần, Telegram lỗi) + chạy cả 3 luồng trên giao diện.
+
+---
+
+## Vòng 3.4 — Làm lại Mua hàng, Thi công, Công nợ theo luồng ERP thực tế (06–07/10/2026)
+
+**Lý do:** sau khi đọc (chỉ tham khảo nghiệp vụ, không chép mã) cách ERP công ty vận hành, mô hình cũ của đồ án khác thực tế ở 3 điểm lớn: mua hàng theo *phiếu đề xuất* thay vì theo *từng dòng vật tư*; công nợ NCC ghi khi nhận hàng thay vì khi *đề xuất chi được duyệt*; thi công không tính công thợ và nghiệm thu không theo số lượng thực tế.
+
+**Đã làm (migration 012 + 013)**
+- **Mua hàng theo dòng** (`mua_hang_dong`): mỗi dòng vật tư mua ngoài có NCC (gợi ý top 3 rẻ nhất hôm nay), giá chốt chụp lại, VAT, trạng thái: Chưa xử lý → Đang hỏi → Đã đặt → Đã sẵn hàng → (hệ thống) Đã lấy → Đã giao. Đủ 100% sẵn hàng mới "Đăng ký giao hàng" (Vận hành bấm, không tự động — ERP cũng bỏ tự động). Rời bước Giao hàng thì mọi dòng tự thành "Đã giao hàng".
+- **Mua bổ sung** có loại phát sinh (hàng hỏng, NCC giao thiếu, thợ làm hỏng...) và chia tiền trách nhiệm cho từng nguồn; tổng trách nhiệm phải bằng tiền hàng.
+- **Đề xuất chi** 1 đơn × 1 NCC hoặc 1 đội thợ, 5 loại: Cọc (khi đã đặt, tổng cọc < tiền hàng) / Quyết toán (khi sẵn hàng, server tính = tiền hàng + VAT − cọc đã duyệt) / Chi bổ sung / Trả công / Ứng công (≤ 50% công dự kiến). Luồng: Chờ duyệt → Duyệt (web hoặc Telegram) → Đã chi (**bắt buộc ảnh bill**, kiểm tra định dạng bằng magic bytes); Từ chối → Kế toán sửa, hệ thống tính lại, gửi lại; Thu hồi khi đã duyệt mà chưa chi. Dòng đã vào quyết toán bị khoá NCC/giá/VAT.
+- **Công nợ NCC** = tiền hàng (quyết toán + chi bổ sung đã duyệt) − đã chi; âm là "chi thừa" (cọc trước khi có hàng). **Công nợ thợ** = phải trả − đã trả − tạm ứng − thợ thu hộ.
+- **Thi công theo giai đoạn**: mỗi giai đoạn 1 đội thợ, giá công × khối lượng. Bắt đầu giai đoạn đầu → đơn sang Thi công; mọi giai đoạn báo xong → Nghiệm thu.
+- **Nghiệm thu** = nhập số lượng thực tế từng dòng vật tư + khối lượng thực tế từng giai đoạn; hao hụt > 10% cảnh báo. **Phát sinh thi công**: phát sinh/phụ thu (+), giảm trừ (−), thợ thu hộ (trừ công thợ, coi như khách đã trả).
+- **Quyết toán** do Vận hành chốt (giống ERP): tổng = SL thực tế × giá − chiết khấu + phí VC + phụ thu + phát sinh; khoá giá trị đơn, ghi công thợ "phải trả", đơn hoàn tất. VIEW `v_don_hang_tien` tính theo SL thực tế và lấy giá trị chốt khi đã quyết toán.
+
+**Giữ chặt hơn ERP ở chỗ ERP còn yếu:** duyệt chi trên web phải đúng vai trò; bot Telegram chỉ tin danh sách người duyệt (ERP tin mọi thành viên nhóm); không ghi cứng tên người trong mã.
+
+**Quyết định kỹ thuật**
+- **Bảng `schema_migrations`**: mỗi migration chạy đúng 1 lần (như Flyway/Knex). Lý do: 013 xoá bảng cũ mà migration 007–011 còn tham chiếu, chạy lại từ đầu sẽ lỗi. DB tạo mới từ `schema.sql` được đánh dấu "đã chạy" (baseline). Migration 004 sửa thành "chỉ tạo VIEW khi chưa có" vì 013 định nghĩa lại VIEW (lỗi `cannot drop columns from view` khi chạy lại).
+- Chống trả tiền 2 lần: TRIGGER chặn 1 dòng vào 2 đề xuất quyết toán + `FOR UPDATE` khi lập.
+- Migration 013 **chuyển dữ liệu cũ** (suy NCC/giá/trạng thái từng dòng từ đề xuất mua cũ, dựng lại quyết toán theo đơn × NCC) thay vì bắt reset DB. Trước khi chạy trên DB thật đã **sao lưu bằng pg_dump**.
+
+**Lỗi phát hiện & bài học**
+- **Sai số số thực khi tính tiền**: 40 × 180.000 × 1,08 = `7776000.000000001` → kiểm tra "cọc ≥ tiền hàng" sai đúng ở ranh giới. Sửa: làm tròn về đồng từng dòng trước khi cộng/so sánh.
+- Gửi lại đề xuất bị từ chối có nguy cơ gom nhầm dòng đang ở đề xuất *khác* (điều kiện thừa) — phát hiện khi đọc lại mã, sửa trước khi chạy.
+
+**Kiểm thử:** 58 ca API đi trọn 1 đơn (chọn NCC → cọc → duyệt/từ chối/gửi lại/thu hồi → đã chi kèm bill → giao hàng → 2 giai đoạn thợ → ứng công → nghiệm thu, hao hụt → thợ thu hộ → quyết toán → trả công → mua bổ sung → công nợ khớp SQL) + chạy cả luồng trên giao diện bằng 4 vai trò.
+
+---
+
+## Vòng 3.5 — Quản trị người dùng, Danh mục vật tư, Tổng quan (07/10/2026, migration 014)
+
+**Quản trị người dùng (Admin)**: tạo tài khoản (mật khẩu tạm ngẫu nhiên hiện 1 lần), đổi vai trò, khoá/mở, đặt lại mật khẩu; ai cũng tự đổi được mật khẩu (≥ 8 ký tự, có chữ và số).
+- **Thu hồi JWT**: thêm `phien_ban_token`; khoá / đổi vai trò / đổi mật khẩu thì tăng số này, middleware đối chiếu với CSDL mỗi request → token cũ hết hiệu lực **ngay** (trước đây phải đợi 8 giờ). Vai trò lấy từ CSDL, không tin token. Đổi lại: thêm 1 truy vấn theo khoá chính mỗi request.
+- Không tự khoá/tự hạ quyền mình; luôn còn ít nhất 1 Admin (khoá các dòng admin `FOR UPDATE` để 2 người không cùng lúc bỏ 2 admin cuối). Không xoá người dùng (lịch sử tham chiếu) — chỉ khoá.
+- **Chặn dò mật khẩu**: sai 5 lần / 15 phút theo tên đăng nhập + IP thì tạm chặn (lưu trong bộ nhớ, nhiều server thì cần Redis).
+
+**Danh mục vật tư (Kế toán, Admin)**: thêm/sửa vật tư và loại vật tư; tên không trùng (UNIQUE trên `lower(trim(ten))`); vật tư đã dùng trong đơn không đổi loại (tránh đổi nguồn gốc tự SX ↔ mua ngoài); **ngừng kinh doanh = ẩn** khỏi form tạo đơn, AI và bảng giá mới, server chặn cả khi gọi thẳng API; đơn cũ giữ nguyên.
+
+**Tổng quan (mọi vai trò)**: KPI (doanh thu tháng so cùng kỳ tháng trước, đơn chốt, đơn đang xử lý, còn phải trả NCC), biểu đồ doanh thu 6 tháng (có bảng dữ liệu thay thế), đơn theo tiến độ, **việc cần làm theo vai trò** có đường dẫn tới màn xử lý (Sale: đơn nháp, khách lâu chưa chăm sóc; Vận hành: chờ lên phương án, đủ hàng chờ giao, chưa phân thợ, chờ nghiệm thu/quyết toán; Kế toán: dòng chưa đặt, chưa lập quyết toán NCC, đề xuất bị từ chối, chờ chuyển khoản, công thợ chưa trả; Admin: đề xuất chờ duyệt). Sale chỉ thấy số liệu của mình.
+
+**Kiểm thử:** 34 ca API (thu hồi token khi khoá/đổi vai trò/đổi mật khẩu, admin cuối cùng, chặn dò mật khẩu, trùng tên vật tư, vật tư ngừng bị chặn ở API, KPI khớp SQL, phạm vi số liệu Sale) + giao diện desktop/điện thoại.
+
+---
+
+## Vòng 3.6 — Phân công Vận hành phụ trách đơn (07/10/2026, migration 015)
+
+**Vấn đề:** trước đây đơn mới chốt không thuộc về ai; Vận hành nào bấm chuyển bước trước thì thành người phụ trách → dễ 2 người cùng làm một đơn hoặc đơn bị bỏ sót.
+
+- **Tự động phân khi Sale chốt đơn**: chọn Vận hành đang hoạt động có **ít đơn đang mở nhất** (chưa hoàn tất/huỷ), hoà thì lấy id nhỏ hơn. Chạy trong cùng transaction với việc chốt; dùng `pg_advisory_xact_lock` để 2 đơn chốt cùng lúc không cùng đọc một số liệu cũ rồi cùng giao cho 1 người (đã thử 6 đơn chốt đồng thời → chia đều, lệch ≤ 1). Không có Vận hành nào → để trống, Admin thấy mục "Đơn chưa có Vận hành phụ trách" ở Tổng quan.
+- **Chỉ người phụ trách + Admin được thao tác**: hàm dùng chung `damBaoPhuTrach(user, donHangId)` (403 nếu Vận hành khác) gọi ở mọi thao tác của Vận hành: chuyển bước, huỷ, phương án, yêu cầu sửa, mua hàng (sửa dòng, lấy hàng, mua bổ sung), thi công (giai đoạn, bắt đầu/báo xong, nghiệm thu, phát sinh, chốt quyết toán). Kiểm tra ở **server**; giao diện chỉ ẩn nút cho dễ dùng.
+- **Admin chuyển phụ trách** (`PUT /don-hang/:id/phu-trach`, bắt buộc lý do; người nhận phải là Vận hành đang hoạt động). Mọi lần phân/chuyển ghi vào `don_hang_phan_cong_log` (từ ai → ai, ai làm, lý do) — hiện ở chi tiết đơn.
+- Sửa lỗi cũ: lưu phương án từng **ghi đè** người phụ trách → đổi sang `COALESCE`.
+- Danh sách đơn có bộ lọc "Vận hành phụ trách" (Đơn tôi phụ trách / Chưa phân công / từng người); "Việc cần làm" của Vận hành chỉ đếm đơn mình phụ trách.
+- Migration 015: bảng log + index; đơn cũ chưa có người phụ trách được chia quay vòng.
+
+**Kiểm thử:** 30 ca API (tự phân đúng người ít việc, bỏ qua người bị khoá, 403 cho Vận hành khác ở đơn hàng/mua hàng/thi công, Admin không bị chặn, chuyển phụ trách + các ca lỗi, người cũ mất quyền ngay, lọc, chốt đồng thời) + chạy migration trên bản sao CSDL thật trước khi áp dụng.
+
+---
+
+## Vòng 3.7 — Trạng thái dòng mua hàng tự động (07/10/2026)
+
+**Vấn đề:** người dùng phải chọn trạng thái cho **từng dòng** vật tư (dropdown) — việc thừa, dễ quên, dễ sai.
+
+**Nguyên tắc:** trạng thái là **hệ quả của thao tác**, không phải một việc riêng. Chỉ sự kiện xảy ra **ngoài hệ thống** (NCC gọi báo có hàng) mới cần bấm — và bấm **1 lần cho cả NCC**, không theo từng dòng.
+
+| Trạng thái | Do đâu |
+|---|---|
+| ⏳ Chưa chọn NCC → 🛒 Đã chọn NCC | Tự động khi chọn / bỏ NCC; đổi NCC = đặt lại từ đầu với NCC mới |
+| 📦 Đã đặt hàng | Nút "Đã đặt hàng" theo NCC |
+| ✅ Sẵn hàng | Nút "NCC báo sẵn hàng" theo NCC (NCC có sẵn kho thì bấm thẳng, bỏ qua bước đặt) |
+| 🚚 Đã lấy / 🏠 Đã giao | Đã tự động từ trước (xác nhận lấy hàng, rời bước Giao hàng) |
+
+- Nút "↩ Lùi" khi bấm nhầm: lùi 1 nấc; không lùi dòng đã vào đề xuất quyết toán, không lùi về "chưa đặt" khi NCC đã có đề xuất cọc (giữ khớp chứng từ tiền).
+- Huỷ / khôi phục dòng là thao tác riêng; dòng đã huỷ không sửa được.
+- **Cố ý không tự động** chuyển đơn sang Giao hàng khi đủ hàng: Vận hành còn phải soát tạm ứng của khách trước khi giao — đó là một quyết định, không phải nhập liệu.
+- API: `POST /mua-hang/don/:id/ncc {ncc_id, hanh_dong: dat_hang|san_hang|lui}`; `PUT /mua-hang/dong/:id` bỏ trường `trang_thai`, thêm `huy`. Không đổi CSDL (ENUM giữ nguyên, chỉ đổi nhãn hiển thị).
+
+**Kiểm thử:** 18 ca API (tự chuyển khi chọn/bỏ NCC, đặt/sẵn hàng theo NCC không ảnh hưởng NCC khác, bấm lặp → 409, khoá lùi khi có cọc/quyết toán, huỷ/khôi phục, phân quyền).
+
+---
+
+## Vòng 3.8 — Vận hành chỉ thấy đơn mình phụ trách (07/10/2026)
+
+Giống Sale chỉ thấy đơn của mình: Vận hành chỉ **xem và thao tác** đơn có `vanhanh_phu_trach_id = mình`. Admin, Kế toán vẫn thấy toàn bộ (Kế toán làm tiền cho mọi đơn).
+- **Lọc ở server, không tin client**: hàm `vanHanhCua(user)` trả id Vận hành (hoặc NULL = không lọc) đưa vào WHERE của mọi danh sách: đơn hàng, mua hàng, mua bổ sung, lịch thi công, đơn cần lập lịch, chờ quyết toán, KPI/biểu đồ Tổng quan. Gửi `van_hanh_id` người khác lên vẫn bị bỏ qua.
+- **Chi tiết**: mở thẳng URL đơn người khác (đơn hàng, mua hàng, thi công, nghiệm thu, quyết toán) → 403.
+- **Đơn chưa phân công** (không có Vận hành nào đang hoạt động lúc chốt): Vận hành không thấy, không nhận được — Admin phân. Trước đây Vận hành nào bấm trước thì nhận; bỏ để khớp nguyên tắc “chỉ thấy đơn của mình”.
+- Giao diện: bỏ bộ lọc “Vận hành phụ trách” với Vận hành (đã mặc định), Tổng quan hiện “Số liệu các đơn bạn phụ trách”.
+
+**Kiểm thử:** 28 ca API (danh sách từng module, giả mạo tham số lọc, 403 khi mở URL đơn người khác, Kế toán/Admin không bị giới hạn, Sale không ảnh hưởng, đơn chưa phân công → Admin phân → Vận hành thấy).
+
+---
+
+## Vòng 3.9 — Tự lập đề xuất quyết toán + Thông báo trong hệ thống (07/10/2026, migration 016)
+
+**Tự lập đề xuất quyết toán NCC:** bấm "NCC báo sẵn hàng" → hệ thống tự lập đề xuất quyết toán (số tiền = tiền hàng + VAT − cọc đã duyệt), gửi Admin duyệt. Lùi "sẵn hàng" khi đề xuất chưa duyệt → xoá đề xuất theo; đã duyệt/đã chi → không lùi (Admin thu hồi). Cọc vẫn lập tay (số tiền do thoả thuận).
+
+**Thông báo (nút 🔔 trên thanh trên cùng):** thao tác xong → người liên quan nhận thông báo, bấm vào mở đúng trang xử lý.
+
+| Sự kiện | Người nhận |
+|---|---|
+| Chốt đơn (tự phân) / Admin chuyển phụ trách | Vận hành được giao (và người cũ khi chuyển) |
+| Đơn chuyển bước (tay hoặc tự động), huỷ đơn | Sale của đơn |
+| Sale gửi yêu cầu sửa / Vận hành xử lý xong | Vận hành phụ trách / Sale |
+| Đề xuất chi mới, gửi lại | Admin |
+| Admin duyệt | Kế toán (cần chuyển khoản) + người lập |
+| Từ chối, thu hồi | Kế toán + người lập (kèm lý do) |
+| Kế toán đã chi | Người lập + Vận hành phụ trách đơn |
+| Tạo phiếu mua bổ sung / đã mua | Kế toán / Vận hành phụ trách |
+
+- **Ghi cùng transaction** với thao tác gốc: thao tác lỗi (rollback) thì không có thông báo "ma". Không gửi cho chính người vừa thao tác; chỉ gửi tài khoản đang hoạt động.
+- Duyệt qua Telegram cũng sinh thông báo (dùng chung hàm duyệt).
+- **Polling 30 giây**, dừng khi tab ẩn. Chọn polling thay WebSocket/SSE vì đơn giản, hợp quy mô vài chục người dùng; nhược điểm trễ ≤ 30 giây và tốn request rỗng — quy mô lớn sẽ chuyển SSE/WebSocket.
+- Bảo mật: chỉ đọc/đánh dấu thông báo của chính mình (`WHERE nguoi_nhan_id = req.user.id`), đoán id thông báo người khác → 404.
+- Index riêng cho đếm chưa đọc (partial index `WHERE da_doc_luc IS NULL`).
+
+**Kiểm thử:** 13 ca API tự lập quyết toán + 19 ca API thông báo (đúng người nhận từng sự kiện, không tự nhận, rollback không sinh thông báo, đọc/đọc hết, không đọc được của người khác, 401) + giao diện desktop/điện thoại.
+
+**Rà soát trước khi commit:**
+- So `pg_dump --schema-only` của DB chạy migration với DB tạo mới từ `schema.sql` → lệch 2 chỗ (2 ENUM cũ còn sót sau migration 013; default `don_hang.trang_thai` là `moi` thay vì `nhap`) → migration **017** đồng bộ, so lại: 0 chỗ lệch.
+- Quét mọi API GET × 4 vai trò trên dữ liệu lớn: không lỗi 500. Phát hiện **lộ dữ liệu**: `/danh-muc/khach-hang` (có SĐT, địa chỉ) mở cho cả Vận hành/Kế toán dù module Khách hàng chặn họ → giới hạn Sale + Admin.
+- Không có khoá bí mật trong file sắp commit; `.env`, `uploads/`, `dist/` nằm ngoài git.
+
+---
+
 ## Vòng 3 — (dự kiến) Giai đoạn đơn hàng + NCC & bảng giá
 
 **Đề xuất đang cân nhắc**

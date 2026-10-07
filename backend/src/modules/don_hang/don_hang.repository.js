@@ -16,7 +16,7 @@ const SAP_XEP = {
 export const KHOA_SAP_XEP = Object.keys(SAP_XEP);
 
 export async function findAll({
-  saleId, anNhap, trangThai, giaiDoan, hinhThuc, tuKhoa, nhomKhach, tinhThanh, nghiemThu,
+  saleId, anNhap, trangThai, giaiDoan, hinhThuc, vanHanhId, tuKhoa, nhomKhach, tinhThanh, nghiemThu,
   chotTu, chotDen, lapDatTu, lapDatDen, tongTu, tongDen, conNo, sapXep, limit, offset,
 }) {
   const where = [];
@@ -25,6 +25,8 @@ export async function findAll({
   if (saleId) them('dh.sale_id = ?', saleId);
   if (anNhap) where.push(`dh.trang_thai <> 'nhap'`);
   if (trangThai) them('dh.trang_thai = ?', trangThai);
+  if (vanHanhId === 'chua') where.push('dh.vanhanh_phu_trach_id IS NULL');
+  else if (vanHanhId) them('dh.vanhanh_phu_trach_id = ?', vanHanhId);
   if (giaiDoan) them('dh.giai_doan = ?', giaiDoan);
   if (hinhThuc) them('dh.hinh_thuc = ?', hinhThuc);
   if (nhomKhach) them('kh.nhom_khach_hang = ?', nhomKhach);
@@ -173,6 +175,28 @@ export async function chuyenGiaiDoan(client, id, { tu, den, trangThai, vanHanhId
   return rows.length > 0;
 }
 
+// Dieu kien roi buoc (doc trong cung transaction voi luc chuyen).
+export async function dieuKienRoiBuoc(client, donHangId) {
+  const { rows } = await client.query(
+    `SELECT
+       (SELECT count(*) FROM mua_hang_dong m JOIN don_hang_vat_tu v ON v.id = m.don_hang_vat_tu_id
+         WHERE v.don_hang_id = $1 AND m.trang_thai NOT IN ('san_hang', 'da_lay_hang', 'da_giao_hang', 'huy'))::int AS dong_chua_san,
+       (SELECT count(*) FROM thi_cong WHERE don_hang_id = $1)::int AS so_giai_doan,
+       (SELECT count(*) FROM thi_cong WHERE don_hang_id = $1 AND ngay_hoan_thanh IS NULL)::int AS giai_doan_chua_xong`,
+    [donHangId],
+  );
+  return rows[0];
+}
+
+// Don roi buoc Giao hang (di tiep): moi dong da san/da lay -> da giao hang (giong ERP: he thong tu dat).
+export async function danhDauDaGiao(client, donHangId) {
+  await client.query(
+    `UPDATE mua_hang_dong m SET trang_thai = 'da_giao_hang', cap_nhat_luc = now()
+       FROM don_hang_vat_tu v WHERE v.id = m.don_hang_vat_tu_id AND v.don_hang_id = $1 AND m.trang_thai IN ('san_hang', 'da_lay_hang')`,
+    [donHangId],
+  );
+}
+
 export async function ghiLichSuGiaiDoan(client, { donHangId, tu, den, nguoiId, ghiChu }) {
   await client.query(
     `INSERT INTO don_hang_giai_doan_log (don_hang_id, tu_giai_doan, den_giai_doan, nguoi_id, ghi_chu)
@@ -189,6 +213,45 @@ export async function findLichSuGiaiDoan(donHangId) {
     [donHangId],
   );
   return rows;
+}
+
+// Chon Van hanh dang hoat dong co it don chua xong nhat. Khoa tu van (advisory lock) de 2 don chot
+// cung luc khong cung doc mot so lieu cu roi cung giao cho 1 nguoi.
+export async function chonVanHanhItViec(client) {
+  await client.query(`SELECT pg_advisory_xact_lock(hashtext('phan_cong_van_hanh'))`);
+  const { rows } = await client.query(
+    `SELECT u.id FROM users u
+      WHERE u.vai_tro = 'van_hanh' AND u.trang_thai = 'active'
+      ORDER BY (SELECT count(*) FROM don_hang d WHERE d.vanhanh_phu_trach_id = u.id AND d.trang_thai <> 'nhap'
+                  AND d.giai_doan NOT IN ('hoan_tat', 'huy')), u.id
+      LIMIT 1`,
+  );
+  return rows[0]?.id ?? null;
+}
+
+export async function ganVanHanh(client, donHangId, { tu, den, nguoiId, lyDo }) {
+  await client.query('UPDATE don_hang SET vanhanh_phu_trach_id = $2 WHERE id = $1', [donHangId, den]);
+  await client.query(
+    'INSERT INTO don_hang_phan_cong_log (don_hang_id, tu_van_hanh_id, den_van_hanh_id, nguoi_id, ly_do) VALUES ($1, $2, $3, $4, $5)',
+    [donHangId, tu, den, nguoiId, lyDo],
+  );
+}
+
+export async function lichSuPhanCong(donHangId) {
+  const { rows } = await query(
+    `SELECT l.id, l.ly_do, l.created_at, t.ho_ten AS tu, d.ho_ten AS den, n.ho_ten AS nguoi
+       FROM don_hang_phan_cong_log l
+       LEFT JOIN users t ON t.id = l.tu_van_hanh_id JOIN users d ON d.id = l.den_van_hanh_id LEFT JOIN users n ON n.id = l.nguoi_id
+      WHERE l.don_hang_id = $1 ORDER BY l.created_at, l.id`,
+    [donHangId],
+  );
+  return rows;
+}
+
+// Phu trach hien tai cua don (dung de kiem tra quyen o moi module).
+export async function phuTrachCua(donHangId, client = { query }) {
+  const { rows } = await client.query('SELECT vanhanh_phu_trach_id FROM don_hang WHERE id = $1', [donHangId]);
+  return rows[0] ? rows[0].vanhanh_phu_trach_id : undefined;
 }
 
 export async function datBaoGiaToken(id, token) {
@@ -209,7 +272,7 @@ export async function updatePhuongAn(id, vanHanhId, data) {
     `UPDATE don_hang
         SET phuong_an_van_chuyen = $2,
             phuong_an_thi_cong   = $3,
-            vanhanh_phu_trach_id = $4,
+            vanhanh_phu_trach_id = COALESCE(vanhanh_phu_trach_id, $4),
             trang_thai = CASE WHEN trang_thai = 'moi' THEN 'dang_xu_ly' ELSE trang_thai END
       WHERE id = $1 AND trang_thai NOT IN ('nhap', 'huy', 'hoan_tat')
       RETURNING *`,
@@ -218,8 +281,8 @@ export async function updatePhuongAn(id, vanHanhId, data) {
   return rows[0] || null;
 }
 
-export async function createYeuCauSua(donHangId, saleId, noiDung) {
-  const { rows } = await query(
+export async function createYeuCauSua(donHangId, saleId, noiDung, client = { query }) {
+  const { rows } = await client.query(
     `INSERT INTO don_hang_yeu_cau_sua (don_hang_id, sale_id, noi_dung)
      VALUES ($1, $2, $3) RETURNING *`,
     [donHangId, saleId, noiDung],
@@ -227,8 +290,8 @@ export async function createYeuCauSua(donHangId, saleId, noiDung) {
   return rows[0];
 }
 
-export async function danhDauDaXuLy(donHangId, yeuCauId) {
-  const { rows } = await query(
+export async function danhDauDaXuLy(donHangId, yeuCauId, client = { query }) {
+  const { rows } = await client.query(
     `UPDATE don_hang_yeu_cau_sua SET trang_thai = 'da_xu_ly'
       WHERE id = $1 AND don_hang_id = $2 AND trang_thai = 'cho_xu_ly'
       RETURNING *`,
