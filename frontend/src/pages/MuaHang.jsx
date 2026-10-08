@@ -157,24 +157,37 @@ export function MuaHangDon() {
   const [kq, setKq] = useState(null);
   const [loi, setLoi] = useState('');
   const [thongBao, setThongBao] = useState('');
+  const [moDh, setMoDh] = useState(null); // don dat hang vua tao -> mo san noi dung de chep
   const tai = useCallback(() => { api.get(`/mua-hang/don/${id}`).then((r) => setKq(r.data)).catch((e) => setLoi(loiCua(e))); }, [id]);
   useEffect(tai, [tai]);
   const lam = async (fn, tb) => {
     setLoi(''); setThongBao('');
     try { const r = await fn(); setThongBao(typeof tb === 'function' ? tb(r) : tb); tai(); } catch (e) { setLoi(loiCua(e)); }
   };
-  const thaoTacNcc = (n, hanhDong, tb) => {
-    if (hanhDong === 'lui' && n.de_xuat.some((c) => c.loai_chi === 'quyet_toan' && ['cho_duyet', 'tu_choi'].includes(c.trang_thai))
-      && !window.confirm(`Lùi trạng thái sẽ xoá đề xuất quyết toán chưa duyệt của ${n.ncc}. Tiếp tục?`)) return;
-    lam(() => api.post(`/mua-hang/don/${id}/ncc`, { ncc_id: n.ncc_id, hanh_dong: hanhDong }), (r) => [
-      `${tb} ${n.ncc} (${r.data.so_dong} dòng)`,
-      r.data.de_xuat && `— đã tự lập đề xuất quyết toán DXC-${r.data.de_xuat.id}: ${tien(r.data.de_xuat.so_tien)}, chờ Admin duyệt${r.data.de_xuat.canh_bao ? ` (${r.data.de_xuat.canh_bao})` : ''}`,
-      r.data.da_xoa_de_xuat?.length && `— đã xoá đề xuất quyết toán chưa duyệt ${r.data.da_xoa_de_xuat.map((x) => `DXC-${x}`).join(', ')}`,
-    ].filter(Boolean).join(' '));
-  };
   const luuDong = (d) => (thayDoi) => lam(() => api.put(`/mua-hang/dong/${d.id}`, thayDoi), `Đã cập nhật ${d.vat_tu}`);
   const deXuat = (body, ten) => lam(() => api.post('/cong-no/de-xuat-chi', body), (r) => `Đã lập đề xuất ${ten} DXC-${r.data.id}: ${tien(r.data.so_tien)}${r.data.canh_bao ? ` — ${r.data.canh_bao}` : ''}`);
-  const coc = (n) => { const v = window.prompt(`Số tiền cọc cho ${n.ncc} (tiền hàng ${tien(n.tien_hang)}):`); if (v) deXuat({ loai_chi: 'coc', don_hang_id: Number(id), ncc_id: n.ncc_id, so_tien: Number(v.replace(/\D/g, '')) }, 'cọc'); };
+  const datHang = (n) => {
+    if (!window.confirm(`Gửi đơn đặt hàng cho ${n.ncc} (${n.dong_cho_dat} dòng vật tư)?`)) return;
+    lam(() => api.post(`/mua-hang/don/${id}/dat-hang`, { ncc_id: n.ncc_id }), (r) => {
+      setMoDh(r.data.id);
+      return `Đã tạo đơn đặt hàng ĐH-${r.data.id} gửi ${n.ncc} (${tien(r.data.tong_tien)}) — ${r.data.telegram === 'da_gui' ? 'đã gửi vào nhóm Telegram NCC' : 'chép nội dung bên dưới gửi NCC qua Zalo/email'}`;
+    });
+  };
+  const phanHoi = (h, n, loai) => {
+    let body = { loai };
+    if (loai === 'coc') {
+      const v = window.prompt(`${n.ncc} yêu cầu cọc bao nhiêu? (tiền hàng ĐH-${h.id}: ${tien(h.tong_tien)})`);
+      if (!v) return;
+      body = { loai, so_tien_coc: Number(v.replace(/\D/g, '')) };
+    } else if (!window.confirm(`Ghi nhận ${n.ncc} đồng ý xuất hàng ĐH-${h.id}? Vật tư sẽ chuyển "Sẵn hàng" và tự lập đề xuất quyết toán.`)) return;
+    lam(() => api.post(`/mua-hang/dat-hang/${h.id}/phan-hoi`, body), (r) => (loai === 'xuat'
+      ? `ĐH-${h.id}: NCC cho xuất hàng — đã tự lập đề xuất quyết toán DXC-${r.data.de_xuat.id} (${tien(r.data.de_xuat.so_tien)}), chờ Admin duyệt`
+      : `ĐH-${h.id}: đã lập đề xuất cọc DXC-${r.data.de_xuat.id} (${tien(r.data.de_xuat.so_tien)}) — Kế toán chi sau khi Admin duyệt, vật tư sẽ tự chuyển "Sẵn hàng"`));
+  };
+  const huyDh = (h) => window.confirm(`Huỷ đơn đặt hàng ĐH-${h.id}? Vật tư trở về "Đã chọn NCC"${h.de_xuat_chi_id ? ', đề xuất cọc chưa duyệt bị xoá' : ''}.`)
+    && lam(() => api.post(`/mua-hang/dat-hang/${h.id}/huy`), `Đã huỷ ĐH-${h.id}`);
+  const luiSanHang = (n) => window.confirm(`Lùi "Sẵn hàng" của ${n.ncc} về "Đã đặt, chờ NCC"? Đề xuất quyết toán chưa duyệt sẽ bị xoá.`)
+    && lam(() => api.post(`/mua-hang/don/${id}/lui-san-hang`, { ncc_id: n.ncc_id }), (r) => `Đã lùi ${r.data.so_dong} dòng của ${n.ncc}`);
 
   if (!kq) return loi ? <div className="error">{loi}</div> : <p className="muted">Đang tải...</p>;
   const { don } = kq;
@@ -203,7 +216,7 @@ export function MuaHangDon() {
             <tbody>{kq.dong.map((d) => <DongMua key={d.id} d={d} duocSua={duocSua} onLuu={luuDong(d)} />)}</tbody>
           </table>
         </div>
-        <p className="muted small mt">Trạng thái tự cập nhật: chọn NCC → <b>Đã chọn NCC</b>; bấm <b>📦 Đã đặt hàng</b> / <b>✅ NCC báo sẵn hàng</b> ở bảng NCC bên dưới (một lần cho cả NCC); lấy hàng, giao hàng do hệ thống ghi. Giá chốt = giá NCC hôm nay, chụp lại vào đơn (NCC đổi giá sau không ảnh hưởng). Dòng đã nằm trong đề xuất quyết toán bị khoá NCC/giá/VAT — muốn sửa phải từ chối đề xuất đó.</p>
+        <p className="muted small mt">Trạng thái tự cập nhật: chọn NCC → <b>Đã chọn NCC</b>; bấm <b>🛒 Đặt hàng</b> ở bảng NCC bên dưới (một lần cho cả NCC); phản hồi của NCC, cọc đã chi, lấy hàng, giao hàng do hệ thống ghi. Giá chốt = giá NCC hôm nay, chụp lại vào đơn (NCC đổi giá sau không ảnh hưởng). Dòng đã nằm trong đề xuất quyết toán bị khoá NCC/giá/VAT — muốn sửa phải từ chối đề xuất đó.</p>
       </div>
 
       <div className="card">
@@ -224,12 +237,10 @@ export function MuaHangDon() {
                     </Link>
                   ))}{n.de_xuat.length === 0 && <span className="muted">—</span>}</td>
                   <td className="nowrap hanh-dong">
-                    {duocSua && n.dong_cho_dat > 0 && <button className="btn sec" onClick={() => thaoTacNcc(n, 'dat_hang', 'Đã đặt hàng')}>📦 Đã đặt hàng</button>}
-                    {duocSua && n.dong_cho_san > 0 && <button className="btn sec" onClick={() => thaoTacNcc(n, 'san_hang', 'Đã sẵn hàng')}>✅ NCC báo sẵn hàng</button>}
-                    {duocSua && n.dong_da_dat > 0 && !['giao_hang', 'thi_cong', 'nghiem_thu', 'quyet_toan'].includes(don.giai_doan) && (
-                      <button className="link small" title="Bấm nhầm: lùi 1 nấc (sẵn hàng → đã đặt → đã chọn NCC)" onClick={() => thaoTacNcc(n, 'lui', 'Đã lùi trạng thái')}>↩ Lùi</button>
+                    {duocSua && n.dong_cho_dat > 0 && <button className="btn" onClick={() => datHang(n)}>🛒 Đặt hàng ({n.dong_cho_dat})</button>}
+                    {duocSua && n.dong_san_sang > 0 && ['len_phuong_an', 'boc_khoi_luong', 'mua_hang'].includes(don.giai_doan) && (
+                      <button className="link small" title="Ghi nhầm NCC cho xuất hàng: lùi về chờ NCC phản hồi" onClick={() => luiSanHang(n)}>↩ Lùi sẵn hàng</button>
                     )}
-                    {laKeToan && n.duoc_coc && <button className="btn sec" onClick={() => coc(n)}>💸 Đề xuất cọc</button>}
                     {laKeToan && n.duoc_quyet_toan && <button className="btn" onClick={() => deXuat({ loai_chi: 'quyet_toan', don_hang_id: Number(id), ncc_id: n.ncc_id }, 'quyết toán')}>💸 Đề xuất quyết toán</button>}
                     {laVanHanh && don.giai_doan === 'giao_hang' && n.dong_san_sang > 0 && <button className="btn sec" onClick={() => lam(() => api.post(`/mua-hang/don/${id}/lay-hang`, { ncc_id: n.ncc_id }), `Đã xác nhận lấy hàng ${n.ncc}`)}>🚚 Đã lấy hàng</button>}
                   </td>
@@ -239,7 +250,22 @@ export function MuaHangDon() {
             </tbody>
           </table>
         </div>
-        <p className="muted small mt">Cọc (nếu NCC yêu cầu): Kế toán lập khi đã đặt hàng, tổng cọc phải nhỏ hơn tiền hàng. Quyết toán: <b>tự lập khi bấm "NCC báo sẵn hàng"</b> — số tiền = tiền hàng + VAT − cọc đã duyệt, gửi Admin duyệt (Telegram/web), Kế toán chi và đính kèm bill. Nút "Đề xuất quyết toán" chỉ còn dùng khi lập lại sau khi xoá.</p>
+        {kq.ncc.some((n) => n.dat_hang.length > 0) && (
+          <>
+            <h4 className="mt">Đơn đặt hàng đã gửi NCC</h4>
+            <ul className="ds-dat-hang">
+              {kq.ncc.flatMap((n) => n.dat_hang.map((h) => (
+                <DatHangNcc key={h.id} h={h} n={n} moSan={moDh === h.id} duocSua={duocSua}
+                  onPhanHoi={(loai) => phanHoi(h, n, loai)} onHuy={() => huyDh(h)} />
+              )))}
+            </ul>
+          </>
+        )}
+        <p className="muted small mt">
+          Quy trình: chọn NCC → <b>🛒 Đặt hàng</b> (gửi nhóm Telegram NCC hoặc chép gửi Zalo) → NCC trả lời <b>Cho xuất hàng</b> (vật tư "Sẵn hàng", tự lập đề xuất quyết toán)
+          hoặc <b>Yêu cầu cọc</b> (tự lập đề xuất cọc → Admin duyệt → Kế toán chi kèm bill → vật tư tự "Sẵn hàng", tự lập quyết toán phần còn lại).
+          NCC trả lời qua điện thoại thì bấm nút ghi nhận tương ứng trên đơn đặt hàng.
+        </p>
       </div>
 
       <div className="card">
@@ -250,6 +276,57 @@ export function MuaHangDon() {
           : kq.mua_bo_sung.length === 0 && <p className="muted small">Mua bổ sung khi đơn đã giao hàng/thi công mà phát sinh thiếu, hỏng.</p>}
       </div>
     </>
+  );
+}
+
+const TT_DAT_HANG = {
+  cho_phan_hoi: { nhan: '⏳ Chờ NCC phản hồi', lop: 'p-wip' },
+  cho_coc: { nhan: '💰 NCC yêu cầu cọc', lop: 'p-wip' },
+  xuat_hang: { nhan: '✅ NCC cho xuất hàng', lop: 'p-done' },
+  huy: { nhan: 'Đã huỷ', lop: 'p-gray' },
+};
+
+// Chep van ban vao clipboard; trinh duyet chan (http, quyen) -> boi den san de nguoi dung Ctrl+C.
+function NutChep({ text }) {
+  const [xong, setXong] = useState(false);
+  const chep = async (e) => {
+    try { await navigator.clipboard.writeText(text); setXong(true); setTimeout(() => setXong(false), 2000); }
+    catch { const pre = e.currentTarget.closest('li')?.querySelector('pre'); if (pre) window.getSelection().selectAllChildren(pre); }
+  };
+  return <button type="button" className="btn sec" onClick={chep}>{xong ? '✓ Đã chép' : '📋 Chép nội dung'}</button>;
+}
+
+function DatHangNcc({ h, n, moSan, duocSua, onPhanHoi, onHuy }) {
+  const tt = TT_DAT_HANG[h.trang_thai];
+  const choCoc = h.trang_thai === 'cho_coc';
+  return (
+    <li className={h.trang_thai === 'huy' ? 'dong-mo' : ''}>
+      <div className="dh-dau">
+        <b>ĐH-{h.id}</b> <span>{n.ncc}</span> <span className={`pill ${tt.lop}`}>{tt.nhan}</span>
+        <span className="muted small">{h.so_dong} dòng · {tien(h.tong_tien)} · {h.nguoi_dat}, {ngay(h.created_at)}{h.da_gui_telegram ? ' · đã gửi Telegram' : ''}</span>
+      </div>
+      {choCoc && (
+        <p className="small">Cọc <b>{tien(h.so_tien_coc)}</b> — đề xuất DXC-{h.de_xuat_chi_id}: <b>{h.coc_trang_thai ? TRANG_THAI_CHI[h.coc_trang_thai].nhan : 'đã xoá'}</b>.
+          {' '}Vật tư tự chuyển "Sẵn hàng" khi Kế toán xác nhận đã chi kèm bill.</p>
+      )}
+      {h.phan_hoi_luc && <p className="muted small">NCC phản hồi qua {h.phan_hoi_qua === 'telegram' ? 'Telegram' : 'web'} — {h.nguoi_phan_hoi}, {ngay(h.phan_hoi_luc)}</p>}
+      <details open={moSan}>
+        <summary className="small">Nội dung đơn đặt hàng</summary>
+        <pre className="noi-dung-dh">{h.noi_dung}</pre>
+      </details>
+      <div className="hanh-dong mt">
+        {h.trang_thai !== 'huy' && <NutChep text={h.noi_dung} />}
+        {duocSua && h.trang_thai === 'cho_phan_hoi' && (
+          <>
+            <button className="btn" onClick={() => onPhanHoi('xuat')}>✅ NCC cho xuất hàng</button>
+            <button className="btn sec" onClick={() => onPhanHoi('coc')}>💰 NCC yêu cầu cọc</button>
+          </>
+        )}
+        {duocSua && (h.trang_thai === 'cho_phan_hoi' || (choCoc && !['da_duyet', 'da_thanh_toan'].includes(h.coc_trang_thai))) && (
+          <button className="link danger" onClick={onHuy}>Huỷ đặt hàng</button>
+        )}
+      </div>
+    </li>
   );
 }
 

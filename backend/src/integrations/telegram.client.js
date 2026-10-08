@@ -59,3 +59,33 @@ export const capNhatTinNhan = (chatId, messageId, text) =>
   goi('editMessageText', { chat_id: chatId, message_id: Number(messageId), text, parse_mode: 'HTML' });
 
 export const traLoiNut = (callbackId, text) => goi('answerCallbackQuery', { callback_query_id: callbackId, text, show_alert: false });
+
+// ---------- Nhom NCC (gia lap ben thu 3: NCC nhan don dat hang, bam "Cho xuat hang" / "Yeu cau coc") ----------
+export const daCauHinhNcc = () => Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID_NCC);
+export const coBot = () => daCauHinh() || daCauHinhNcc();
+
+export async function guiDatHangNcc(dh) {
+  const msg = await goi('sendMessage', {
+    chat_id: process.env.TELEGRAM_CHAT_ID_NCC,
+    text: dh.noi_dung, // van ban thuong (khong parse_mode) -> khong can escape
+    reply_markup: { inline_keyboard: [[
+      { text: '✅ Cho xuất hàng', callback_data: `dh:${dh.id}:xuat` },
+      { text: '💰 Xuất hàng – yêu cầu cọc', callback_data: `dh:${dh.id}:coc` },
+    ]] },
+  });
+  return { message_id: String(msg.message_id), chat_id: String(msg.chat.id) };
+}
+
+// Hoi so tien coc: ForceReply -> NCC tra loi dung tin nay, bot doc so tien tu tin tra loi.
+export async function hoiSoTienCoc(chatId, replyTo, maDh) {
+  const msg = await goi('sendMessage', {
+    chat_id: chatId,
+    reply_to_message_id: Number(replyTo),
+    text: `💰 ĐH-${maDh}: vui lòng TRẢ LỜI tin nhắn này với số tiền cọc (vd: 2000000 hoặc 2tr).`,
+    reply_markup: { force_reply: true, selective: false, input_field_placeholder: 'Số tiền cọc' },
+  });
+  return String(msg.message_id);
+}
+
+export const guiTin = (chatId, text, replyTo) =>
+  goi('sendMessage', { chat_id: chatId, text, parse_mode: 'HTML', ...(replyTo ? { reply_to_message_id: Number(replyTo) } : {}) });

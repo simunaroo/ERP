@@ -41,6 +41,7 @@ export async function deXuatChi(client, id, suKien, { nguoiGayId = null, ghiChu 
   const noiDung = [c.ma_don && `Đơn ${c.ma_don}`, ghiChu].filter(Boolean).join(' — ') || null;
   const CAU_HINH = {
     moi: { vaiTro: ['admin'], tieuDe: `Đề xuất chi chờ duyệt: ${ten}` },
+    coc_ncc: { vaiTro: ['ke_toan', 'admin'], nguoiIds: [c.vanhanh_phu_trach_id], tieuDe: `NCC yêu cầu cọc — chờ duyệt rồi chi: ${ten}` },
     gui_lai: { vaiTro: ['admin'], tieuDe: `Đề xuất chi gửi lại, chờ duyệt: ${ten}` },
     duyet: { vaiTro: ['ke_toan'], nguoiIds: [c.nguoi_tao_id], tieuDe: `Đã duyệt — cần chuyển khoản: ${ten}` },
     duyet_0d: { nguoiIds: [c.nguoi_tao_id], tieuDe: `Đã duyệt (0 đ, cọc đã trừ hết): ${ten}` },

@@ -394,6 +394,33 @@ Giống Sale chỉ thấy đơn của mình: Vận hành chỉ **xem và thao t�
 
 ---
 
+## Vòng 3.10 — Đặt hàng NCC qua Telegram, cọc theo yêu cầu NCC; làm nổi bật Việc cần làm (08/10/2026, migration 018–019)
+
+**Luồng mới (thay nút "Đã đặt hàng"/"NCC báo sẵn hàng" bấm tay):**
+```
+Chọn NCC ─► [🛒 Đặt hàng] ─► Đơn đặt hàng ĐH-x (văn bản chép gửi Zalo + gửi nhóm Telegram NCC có 2 nút)
+                 │
+                 ├─ NCC "✅ Cho xuất hàng"  ─► vật tư Sẵn hàng + tự lập đề xuất quyết toán
+                 └─ NCC "💰 Yêu cầu cọc" ─► bot hỏi số tiền (ForceReply) ─► vật tư Chờ cọc + tự lập đề xuất cọc
+                        ─► Admin duyệt (web / nhóm Telegram duyệt chi) ─► Kế toán chi + bill
+                        ─► vật tư tự Sẵn hàng + tự lập quyết toán phần còn lại + bot báo nhóm NCC "đã chuyển cọc, đề nghị xuất hàng"
+Tất cả vật tư Sẵn hàng ─► Vận hành [Đăng ký giao hàng]
+```
+- Bảng `dat_hang_ncc` lưu nội dung đã gửi, phản hồi (qua web/Telegram, ai, lúc nào), đề xuất cọc, id tin Telegram; dòng mua gắn `dat_hang_ncc_id`. Trạng thái dòng mới `cho_coc` (ENUM ADD VALUE ở migration riêng 018).
+- NCC trả lời qua điện thoại/Zalo → Vận hành bấm "NCC cho xuất hàng" / "NCC yêu cầu cọc" trên web — dùng chung một hàm với Telegram.
+- Văn bản gửi NCC **không chứa tên/SĐT/địa chỉ khách** (NCC không cần, tránh lộ thông tin).
+- Huỷ đặt hàng: khi đang chờ phản hồi hoặc chờ cọc chưa duyệt (đề xuất cọc bị xoá theo, tin Telegram được sửa "đã huỷ"). Cọc đã duyệt/đã chi → không huỷ, không lùi.
+- Đã gửi đặt hàng thì khoá đổi NCC/giá/huỷ dòng (phải huỷ đặt hàng trước) — tránh lệch với đơn NCC đang cầm.
+- Dữ liệu cũ (dòng "đã đặt" chưa có đơn đặt hàng) vẫn bấm Đặt hàng lại được.
+
+**Telegram — một bot, hai nhóm** (`telegram.router.js` điều phối): nhóm duyệt chi (nút `dxc:*`, chỉ username được phép) và nhóm NCC (nút `dh:*`, tin trả lời số tiền). Chống giả mạo: chỉ nhận nút/tin trong đúng `TELEGRAM_CHAT_ID_NCC` và đúng id tin nhắn của đơn đặt hàng đó. Đọc số tiền: "2000000", "2.000.000", "2tr", "2,5tr", "500k". Polling nhận thêm loại `message`.
+
+**Việc cần làm nổi bật:** đưa lên đầu trang Tổng quan, ô lớn số to, việc **gấp** (trễ hạn / đang chặn người khác) tô đỏ và xếp trước, tiêu đề ghi tổng số việc + số việc gấp. Thêm việc: đơn đặt hàng chờ NCC quá 1 ngày, đơn có vật tư chưa đặt hàng, cọc NCC chờ duyệt.
+
+**Kiểm thử:** 35 ca API luồng web + 20 ca Telegram giả lập (thay `fetch` tới api.telegram.org: nút từ nhóm khác/sai tin nhắn bị chặn, hỏi cọc, trả lời sai định dạng/vượt tiền hàng, huỷ) + mở mọi trang × 4 vai trò bằng trình duyệt bắt lỗi JS → phát hiện và sửa lỗi xoá nhầm 2 hàm ở trang Mua hàng (build không bắt được, chỉ lộ khi chạy).
+
+---
+
 ## Vòng 3 — (dự kiến) Giai đoạn đơn hàng + NCC & bảng giá
 
 **Đề xuất đang cân nhắc**
