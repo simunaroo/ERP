@@ -12,7 +12,7 @@ CREATE TYPE trang_thai_yeu_cau_sua_enum AS ENUM ('cho_xu_ly', 'da_xu_ly');
 CREATE TYPE loai_hinh_anh_enum AS ENUM ('mat_bang', 'nghiem_thu', 'khac');
 CREATE TYPE nguon_goc_vat_tu_enum AS ENUM ('tu_san_xuat', 'mua_ngoai');
 -- Trang thai TUNG DONG vat tu mua ngoai (da_lay_hang, da_giao_hang do he thong dat khi don di giao).
-CREATE TYPE trang_thai_dong_mua_enum AS ENUM ('cho_xu_ly', 'dang_hoi', 'da_dat_hang', 'san_hang', 'da_lay_hang', 'da_giao_hang', 'huy');
+CREATE TYPE trang_thai_dong_mua_enum AS ENUM ('cho_xu_ly', 'dang_hoi', 'da_dat_hang', 'cho_coc', 'san_hang', 'da_lay_hang', 'da_giao_hang', 'huy');
 CREATE TYPE loai_phat_sinh_mbs_enum AS ENUM ('hang_hong', 'giao_thieu_sai', 'boc_khoi_luong_thieu', 'tho_lam_hong', 'khach_bo_sung', 'mat_hang', 'khac');
 CREATE TYPE nguon_trach_nhiem_enum AS ENUM ('ncc', 'van_chuyen', 'tho', 'khao_sat', 'sale', 'khach_hang', 'cong_ty', 'chua_xac_dinh');
 CREATE TYPE trang_thai_mbs_enum AS ENUM ('cho_xu_ly', 'da_mua', 'huy');
@@ -465,3 +465,28 @@ CREATE TABLE thong_bao (
 );
 CREATE INDEX idx_thong_bao_nguoi ON thong_bao (nguoi_nhan_id, created_at DESC);
 CREATE INDEX idx_thong_bao_chua_doc ON thong_bao (nguoi_nhan_id) WHERE da_doc_luc IS NULL;
+
+-- Don dat hang gui NCC: noi dung gui di, phan hoi NCC (cho xuat hang / yeu cau coc), de xuat coc, tin Telegram nhom NCC.
+CREATE TABLE dat_hang_ncc (
+    id                      SERIAL PRIMARY KEY,
+    don_hang_id             INTEGER NOT NULL REFERENCES don_hang(id) ON DELETE CASCADE,
+    ncc_id                  INTEGER NOT NULL REFERENCES nha_cung_cap(id) ON DELETE RESTRICT,
+    nguoi_dat_id            INTEGER NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    noi_dung                TEXT NOT NULL,
+    tong_tien               NUMERIC(14,2) NOT NULL DEFAULT 0,
+    trang_thai              VARCHAR(20) NOT NULL DEFAULT 'cho_phan_hoi'
+                            CHECK (trang_thai IN ('cho_phan_hoi', 'cho_coc', 'xuat_hang', 'huy')),
+    so_tien_coc             NUMERIC(14,2) CHECK (so_tien_coc > 0),
+    de_xuat_chi_id          INTEGER REFERENCES de_xuat_chi(id) ON DELETE SET NULL,
+    phan_hoi_qua            VARCHAR(10) CHECK (phan_hoi_qua IN ('web', 'telegram')),
+    nguoi_phan_hoi          TEXT,
+    phan_hoi_luc            TIMESTAMPTZ,
+    tg_chat_id              TEXT,
+    tg_message_id           TEXT,
+    tg_hoi_coc_message_id   TEXT,
+    created_at              TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT ck_dhn_coc CHECK (trang_thai <> 'cho_coc' OR so_tien_coc IS NOT NULL)
+);
+CREATE INDEX idx_dat_hang_ncc_don ON dat_hang_ncc (don_hang_id);
+CREATE INDEX idx_dat_hang_ncc_dxc ON dat_hang_ncc (de_xuat_chi_id);
+ALTER TABLE mua_hang_dong ADD COLUMN dat_hang_ncc_id INTEGER REFERENCES dat_hang_ncc(id) ON DELETE SET NULL;

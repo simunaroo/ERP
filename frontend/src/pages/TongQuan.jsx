@@ -42,7 +42,10 @@ export default function TongQuan() {
   if (!kq) return loi ? <div className="error">{loi}</div> : <p className="muted">Đang tải...</p>;
   const { kpi } = kq;
   const tang = pct(kpi.doanh_thu_thang, kpi.doanh_thu_cung_ky_thang_truoc);
-  const viec = kq.viec.filter((v) => v.so > 0);
+  // Viec gap len truoc, roi theo so luong giam dan.
+  const viec = kq.viec.filter((v) => v.so > 0).sort((a, b) => (a.muc === 'gap' ? 0 : 1) - (b.muc === 'gap' ? 0 : 1) || b.so - a.so);
+  const tongViec = viec.reduce((t, v) => t + v.so, 0);
+  const soGap = viec.filter((v) => v.muc === 'gap').reduce((t, v) => t + v.so, 0);
   const buoc = BUOC_DON.hoan_thien;
   const maxGd = Math.max(1, ...Object.values(kq.theo_giai_doan));
 
@@ -50,6 +53,27 @@ export default function TongQuan() {
     <>
       <h1>Xin chào, {user.ho_ten}</h1>
       <p className="muted">{kq.pham_vi === 'cua_toi' ? 'Số liệu các đơn bạn phụ trách.' : 'Số liệu toàn công ty.'}</p>
+
+      <section className={`viec-can-lam${viec.length ? '' : ' xong'}`} aria-labelledby="tieu-de-viec">
+        <div className="viec-dau">
+          <h2 id="tieu-de-viec">Việc cần làm</h2>
+          {viec.length > 0 && <span className="viec-tong">{tongViec} việc{soGap > 0 && <> · <b className="chu-gap">{soGap} gấp</b></>}</span>}
+        </div>
+        {viec.length === 0 ? <p className="muted">🎉 Không có việc tồn đọng — bạn đã xử lý hết.</p> : (
+          <ul className="o-viec">
+            {viec.map((v) => (
+              <li key={v.nhan}>
+                <Link to={v.link} className={v.muc === 'gap' ? 'o gap' : 'o'}>
+                  <span className="o-so">{v.so}</span>
+                  <span className="o-nhan">{v.muc === 'gap' && <span className="nhan-gap">Gấp</span>}{v.nhan}</span>
+                  <span className="o-xu-ly">Xử lý →</span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       <div className="kpi-row">
         <div className="kpi"><span className="kpi-nhan">Doanh thu tháng này</span><span className="kpi-so">{tienGon(kpi.doanh_thu_thang)}</span>
           {tang === null ? <span className="muted small">tháng trước cùng kỳ chưa có số</span> : <span className={`bd ${tang >= 0 ? 'bd-tang' : 'bd-giam'}`}>{tang >= 0 ? '↑' : '↓'} {Math.abs(tang)}% so với cùng kỳ tháng trước</span>}</div>
@@ -59,30 +83,18 @@ export default function TongQuan() {
           <span className="muted small">{kpi.cho_duyet.so} đề xuất chờ duyệt · {tienGon(kpi.cho_duyet.tien)}</span></div>}
       </div>
 
-      <div className="grid2">
-        <div className="card">
-          <h3>Việc cần làm</h3>
-          {viec.length === 0 ? <p className="muted">🎉 Không có việc tồn đọng.</p> : (
-            <ul className="ds-can-lam">
-              {viec.map((v) => (
-                <li key={v.nhan}><Link to={v.link}><span className="so-viec">{v.so}</span><span>{v.nhan}</span><span aria-hidden="true">→</span></Link></li>
-              ))}
-            </ul>
-          )}
-        </div>
-        <div className="card">
-          <h3>Đơn đang chạy theo tiến độ</h3>
-          <ul className="gd-ngang">
-            {buoc.filter((b) => kq.theo_giai_doan[b]).map((b) => (
-              <li key={b}>
-                <Link to={`/don-hang?giai_doan=${b}`} className="gd-nhan">{GIAI_DOAN[b].nhan}</Link>
-                <span className="o-thanh rong"><span className="thanh-ngang" style={{ width: `${(kq.theo_giai_doan[b] / maxGd) * 100}%` }} /></span>
-                <b className="gd-so">{kq.theo_giai_doan[b]}</b>
-              </li>
-            ))}
-            {Object.keys(kq.theo_giai_doan).length === 0 && <li className="muted">Không có đơn đang chạy.</li>}
-          </ul>
-        </div>
+      <div className="card">
+        <h3>Đơn đang chạy theo tiến độ</h3>
+        <ul className="gd-ngang">
+          {buoc.filter((b) => kq.theo_giai_doan[b]).map((b) => (
+            <li key={b}>
+              <Link to={`/don-hang?giai_doan=${b}`} className="gd-nhan">{GIAI_DOAN[b].nhan}</Link>
+              <span className="o-thanh rong"><span className="thanh-ngang" style={{ width: `${(kq.theo_giai_doan[b] / maxGd) * 100}%` }} /></span>
+              <b className="gd-so">{kq.theo_giai_doan[b]}</b>
+            </li>
+          ))}
+          {Object.keys(kq.theo_giai_doan).length === 0 && <li className="muted">Không có đơn đang chạy.</li>}
+        </ul>
       </div>
 
       <div className="card">

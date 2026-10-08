@@ -70,3 +70,4 @@ Tài khoản demo — mật khẩu là tên tài khoản + `123456` (ví dụ `d
 - [x] Tự động phân Vận hành phụ trách khi chốt đơn (ít việc nhất), chỉ người phụ trách + Admin thao tác, Admin chuyển phụ trách có lịch sử
 - [x] Trạng thái dòng mua hàng tự động; tự lập đề xuất quyết toán khi NCC báo sẵn hàng
 - [x] Thông báo trong hệ thống (nút chuông): thao tác xong báo người liên quan
+- [x] Đặt hàng NCC (gửi nhóm Telegram NCC / chép gửi Zalo), NCC cho xuất hoặc yêu cầu cọc → tự lập đề xuất cọc/quyết toán

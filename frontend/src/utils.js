@@ -31,7 +31,8 @@ export const vaiTroPhuTrach = () => 'van_hanh';
 export const TRANG_THAI_DONG_MUA = {
   cho_xu_ly: { nhan: '⏳ Chưa chọn NCC', lop: 'p-gray' },
   dang_hoi: { nhan: '🛒 Đã chọn NCC', lop: 'p-new' },
-  da_dat_hang: { nhan: '📦 Đã đặt hàng', lop: 'p-wip' },
+  da_dat_hang: { nhan: '📦 Đã đặt, chờ NCC', lop: 'p-wip' },
+  cho_coc: { nhan: '💰 Chờ cọc', lop: 'p-wip' },
   san_hang: { nhan: '✅ Đã sẵn hàng', lop: 'p-done' },
   da_lay_hang: { nhan: '🚚 Đã lấy hàng', lop: 'p-done' },
   da_giao_hang: { nhan: '🏠 Đã giao hàng', lop: 'p-done' },

@@ -1,8 +1,9 @@
-import { withTransaction } from '../../config/db.js';
+import { query, withTransaction } from '../../config/db.js';
 import { AppError } from '../../utils/AppError.js';
 import * as repo from './mua_hang.repository.js';
 import { damBaoPhuTrach, vanHanhCua } from '../don_hang/don_hang.service.js';
-import { taoQuyetToanNcc, thongBaoDeXuat, xoaQuyetToanChuaDuyet } from '../cong_no/cong_no.service.js';
+import { taoCocTuNcc, taoQuyetToanNcc, thongBaoDeXuat, xoaQuyetToanChuaDuyet } from '../cong_no/cong_no.service.js';
+import * as tg from '../../integrations/telegram.client.js';
 import * as thongBao from '../thong_bao/thong_bao.service.js';
 
 const homNay = () => new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
@@ -11,10 +12,11 @@ const so = (n) => (n === null || n === undefined ? null : Number(n));
 
 // Trang thai dong mua KHONG chon tay tung dong — suy ra tu thao tac:
 //   chon NCC -> dang_hoi ("Da chon NCC"), bo NCC -> cho_xu_ly
-//   nut "Dat hang" theo NCC -> da_dat_hang;  nut "NCC bao san hang" theo NCC -> san_hang
+//   nut "Dat hang" theo NCC -> da_dat_hang (gui don dat hang cho NCC)
+//   NCC phan hoi: cho xuat -> san_hang | yeu cau coc -> cho_coc -> (coc da chi) san_hang
 //   nut "Da lay hang" (buoc Giao hang) -> da_lay_hang;  roi buoc Giao hang -> da_giao_hang
 const TRANG_THAI_KHOA = ['da_lay_hang', 'da_giao_hang'];
-const CO_NCC = ['da_dat_hang', 'san_hang', 'da_lay_hang', 'da_giao_hang'];
+const CO_NCC = ['da_dat_hang', 'cho_coc', 'san_hang', 'da_lay_hang', 'da_giao_hang'];
 const LOC = ['san_sang', 'dang_chuan_bi', 'chua_xu_ly'];
 export const LOAI_MBS = ['hang_hong', 'giao_thieu_sai', 'boc_khoi_luong_thieu', 'tho_lam_hong', 'khach_bo_sung', 'mat_hang', 'khac'];
 export const NGUON = ['ncc', 'van_chuyen', 'tho', 'khao_sat', 'sale', 'khach_hang', 'cong_ty', 'chua_xac_dinh'];
@@ -31,7 +33,7 @@ export async function chiTietDon(user, donHangId) {
   if (!don || don.trang_thai === 'nhap') throw new AppError(404, 'Không tìm thấy đơn hàng');
   await damBaoPhuTrach(user, donHangId);
   await repo.dongBo(donHangId);
-  const [dong, dxc, mbs] = await Promise.all([repo.dongCuaDon(donHangId), repo.deXuatChiCuaDon(donHangId), repo.dsMuaBoSung({ donHangId })]);
+  const [dong, dxc, mbs, dsDatHang] = await Promise.all([repo.dongCuaDon(donHangId), repo.deXuatChiCuaDon(donHangId), repo.dsMuaBoSung({ donHangId }), repo.datHangCuaDon(donHangId)]);
   const gia = await repo.giaHomNay([...new Set(dong.map((d) => d.vat_tu_id))], homNay());
   const ds = dong.map((d) => {
     const lua = gia.filter((g) => g.vat_tu_id === d.vat_tu_id).map((g) => ({ ncc_id: g.ncc_id, ncc: g.ncc, don_gia: Number(g.don_gia) }));
@@ -48,13 +50,13 @@ export async function chiTietDon(user, donHangId) {
   // Bang tong theo NCC: tien hang (gom VAT) cac dong da dat tro di, coc dang hieu luc, quyet toan.
   const theoNcc = new Map();
   for (const d of ds.filter((x) => x.ncc_id && x.trang_thai !== 'huy')) {
-    if (!theoNcc.has(d.ncc_id)) theoNcc.set(d.ncc_id, { ncc_id: d.ncc_id, ncc: d.ncc, so_dong: 0, tien_hang: 0, dong_da_dat: 0, dong_san_sang: 0, dong_cho_dat: 0, dong_cho_san: 0 });
+    if (!theoNcc.has(d.ncc_id)) theoNcc.set(d.ncc_id, { ncc_id: d.ncc_id, ncc: d.ncc, so_dong: 0, tien_hang: 0, dong_da_dat: 0, dong_san_sang: 0, dong_cho_dat: 0 });
     const n = theoNcc.get(d.ncc_id);
     n.so_dong++;
     n.tien_hang += d.thanh_tien || 0;
     if (CO_NCC.includes(d.trang_thai)) n.dong_da_dat++;
-    if (d.trang_thai === 'dang_hoi') n.dong_cho_dat++;
-    if (['dang_hoi', 'da_dat_hang'].includes(d.trang_thai)) n.dong_cho_san++;
+    // Cho dat = da chon NCC; dong cu "da dat hang" chua co don dat hang (du lieu truoc khi co tinh nang) cung dat lai duoc.
+    if (d.trang_thai === 'dang_hoi' || (d.trang_thai === 'da_dat_hang' && !d.dat_hang_ncc_id)) n.dong_cho_dat++;
     if (['san_hang', 'da_lay_hang', 'da_giao_hang'].includes(d.trang_thai)) n.dong_san_sang++;
   }
   const dxcSo = dxc.map((c) => ({ ...c, gia_tri_hang: Number(c.gia_tri_hang), coc_da_tru: Number(c.coc_da_tru), so_tien: Number(c.so_tien) }));
@@ -64,8 +66,8 @@ export async function chiTietDon(user, donHangId) {
       ...n,
       coc: cuaNcc.filter((c) => c.loai_chi === 'coc' && ['da_duyet', 'da_thanh_toan'].includes(c.trang_thai)).reduce((s, c) => s + c.so_tien, 0),
       de_xuat: cuaNcc,
-      // Coc: khi co dong da dat hang; Quyet toan: khi co dong san hang chua nam trong quyet toan nao.
-      duoc_coc: n.dong_da_dat > 0,
+      dat_hang: dsDatHang.filter((h) => h.ncc_id === n.ncc_id),
+      // Quyet toan lap tay (du phong): khi co dong san hang chua nam trong quyet toan nao.
       duoc_quyet_toan: ds.some((d) => d.ncc_id === n.ncc_id && ['san_hang', 'da_lay_hang', 'da_giao_hang'].includes(d.trang_thai) && !d.dxc_quyet_toan_id),
     };
   });
@@ -91,6 +93,9 @@ export async function capNhatDong(user, id, body) {
     const doiNcc = nccId !== d.ncc_id;
     const doiGia = body.gia_chot !== undefined || doiNcc || vat !== Number(d.vat_pct);
     if (d.trang_thai === 'huy' && body.huy !== false) throw new AppError(409, 'Dòng đã huỷ — khôi phục trước khi sửa');
+    if (d.dat_hang_ncc_id && ['da_dat_hang', 'cho_coc'].includes(d.trang_thai) && (doiGia || body.huy === true)) {
+      throw new AppError(409, `Đã gửi đơn đặt hàng ĐH-${d.dat_hang_ncc_id} cho NCC — huỷ đơn đặt hàng trước khi đổi NCC/giá hoặc huỷ dòng`);
+    }
     if (body.huy === true && d.khoa_quyet_toan) throw new AppError(409, 'Dòng đã nằm trong đề xuất quyết toán — không huỷ được');
     // Doi NCC = dat lai tu dau voi NCC moi (don dat voi NCC cu coi nhu bo).
     let trangThai = d.trang_thai;
@@ -115,48 +120,199 @@ export async function capNhatDong(user, id, body) {
   });
 }
 
-// Thao tac theo NCC (1 lan cho moi dong cua NCC do trong don), thay vi doi trang thai tung dong:
-//   dat_hang: Da chon NCC -> Da dat hang (sau khi goi/gui don cho NCC)
-//   san_hang: Da chon NCC / Da dat hang -> San hang (NCC bao co hang; NCC co san kho thi bam thang)
-//   lui:      bam nham -> lui 1 nac (quyet toan chua duyet bi xoa theo; da duyet/da chi hoac NCC da co coc thi khong lui)
-// San hang -> TU LAP de xuat quyet toan NCC (cho Admin duyet), giong ERP: mua hang xong la sinh de xuat chi.
-const HANH_DONG_NCC = {
-  dat_hang: { tu: ['dang_hoi'], den: 'da_dat_hang', nhan: 'đặt hàng' },
-  san_hang: { tu: ['dang_hoi', 'da_dat_hang'], den: 'san_hang', nhan: 'sẵn hàng' },
-};
-export async function thaoTacNcc(user, donHangId, nccId, hanhDong) {
+// ---------- Dat hang NCC (thay cho doi trang thai tay) ----------
+// Da chon NCC -[Dat hang]-> Da dat hang: sinh "don dat hang" (van ban chep gui NCC + gui nhom Telegram NCC neu co)
+//   NCC "Cho xuat hang"           -> San hang + tu lap de xuat quyet toan
+//   NCC "Xuat hang - yeu cau coc" -> Cho coc + tu lap de xuat coc -> Admin duyet -> Ke toan chi (bill) -> San hang + quyet toan phan con lai
+// NCC tra loi qua Telegram (nut bam) hoac qua dien thoai/Zalo (nguoi mua ghi nhan tren web) - dung chung 1 ham.
+const tienVn = (n) => `${Math.round(Number(n)).toLocaleString('vi-VN')} đ`;
+const slVn = (n) => Number(n).toLocaleString('vi-VN', { maximumFractionDigits: 2 });
+const thanhTien = (d) => Math.round(Number(d.so_luong_can) * Number(d.gia_chot) * (1 + Number(d.vat_pct) / 100));
+
+// Khong dua ten/SDT/dia chi khach vao don gui NCC (NCC khong can, tranh lo thong tin khach).
+function noiDungDatHang({ id, ncc, don, dong, tong, nguoiDat }) {
+  const han = don.ngay_yc_lap_dat ? ` · cần hàng trước ${new Date(don.ngay_yc_lap_dat).toLocaleDateString('vi-VN')}` : '';
+  return [
+    `ĐƠN ĐẶT HÀNG ĐH-${id} — Công ty NST`,
+    `Gửi: ${ncc}`,
+    `Mã công trình: ${don.ma_don}${han}`,
+    '',
+    ...dong.map((d, i) => `${i + 1}. ${d.vat_tu}${d.quy_cach ? ` (${d.quy_cach})` : ''}: ${slVn(d.so_luong_can)} ${d.don_vi_tinh} × ${tienVn(d.gia_chot)}`
+      + `${Number(d.vat_pct) ? ` + VAT ${Number(d.vat_pct)}%` : ''} = ${tienVn(thanhTien(d))}`),
+    '',
+    `Tổng cộng (gồm VAT): ${tienVn(tong)}`,
+    `Người đặt: ${nguoiDat}`,
+    'Vui lòng xác nhận: CHO XUẤT HÀNG, hoặc XUẤT HÀNG – YÊU CẦU CỌC (kèm số tiền cọc).',
+  ].join('\n');
+}
+
+export async function datHang(user, donHangId, nccId) {
   if (!nccId) throw new AppError(400, 'Chọn nhà cung cấp');
-  if (hanhDong !== 'lui' && !HANH_DONG_NCC[hanhDong]) throw new AppError(400, 'Thao tác không hợp lệ');
-  const kq = await withTransaction(async (client) => {
+  const dh = await withTransaction(async (client) => {
     const don = await repo.khoaDon(client, donHangId);
     if (!don || don.trang_thai === 'nhap') throw new AppError(404, 'Không tìm thấy đơn hàng');
     await damBaoPhuTrach(user, donHangId, client);
     if (['hoan_tat', 'huy'].includes(don.giai_doan)) throw new AppError(409, 'Đơn đã đóng');
-    let soDong;
-    let deXuatId = null;
-    let daXoa = [];
-    if (hanhDong === 'lui') {
-      daXoa = await xoaQuyetToanChuaDuyet(client, donHangId, nccId);
-      soDong = await repo.doiTrangThaiTheoNcc(client, { donHangId, nccId, tu: ['san_hang'], den: 'da_dat_hang', nguoiId: user.id, boQuaQuyetToan: true });
-      if (!soDong) {
-        if (await repo.coCocHieuLuc(client, donHangId, nccId)) throw new AppError(409, 'Đã có đề xuất cọc với NCC này — không lùi về chưa đặt được');
-        soDong = await repo.doiTrangThaiTheoNcc(client, { donHangId, nccId, tu: ['da_dat_hang'], den: 'dang_hoi', nguoiId: user.id });
-      }
-      if (!soDong) throw new AppError(409, 'Không có dòng nào lùi được (đề xuất quyết toán đã duyệt/đã chi — liên hệ Admin thu hồi)');
-    } else {
-      const h = HANH_DONG_NCC[hanhDong];
-      soDong = await repo.doiTrangThaiTheoNcc(client, { donHangId, nccId, tu: h.tu, den: h.den, nguoiId: user.id });
-      if (!soDong) throw new AppError(409, `Không có dòng nào của NCC này để chuyển sang ${h.nhan}`);
-      if (hanhDong === 'san_hang') {
-        deXuatId = await taoQuyetToanNcc(client, { donHangId, nccId, nguoiId: user.id, ghiChu: 'Tự động khi NCC báo sẵn hàng' });
-        await thongBao.deXuatChi(client, deXuatId, 'moi', { nguoiGayId: user.id, ghiChu: 'Tự lập khi NCC báo sẵn hàng' });
-      }
-    }
-    return { so_dong: soDong, deXuatId, daXoa };
+    const dong = await repo.dongChoDat(client, donHangId, nccId);
+    if (!dong.length) throw new AppError(409, 'Không có dòng "Đã chọn NCC" nào của nhà cung cấp này để đặt hàng');
+    const tong = dong.reduce((s, d) => s + thanhTien(d), 0);
+    const id = await repo.taoDatHang(client, { donHangId, nccId, nguoiId: user.id, tongTien: tong });
+    const [thongTin, ncc] = await Promise.all([
+      repo.donCoBan(donHangId, client),
+      client.query('SELECT ten FROM nha_cung_cap WHERE id = $1', [nccId]).then((r) => r.rows[0].ten),
+    ]);
+    const noiDung = noiDungDatHang({ id, ncc, don: thongTin, dong, tong, nguoiDat: user.ho_ten });
+    await repo.capNhatDatHang(client, id, { noi_dung: noiDung });
+    await repo.ganDongDatHang(client, dong.map((d) => d.id), id, user.id);
+    return { id, noi_dung: noiDung, so_dong: dong.length, tong_tien: tong };
   });
-  // Gui Telegram cho Admin SAU commit (giong lap tay).
-  const deXuat = kq.deXuatId ? await thongBaoDeXuat(kq.deXuatId) : null;
-  return { so_dong: kq.so_dong, de_xuat: deXuat, da_xoa_de_xuat: kq.daXoa };
+  // Gui nhom Telegram NCC SAU commit; loi Telegram khong lam mat don dat hang (van chep van ban gui NCC duoc).
+  let telegram = 'chua_cau_hinh';
+  if (tg.daCauHinhNcc()) {
+    try {
+      const m = await tg.guiDatHangNcc(dh);
+      await repo.capNhatDatHang({ query }, dh.id, { tg_chat_id: m.chat_id, tg_message_id: m.message_id });
+      telegram = 'da_gui';
+    } catch (e) { console.error('Telegram NCC:', e.message); telegram = 'loi'; }
+  }
+  return { ...dh, telegram };
+}
+
+// Ghi phan hoi cua NCC (dung chung web + Telegram). nguoiId = null khi tu Telegram.
+async function ghiPhanHoiNcc({ datHangId, loai, soTienCoc = null, qua, nguoi, nguoiId = null, user = null }) {
+  const kq = await withTransaction(async (client) => {
+    const dh = await repo.khoaDatHang(client, datHangId);
+    if (!dh) throw new AppError(404, 'Không tìm thấy đơn đặt hàng');
+    if (user) await damBaoPhuTrach(user, dh.don_hang_id, client);
+    if (dh.trang_thai !== 'cho_phan_hoi') throw new AppError(409, `ĐH-${dh.id} đã được xử lý trước đó`);
+    const chung = { phan_hoi_qua: qua, nguoi_phan_hoi: nguoi, phan_hoi_luc: new Date() };
+    if (loai === 'xuat') {
+      if (!(await repo.doiDongDatHang(client, dh.id, ['da_dat_hang'], 'san_hang', { nguoiId }))) throw new AppError(409, 'Đơn đặt hàng không còn dòng vật tư nào');
+      await repo.capNhatDatHang(client, dh.id, { ...chung, trang_thai: 'xuat_hang' });
+      const qtId = await taoQuyetToanNcc(client, { donHangId: dh.don_hang_id, nccId: dh.ncc_id, nguoiId: dh.nguoi_dat_id, ghiChu: `Tự động: NCC cho xuất hàng (ĐH-${dh.id})` });
+      await thongBao.deXuatChi(client, qtId, 'moi', { nguoiGayId: nguoiId });
+      await thongBao.gui(client, {
+        nguoiIds: [dh.vanhanh_phu_trach_id, dh.nguoi_dat_id], nguoiGayId: nguoiId, loai: 'ncc_xuat_hang',
+        tieuDe: `${dh.ncc} cho xuất hàng — vật tư đơn ${dh.ma_don} sẵn hàng`, noiDung: `ĐH-${dh.id}, ghi nhận bởi ${nguoi}`, link: `/mua-hang/don/${dh.don_hang_id}`,
+      });
+      return { dh, dxcId: qtId };
+    }
+    const cocId = await taoCocTuNcc(client, {
+      donHangId: dh.don_hang_id, nccId: dh.ncc_id, nguoiId: dh.nguoi_dat_id, soTienCoc, ghiChu: `NCC yêu cầu cọc trước khi xuất hàng (ĐH-${dh.id})`,
+    });
+    await repo.doiDongDatHang(client, dh.id, ['da_dat_hang'], 'cho_coc', { nguoiId });
+    await repo.capNhatDatHang(client, dh.id, { ...chung, trang_thai: 'cho_coc', so_tien_coc: Math.round(Number(soTienCoc)), de_xuat_chi_id: cocId });
+    await thongBao.deXuatChi(client, cocId, 'coc_ncc', { nguoiGayId: nguoiId, ghiChu: `${dh.ncc} yêu cầu cọc (ĐH-${dh.id}), ghi nhận bởi ${nguoi}` });
+    return { dh, dxcId: cocId };
+  });
+  const deXuat = await thongBaoDeXuat(kq.dxcId); // de xuat (quyet toan / coc) -> nhom Telegram duyet chi
+  if (kq.dh.tg_message_id && tg.daCauHinhNcc()) {
+    const ketQua = loai === 'xuat' ? `✅ Đã xác nhận CHO XUẤT HÀNG — ${nguoi}` : `💰 Yêu cầu cọc ${tienVn(soTienCoc)} — ${nguoi}. Công ty đang làm thủ tục chi cọc.`;
+    tg.goi('editMessageText', { chat_id: kq.dh.tg_chat_id, message_id: Number(kq.dh.tg_message_id), text: `${kq.dh.noi_dung}\n\n${ketQua}` })
+      .catch((e) => console.error('Telegram NCC:', e.message));
+  }
+  return { dat_hang_id: kq.dh.id, de_xuat: deXuat };
+}
+
+// NCC tra loi qua dien thoai/Zalo -> Van hanh/Ke toan ghi nhan tren web.
+export function phanHoiNccWeb(user, datHangId, { loai, so_tien_coc }) {
+  if (!['xuat', 'coc'].includes(loai)) throw new AppError(400, 'Phản hồi không hợp lệ');
+  return ghiPhanHoiNcc({ datHangId, loai, soTienCoc: so_tien_coc, qua: 'web', nguoi: user.ho_ten, nguoiId: user.id, user });
+}
+
+// Huy don dat hang chua xong: dong ve "Da chon NCC" (doi NCC / dat lai duoc). De xuat coc chua duyet bi xoa theo.
+export async function huyDatHang(user, datHangId) {
+  const kq = await withTransaction(async (client) => {
+    const dh = await repo.khoaDatHang(client, datHangId);
+    if (!dh) throw new AppError(404, 'Không tìm thấy đơn đặt hàng');
+    await damBaoPhuTrach(user, dh.don_hang_id, client);
+    if (!['cho_phan_hoi', 'cho_coc'].includes(dh.trang_thai)) throw new AppError(409, 'Chỉ huỷ được đơn đặt hàng đang chờ NCC phản hồi hoặc chờ cọc');
+    if (['da_duyet', 'da_thanh_toan'].includes(dh.coc_trang_thai)) throw new AppError(409, 'Cọc đã được duyệt/đã chi — không huỷ được (Admin thu hồi cọc trước)');
+    let tinDuyet = null;
+    if (dh.de_xuat_chi_id) {
+      const { rows } = await client.query(
+        `DELETE FROM de_xuat_chi WHERE id = $1 AND trang_thai IN ('cho_duyet', 'tu_choi') RETURNING telegram_chat_id, telegram_message_id`, [dh.de_xuat_chi_id],
+      );
+      tinDuyet = rows[0] || null;
+    }
+    await repo.doiDongDatHang(client, dh.id, ['da_dat_hang', 'cho_coc'], 'dang_hoi', { nguoiId: user.id, boGan: true });
+    await repo.capNhatDatHang(client, dh.id, { trang_thai: 'huy' });
+    return { dh, tinDuyet };
+  });
+  if (tg.coBot()) {
+    const sua = (chat, msg, text) => tg.goi('editMessageText', { chat_id: chat, message_id: Number(msg), text }).catch((e) => console.error('Telegram:', e.message));
+    if (kq.dh.tg_message_id) sua(kq.dh.tg_chat_id, kq.dh.tg_message_id, `${kq.dh.noi_dung}\n\n❌ Công ty đã HUỶ đơn đặt hàng này (${user.ho_ten}).`);
+    if (kq.tinDuyet?.telegram_message_id) sua(kq.tinDuyet.telegram_chat_id, kq.tinDuyet.telegram_message_id, `Đề xuất cọc ĐH-${kq.dh.id} đã huỷ theo đơn đặt hàng.`);
+  }
+  return { ok: true };
+}
+
+// "2000000", "2.000.000", "2tr", "2,5tr", "500k", "2000000đ" -> so dong; khong doc duoc -> null.
+export function docSoTien(text) {
+  const t = String(text || '').toLowerCase().replace(/\s+/g, '').replace(/(vnd|vnđ|đ|d)$/, '');
+  let m = /^(\d+(?:[.,]\d+)?)(tr|triệu|trieu|m)$/.exec(t);
+  if (m) return Math.round(parseFloat(m[1].replace(',', '.')) * 1e6);
+  m = /^(\d+(?:[.,]\d+)?)(k|nghìn|nghin)$/.exec(t);
+  if (m) return Math.round(parseFloat(m[1].replace(',', '.')) * 1e3);
+  if (/^\d{1,3}([.,]\d{3})+$/.test(t) || /^\d+$/.test(t)) return Number(t.replace(/[.,]/g, '')) || null;
+  return null;
+}
+
+const tenTg = (from) => (from?.username ? `@${from.username}` : from?.first_name || 'NCC');
+
+// Update tu nhom Telegram NCC: nut "Cho xuat hang" / "Yeu cau coc", va tin tra loi so tien coc.
+export async function xuLyTelegramNcc(update) {
+  const nhomNcc = String(process.env.TELEGRAM_CHAT_ID_NCC || '');
+  const cb = update.callback_query;
+  if (cb) {
+    const m = /^dh:(\d+):(xuat|coc)$/.exec(cb.data || '');
+    if (!m) return tg.traLoiNut(cb.id, 'Nút không hợp lệ');
+    // Chi nhan nut bam trong dung nhom NCC va dung tin nhan cua don dat hang do (khong gia mao callback tu nhom khac).
+    if (!nhomNcc || String(cb.message?.chat?.id) !== nhomNcc) return tg.traLoiNut(cb.id, 'Không đúng nhóm nhà cung cấp');
+    const id = Number(m[1]);
+    if ((await repo.datHangTheoTelegram({ query }, { messageId: cb.message.message_id })) !== id) return tg.traLoiNut(cb.id, 'Không tìm thấy đơn đặt hàng');
+    if (m[2] === 'xuat') {
+      try {
+        await ghiPhanHoiNcc({ datHangId: id, loai: 'xuat', qua: 'telegram', nguoi: tenTg(cb.from) });
+        return tg.traLoiNut(cb.id, 'Đã xác nhận cho xuất hàng');
+      } catch (e) { return tg.traLoiNut(cb.id, e instanceof AppError ? e.message : 'Lỗi xử lý'); }
+    }
+    const { rows } = await query('SELECT trang_thai FROM dat_hang_ncc WHERE id = $1', [id]);
+    if (rows[0]?.trang_thai !== 'cho_phan_hoi') return tg.traLoiNut(cb.id, 'Đơn đặt hàng đã được xử lý');
+    const hoiId = await tg.hoiSoTienCoc(cb.message.chat.id, cb.message.message_id, id);
+    await repo.capNhatDatHang({ query }, id, { tg_hoi_coc_message_id: hoiId });
+    return tg.traLoiNut(cb.id, 'Trả lời tin nhắn của bot bằng số tiền cọc');
+  }
+  const msg = update.message;
+  if (!msg?.reply_to_message || !nhomNcc || String(msg.chat?.id) !== nhomNcc) return;
+  const id = await repo.datHangTheoTelegram({ query }, { messageId: msg.reply_to_message.message_id, hoiCoc: true });
+  if (!id) return; // tra loi tin khac -> bo qua
+  const soTien = docSoTien(msg.text);
+  if (!soTien) return tg.guiTin(msg.chat.id, '⚠️ Không đọc được số tiền — trả lời lại tin hỏi cọc, vd: 2000000 hoặc 2tr.', msg.message_id);
+  try {
+    await ghiPhanHoiNcc({ datHangId: id, loai: 'coc', soTienCoc: soTien, qua: 'telegram', nguoi: tenTg(msg.from) });
+    return tg.guiTin(msg.chat.id, `✅ Đã ghi nhận yêu cầu cọc <b>${tienVn(soTien)}</b> cho ĐH-${id}. Công ty sẽ chuyển cọc sau khi duyệt.`, msg.message_id);
+  } catch (e) {
+    return tg.guiTin(msg.chat.id, `⚠️ ${tg.esc(e instanceof AppError ? e.message : 'Lỗi xử lý')} — trả lời lại tin hỏi cọc với số khác.`, msg.message_id);
+  }
+}
+
+// Lui "San hang" khi ghi nham NCC cho xuat hang: quyet toan chua duyet bi xoa, dong ve "Da dat hang", don dat hang ve "cho NCC phan hoi".
+// Khong lui duoc khi quyet toan da duyet/da chi, hoac hang da duoc coc (tien da ra khoi cong ty).
+export async function luiSanHang(user, donHangId, nccId) {
+  if (!nccId) throw new AppError(400, 'Chọn nhà cung cấp');
+  return withTransaction(async (client) => {
+    const don = await repo.khoaDon(client, donHangId);
+    if (!don || don.trang_thai === 'nhap') throw new AppError(404, 'Không tìm thấy đơn hàng');
+    await damBaoPhuTrach(user, donHangId, client);
+    if (!['len_phuong_an', 'boc_khoi_luong', 'mua_hang'].includes(don.giai_doan)) throw new AppError(409, 'Đơn đã qua bước Mua hàng — sai sót xử lý bằng Mua bổ sung');
+    if (await repo.daCocDongSanHang(client, donHangId, nccId)) throw new AppError(409, 'Hàng của NCC này đã được cọc — không lùi được');
+    const daXoa = await xoaQuyetToanChuaDuyet(client, donHangId, nccId);
+    const soDong = await repo.doiTrangThaiTheoNcc(client, { donHangId, nccId, tu: ['san_hang'], den: 'da_dat_hang', nguoiId: user.id, boQuaQuyetToan: true });
+    if (!soDong) throw new AppError(409, 'Không có dòng nào lùi được (đề xuất quyết toán đã duyệt/đã chi — liên hệ Admin thu hồi)');
+    await repo.moLaiDatHang(client, donHangId, nccId);
+    return { so_dong: soDong, da_xoa_de_xuat: daXoa };
+  });
 }
 
 // Don dang giao hang: xac nhan da lay hang cua 1 NCC.

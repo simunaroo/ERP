@@ -58,7 +58,7 @@ export async function donCoBan(id, client = { query }) {
 // Dong mua cua don + de xuat quyet toan con hieu luc dang giu dong (neu co).
 export async function dongCuaDon(donHangId) {
   const { rows } = await query(
-    `SELECT m.id, m.ncc_id, n.ten AS ncc, m.gia_chot, m.vat_pct, m.trang_thai, m.ghi_chu, m.cap_nhat_luc,
+    `SELECT m.id, m.ncc_id, n.ten AS ncc, m.gia_chot, m.vat_pct, m.trang_thai, m.ghi_chu, m.cap_nhat_luc, m.dat_hang_ncc_id,
             dvt.id AS don_hang_vat_tu_id, dvt.vat_tu_id, vt.ten AS vat_tu, vt.don_vi_tinh, vt.quy_cach, dvt.so_luong_can,
             dvt.dai_mm, dvt.rong_mm,
             (SELECT c.id FROM de_xuat_chi_dong x JOIN de_xuat_chi c ON c.id = x.de_xuat_chi_id
@@ -231,4 +231,111 @@ export async function deXuatChiCuaDon(donHangId) {
     [donHangId],
   );
   return rows;
+}
+
+// ---------- Don dat hang NCC ----------
+export async function taoDatHang(client, d) {
+  const { rows } = await client.query(
+    `INSERT INTO dat_hang_ncc (don_hang_id, ncc_id, nguoi_dat_id, noi_dung, tong_tien) VALUES ($1, $2, $3, '', $4) RETURNING id`,
+    [d.donHangId, d.nccId, d.nguoiId, d.tongTien],
+  );
+  return rows[0].id;
+}
+
+export async function capNhatDatHang(client, id, f) {
+  const cot = Object.keys(f);
+  if (!cot.length) return;
+  await client.query(
+    `UPDATE dat_hang_ncc SET ${cot.map((c, i) => `${c} = $${i + 2}`).join(', ')} WHERE id = $1`,
+    [id, ...cot.map((c) => f[c])],
+  );
+}
+
+export async function khoaDatHang(client, id) {
+  const { rows } = await client.query(
+    `SELECT h.*, dh.ma_don, dh.vanhanh_phu_trach_id, dh.giai_doan, n.ten AS ncc,
+            c.trang_thai AS coc_trang_thai
+       FROM dat_hang_ncc h JOIN don_hang dh ON dh.id = h.don_hang_id JOIN nha_cung_cap n ON n.id = h.ncc_id
+       LEFT JOIN de_xuat_chi c ON c.id = h.de_xuat_chi_id
+      WHERE h.id = $1 FOR UPDATE OF h`,
+    [id],
+  );
+  return rows[0] || null;
+}
+
+export async function datHangTheoTelegram(client, { messageId, hoiCoc = false }) {
+  const { rows } = await client.query(
+    `SELECT id FROM dat_hang_ncc WHERE ${hoiCoc ? 'tg_hoi_coc_message_id' : 'tg_message_id'} = $1 ORDER BY id DESC LIMIT 1`,
+    [String(messageId)],
+  );
+  return rows[0]?.id ?? null;
+}
+
+export async function datHangTheoDxc(client, dxcId) {
+  const { rows } = await client.query('SELECT id FROM dat_hang_ncc WHERE de_xuat_chi_id = $1 FOR UPDATE', [dxcId]);
+  return rows[0]?.id ?? null;
+}
+
+// Dong "Da chon NCC" cua 1 NCC trong don (de dua vao don dat hang), khoa dong.
+export async function dongChoDat(client, donHangId, nccId) {
+  const { rows } = await client.query(
+    `SELECT m.id, m.gia_chot, m.vat_pct, dvt.so_luong_can, vt.ten AS vat_tu, vt.don_vi_tinh, vt.quy_cach
+       FROM mua_hang_dong m JOIN don_hang_vat_tu dvt ON dvt.id = m.don_hang_vat_tu_id JOIN vat_tu vt ON vt.id = dvt.vat_tu_id
+      WHERE dvt.don_hang_id = $1 AND m.ncc_id = $2
+        AND (m.trang_thai = 'dang_hoi' OR (m.trang_thai = 'da_dat_hang' AND m.dat_hang_ncc_id IS NULL))
+      ORDER BY dvt.id FOR UPDATE OF m`,
+    [donHangId, nccId],
+  );
+  return rows;
+}
+
+export async function ganDongDatHang(client, ids, datHangId, nguoiId) {
+  await client.query(
+    `UPDATE mua_hang_dong SET trang_thai = 'da_dat_hang', dat_hang_ncc_id = $2, nguoi_cap_nhat_id = $3, cap_nhat_luc = now() WHERE id = ANY($1)`,
+    [ids, datHangId, nguoiId],
+  );
+}
+
+// Doi trang thai cac dong thuoc 1 don dat hang (vd da_dat_hang -> cho_coc / san_hang). boGan: tra dong ve "Da chon NCC".
+export async function doiDongDatHang(client, datHangId, tu, den, { nguoiId = null, boGan = false } = {}) {
+  const { rowCount } = await client.query(
+    `UPDATE mua_hang_dong SET trang_thai = $3, nguoi_cap_nhat_id = COALESCE($4, nguoi_cap_nhat_id), cap_nhat_luc = now()
+            ${boGan ? ', dat_hang_ncc_id = NULL' : ''}
+      WHERE dat_hang_ncc_id = $1 AND trang_thai::text = ANY($2)`,
+    [datHangId, tu, den, nguoiId],
+  );
+  return rowCount;
+}
+
+export async function datHangCuaDon(donHangId) {
+  const { rows } = await query(
+    `SELECT h.id, h.ncc_id, h.noi_dung, h.tong_tien, h.trang_thai, h.so_tien_coc, h.de_xuat_chi_id, h.phan_hoi_qua, h.nguoi_phan_hoi,
+            h.phan_hoi_luc, h.created_at, h.tg_message_id IS NOT NULL AS da_gui_telegram, u.ho_ten AS nguoi_dat,
+            c.trang_thai AS coc_trang_thai,
+            (SELECT count(*)::int FROM mua_hang_dong m WHERE m.dat_hang_ncc_id = h.id) AS so_dong
+       FROM dat_hang_ncc h JOIN users u ON u.id = h.nguoi_dat_id LEFT JOIN de_xuat_chi c ON c.id = h.de_xuat_chi_id
+      WHERE h.don_hang_id = $1 ORDER BY h.id DESC`,
+    [donHangId],
+  );
+  return rows;
+}
+
+// Co dong san hang cua NCC thuoc don dat hang co coc da duyet/da chi -> khong cho lui.
+export async function daCocDongSanHang(client, donHangId, nccId) {
+  const { rows } = await client.query(
+    `SELECT 1 FROM mua_hang_dong m JOIN don_hang_vat_tu v ON v.id = m.don_hang_vat_tu_id
+       JOIN dat_hang_ncc h ON h.id = m.dat_hang_ncc_id JOIN de_xuat_chi c ON c.id = h.de_xuat_chi_id
+      WHERE v.don_hang_id = $1 AND m.ncc_id = $2 AND m.trang_thai = 'san_hang' AND c.trang_thai IN ('da_duyet', 'da_thanh_toan') LIMIT 1`,
+    [donHangId, nccId],
+  );
+  return rows.length > 0;
+}
+
+// Lui san hang: don dat hang "da cho xuat" ve "cho NCC phan hoi" (ghi nhan lai phan hoi dung).
+export async function moLaiDatHang(client, donHangId, nccId) {
+  await client.query(
+    `UPDATE dat_hang_ncc SET trang_thai = 'cho_phan_hoi', phan_hoi_qua = NULL, nguoi_phan_hoi = NULL, phan_hoi_luc = NULL
+      WHERE don_hang_id = $1 AND ncc_id = $2 AND trang_thai = 'xuat_hang' AND de_xuat_chi_id IS NULL`,
+    [donHangId, nccId],
+  );
 }

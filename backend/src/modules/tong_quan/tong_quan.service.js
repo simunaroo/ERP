@@ -54,7 +54,7 @@ async function congNoNcc() {
   return Number(rows[0].con_phai_tra);
 }
 
-// Moi viec: so luong + duong dan toi man xu ly. Chi tra viec co so > 0.
+// Moi viec: [nhan, duong dan toi man xu ly, SQL dem, muc do]. muc 'gap' = tre han / dang chan nguoi khac -> to mau do.
 const VIEC = {
   sale: [
     ['Đơn nháp chưa chốt', '/don-hang?trang_thai=nhap',
@@ -68,6 +68,13 @@ const VIEC = {
   van_hanh: [
     ['Đơn mới chờ lên phương án', '/don-hang?giai_doan=len_phuong_an',
       `SELECT count(*) FROM don_hang WHERE giai_doan = 'len_phuong_an' AND vanhanh_phu_trach_id = $1`],
+    ['Đơn đặt hàng chờ NCC phản hồi quá 1 ngày', '/mua-hang?loc=dang_chuan_bi',
+      `SELECT count(*) FROM dat_hang_ncc h JOIN don_hang d ON d.id = h.don_hang_id
+        WHERE h.trang_thai = 'cho_phan_hoi' AND h.created_at < now() - interval '1 day' AND d.vanhanh_phu_trach_id = $1`, 'gap'],
+    ['Đơn có vật tư chưa đặt hàng NCC', '/mua-hang?loc=dang_chuan_bi',
+      `SELECT count(DISTINCT d.id) FROM don_hang d JOIN don_hang_vat_tu v ON v.don_hang_id = d.id JOIN mua_hang_dong m ON m.don_hang_vat_tu_id = v.id
+        WHERE d.giai_doan IN ('len_phuong_an', 'boc_khoi_luong', 'mua_hang') AND d.vanhanh_phu_trach_id = $1
+          AND (m.trang_thai IN ('cho_xu_ly', 'dang_hoi') OR (m.trang_thai = 'da_dat_hang' AND m.dat_hang_ncc_id IS NULL))`],
     ['Đơn đủ hàng, chờ đăng ký giao hàng', '/mua-hang?loc=san_sang',
       `SELECT count(*) FROM don_hang d WHERE d.giai_doan = 'mua_hang' AND d.vanhanh_phu_trach_id = $1 AND EXISTS (SELECT 1 FROM don_hang_vat_tu v JOIN mua_hang_dong m ON m.don_hang_vat_tu_id = v.id WHERE v.don_hang_id = d.id)
          AND NOT EXISTS (SELECT 1 FROM don_hang_vat_tu v JOIN mua_hang_dong m ON m.don_hang_vat_tu_id = v.id
@@ -76,7 +83,7 @@ const VIEC = {
       `SELECT count(*) FROM don_hang d WHERE d.vanhanh_phu_trach_id = $1 AND d.hinh_thuc = 'hoan_thien' AND d.giai_doan IN ('mua_hang', 'giao_hang', 'thi_cong')
          AND NOT EXISTS (SELECT 1 FROM thi_cong t WHERE t.don_hang_id = d.id)`],
     ['Giai đoạn đến hạn mà chưa bắt đầu thi công', '/thi-cong',
-      `SELECT count(*) FROM thi_cong t JOIN don_hang d ON d.id = t.don_hang_id WHERE t.trang_thai = 'lap_lich' AND t.ngay_du_kien <= CURRENT_DATE AND d.vanhanh_phu_trach_id = $1`],
+      `SELECT count(*) FROM thi_cong t JOIN don_hang d ON d.id = t.don_hang_id WHERE t.trang_thai = 'lap_lich' AND t.ngay_du_kien <= CURRENT_DATE AND d.vanhanh_phu_trach_id = $1`, 'gap'],
     ['Đơn chờ nghiệm thu', '/don-hang?giai_doan=nghiem_thu', `SELECT count(*) FROM don_hang WHERE giai_doan = 'nghiem_thu' AND vanhanh_phu_trach_id = $1`],
     ['Đơn chờ chốt quyết toán', '/don-hang?giai_doan=quyet_toan', `SELECT count(*) FROM don_hang WHERE giai_doan = 'quyet_toan' AND vanhanh_phu_trach_id = $1`],
     ['Yêu cầu sửa đơn chưa xử lý', '/don-hang', `SELECT count(*) FROM don_hang_yeu_cau_sua y JOIN don_hang d ON d.id = y.don_hang_id WHERE y.trang_thai = 'cho_xu_ly' AND d.vanhanh_phu_trach_id = $1`],
@@ -90,24 +97,25 @@ const VIEC = {
         WHERE d.giai_doan <> 'huy' AND m.trang_thai IN ('san_hang', 'da_lay_hang', 'da_giao_hang')
           AND NOT EXISTS (SELECT 1 FROM de_xuat_chi_dong x JOIN de_xuat_chi c ON c.id = x.de_xuat_chi_id WHERE x.mua_hang_dong_id = m.id AND c.trang_thai <> 'thu_hoi')`],
     ['Đề xuất chi bị từ chối cần sửa', '/cong-no?trang_thai=tu_choi', `SELECT count(*) FROM de_xuat_chi WHERE trang_thai = 'tu_choi'`],
-    ['Đề xuất đã duyệt, chờ chuyển khoản', '/cong-no?trang_thai=da_duyet', `SELECT count(*) FROM de_xuat_chi WHERE trang_thai = 'da_duyet'`],
+    ['Đề xuất đã duyệt, chờ chuyển khoản', '/cong-no?trang_thai=da_duyet', `SELECT count(*) FROM de_xuat_chi WHERE trang_thai = 'da_duyet'`, 'gap'],
+    ['Cọc NCC chờ duyệt (NCC chưa xuất hàng)', '/cong-no?trang_thai=cho_duyet&loai_chi=coc', `SELECT count(*) FROM de_xuat_chi WHERE trang_thai = 'cho_duyet' AND loai_chi = 'coc'`],
     ['Đội thợ còn công chưa lập đề xuất trả', '/cong-no/tho',
       `SELECT count(*) FROM (SELECT g.doi_tho_id, g.don_hang_id FROM giao_dich_tho g GROUP BY 1, 2
           HAVING sum(CASE g.loai WHEN 'phai_tra' THEN g.so_tien ELSE -g.so_tien END) > 0 AND bool_or(g.loai = 'phai_tra')) x
         WHERE NOT EXISTS (SELECT 1 FROM de_xuat_chi c WHERE c.doi_tho_id = x.doi_tho_id AND c.don_hang_id = x.don_hang_id AND c.trang_thai IN ('cho_duyet', 'da_duyet'))`],
   ],
   admin: [
-    ['Đề xuất chi chờ bạn duyệt', '/cong-no?trang_thai=cho_duyet', `SELECT count(*) FROM de_xuat_chi WHERE trang_thai = 'cho_duyet'`],
+    ['Đề xuất chi chờ bạn duyệt', '/cong-no?trang_thai=cho_duyet', `SELECT count(*) FROM de_xuat_chi WHERE trang_thai = 'cho_duyet'`, 'gap'],
     ['Đơn chờ chốt quyết toán', '/thi-cong/quyet-toan', `SELECT count(*) FROM don_hang WHERE giai_doan = 'quyet_toan'`],
-    ['Đơn chưa có Vận hành phụ trách', '/don-hang?van_hanh_id=chua', `SELECT count(*) FROM don_hang WHERE trang_thai <> 'nhap' AND giai_doan NOT IN ('hoan_tat', 'huy') AND vanhanh_phu_trach_id IS NULL`],
+    ['Đơn chưa có Vận hành phụ trách', '/don-hang?van_hanh_id=chua', `SELECT count(*) FROM don_hang WHERE trang_thai <> 'nhap' AND giai_doan NOT IN ('hoan_tat', 'huy') AND vanhanh_phu_trach_id IS NULL`, 'gap'],
   ],
 };
 
 async function viecCanLam(user) {
   const ds = VIEC[user.vai_tro] || [];
-  const kq = await Promise.all(ds.map(async ([nhan, link, sql]) => {
+  const kq = await Promise.all(ds.map(async ([nhan, link, sql, muc = 'thuong']) => {
     const { rows } = await query(sql, sql.includes('$1') ? [user.id] : []);
-    return { nhan, link, so: Number(rows[0].count) };
+    return { nhan, link, so: Number(rows[0].count), muc };
   }));
   return kq;
 }

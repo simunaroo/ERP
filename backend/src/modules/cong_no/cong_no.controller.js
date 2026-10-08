@@ -1,3 +1,4 @@
+import { xuLyUpdate } from '../../integrations/telegram.router.js';
 import * as service from './cong_no.service.js';
 
 const id = (req) => Number(req.params.id);
@@ -26,5 +27,5 @@ export const soTho = async (req, res) => res.json(await service.soTho(id(req)));
 export async function webhook(req, res) {
   if (!service.dungSecret(req.get('X-Telegram-Bot-Api-Secret-Token'))) return res.status(401).end();
   res.json({ ok: true });
-  service.xuLyUpdateTelegram(req.body).catch((e) => console.error('Telegram webhook:', e.message));
+  xuLyUpdate(req.body).catch((e) => console.error('Telegram webhook:', e.message));
 }

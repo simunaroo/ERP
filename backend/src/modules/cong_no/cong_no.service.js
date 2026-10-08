@@ -6,11 +6,12 @@ import { luuAnhBase64, duongDanAnh } from '../../utils/luuAnh.js';
 import * as repo from './cong_no.repository.js';
 import * as tg from '../../integrations/telegram.client.js';
 import * as thongBao from '../thong_bao/thong_bao.service.js';
+import * as muaRepo from '../mua_hang/mua_hang.repository.js';
 
 const TRANG_THAI = ['cho_duyet', 'da_duyet', 'tu_choi', 'da_thanh_toan', 'thu_hoi'];
 const LOAI = ['coc', 'quyet_toan', 'chi_bo_sung', 'tra_cong', 'ung_cong'];
 const SAN_SANG = ['san_hang', 'da_lay_hang', 'da_giao_hang'];
-const DA_DAT = ['da_dat_hang', ...SAN_SANG];
+const DA_DAT = ['da_dat_hang', 'cho_coc', ...SAN_SANG];
 const tien = (n) => `${Math.round(n).toLocaleString('vi-VN')} đ`;
 const soTien = (v) => {
   const n = Number(v);
@@ -90,6 +91,30 @@ export async function xoaQuyetToanChuaDuyet(client, donHangId, nccId) {
 }
 
 export const thongBaoDeXuat = (id) => guiTelegramSauCommit(id);
+
+// NCC tra loi don dat hang "xuat hang nhung yeu cau coc" -> sinh de xuat coc (cho Admin duyet), nguoi lap = nguoi dat hang.
+export async function taoCocTuNcc(client, { donHangId, nccId, nguoiId, soTienCoc, ghiChu }) {
+  const so = soTien(soTienCoc);
+  await kiemTraCoc(client, donHangId, nccId, so);
+  return repo.tao(client, { loai: 'coc', nccId, donHangId, nguoiId, soTien: so, ghiChu });
+}
+
+// Coc da chi (co bill): cac dong cua don dat hang dang "cho coc" -> San hang, NCC xuat hang, tu lap quyet toan phan con lai.
+async function sauKhiChiCoc(client, c, nguoiId) {
+  const dhId = await muaRepo.datHangTheoDxc(client, c.id);
+  if (!dhId) return null;
+  const dh = await muaRepo.khoaDatHang(client, dhId);
+  if (dh.trang_thai !== 'cho_coc') return null;
+  await muaRepo.doiDongDatHang(client, dhId, ['cho_coc'], 'san_hang', { nguoiId });
+  await muaRepo.capNhatDatHang(client, dhId, { trang_thai: 'xuat_hang' });
+  const qtId = await taoQuyetToanNcc(client, { donHangId: dh.don_hang_id, nccId: dh.ncc_id, nguoiId: dh.nguoi_dat_id, ghiChu: 'Tự động: cọc đã chi, NCC xuất hàng' });
+  await thongBao.deXuatChi(client, qtId, 'moi', { nguoiGayId: nguoiId });
+  await thongBao.gui(client, {
+    nguoiIds: [dh.vanhanh_phu_trach_id, dh.nguoi_dat_id], nguoiGayId: nguoiId, loai: 'ncc_xuat_hang',
+    tieuDe: `Đã chi cọc — ${dh.ncc} xuất hàng, vật tư đơn ${dh.ma_don} sẵn hàng`, link: `/mua-hang/don/${dh.don_hang_id}`,
+  });
+  return { qtId, dh };
+}
 
 async function kiemTraCoc(client, donHangId, nccId, so, boQuaId = 0) {
   const dong = await repo.dongCuaNcc(client, donHangId, nccId);
@@ -236,6 +261,7 @@ export async function thuHoi(user, id, { ly_do }) {
 // "Da chi": bat buoc anh bill/UNC. Chi cho tho -> ghi so tho (da_tra / tam_ung).
 export async function daChi(user, id, { bill }) {
   const ten = await luuAnhBase64(bill, 'bill');
+  let sauCoc = null;
   try {
     await withTransaction(async (client) => {
       const c = await repo.khoaDxc(client, id);
@@ -247,6 +273,7 @@ export async function daChi(user, id, { bill }) {
       });
       await repo.doiTrangThai(client, id, 'da_duyet', 'da_thanh_toan');
       await thongBao.deXuatChi(client, id, 'da_chi', { nguoiGayId: user.id });
+      if (c.loai_chi === 'coc') sauCoc = await sauKhiChiCoc(client, c, user.id);
       if (c.doi_tho_id) {
         await repo.ghiGiaoDichTho(client, {
           thoId: c.doi_tho_id, donHangId: c.don_hang_id, loai: c.loai_chi === 'tra_cong' ? 'da_tra' : 'tam_ung',
@@ -257,6 +284,13 @@ export async function daChi(user, id, { bill }) {
   } catch (e) {
     await fs.unlink(duongDanAnh(ten).file).catch(() => {}); // giao dich loi -> xoa anh vua luu
     throw e;
+  }
+  if (sauCoc) {
+    await guiTelegramSauCommit(sauCoc.qtId); // quyet toan phan con lai -> nhom duyet chi
+    if (sauCoc.dh.tg_message_id && tg.daCauHinhNcc()) {
+      tg.guiTin(sauCoc.dh.tg_chat_id, `✅ <b>ĐH-${sauCoc.dh.id}</b>: công ty đã chuyển cọc <b>${tien(sauCoc.dh.so_tien_coc)}</b>. Đề nghị xuất hàng.`, sauCoc.dh.tg_message_id)
+        .catch((e) => console.error('Telegram NCC:', e.message));
+    }
   }
   return chiTiet(id);
 }
