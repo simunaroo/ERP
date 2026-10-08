@@ -35,28 +35,67 @@ export function noiDungDeXuatChi(dxc, ketQua) {
     `Số tiền: <b>${tien(dxc.so_tien)}</b>`,
   ];
   if (dxc.loai_chi === 'quyet_toan') dong.push(`Tiền hàng (gồm VAT) ${tien(dxc.gia_tri_hang)} − cọc ${tien(dxc.coc_da_tru)}; ${dxc.dong.length} dòng vật tư`);
+  if (dxc.nguoi_nhan) dong.push(`Chuyển tới: <b>${esc(dxc.nguoi_nhan.ten_ngan_hang)} · ${esc(dxc.nguoi_nhan.so_tk)}</b> · ${esc(dxc.nguoi_nhan.chu_tk)}`);
+  if (dxc.noi_dung_ck) dong.push(`Nội dung CK: <code>${esc(dxc.noi_dung_ck)}</code>`);
+  if (dxc.qr_ly_do) dong.push(`⚠️ ${esc(dxc.qr_ly_do)}`);
   dong.push(`Người lập: ${esc(dxc.nguoi_tao)}`);
   if (dxc.ghi_chu) dong.push(`Ghi chú: ${esc(dxc.ghi_chu)}`);
   if (ketQua) dong.push('', ketQua);
   return dong.join('\n');
 }
 
+// Co QR -> gui ANH QR, noi dung de xuat lam chu thich (caption) kem nut duyet; Telegram khong tai duoc anh -> gui chu kem link QR.
 export async function guiDeXuatChi(dxc) {
-  const msg = await goi('sendMessage', {
-    chat_id: process.env.TELEGRAM_CHAT_ID_DUYET,
-    text: noiDungDeXuatChi(dxc),
-    parse_mode: 'HTML',
-    reply_markup: { inline_keyboard: [[
-      { text: '✅ Duyệt', callback_data: `dxc:${dxc.id}:duyet` },
-      { text: '❌ Từ chối', callback_data: `dxc:${dxc.id}:tu_choi` },
-    ]] },
-  });
+  const nut = { inline_keyboard: [[
+    { text: '✅ Duyệt', callback_data: `dxc:${dxc.id}:duyet` },
+    { text: '❌ Từ chối', callback_data: `dxc:${dxc.id}:tu_choi` },
+  ]] };
+  const chat = process.env.TELEGRAM_CHAT_ID_DUYET;
+  let msg;
+  if (dxc.qr) {
+    try {
+      msg = await goi('sendPhoto', { chat_id: chat, photo: dxc.qr, caption: noiDungDeXuatChi(dxc), parse_mode: 'HTML', reply_markup: nut }, 20000);
+    } catch (e) { console.error('Telegram sendPhoto QR:', e.message); }
+  }
+  if (!msg) {
+    const text = noiDungDeXuatChi(dxc) + (dxc.qr ? `\n<a href="${esc(dxc.qr)}">Mở mã QR chuyển khoản</a>` : '');
+    msg = await goi('sendMessage', { chat_id: chat, text, parse_mode: 'HTML', reply_markup: nut });
+  }
   return { message_id: String(msg.message_id), chat_id: String(msg.chat.id) };
 }
 
-// Sau khi duyet/tu choi: sua tin nhan, bo nut bam (khong bam lai duoc).
-export const capNhatTinNhan = (chatId, messageId, text) =>
-  goi('editMessageText', { chat_id: chatId, message_id: Number(messageId), text, parse_mode: 'HTML' });
+// Sua tin sau moi buoc (duyet / da chi...). Khong truyen nut -> bo nut (khong bam lai duoc).
+// Tin anh (QR) khong co text -> phai sua caption.
+export async function capNhatTinNhan(chatId, messageId, text, nut = null) {
+  const chung = { chat_id: chatId, message_id: Number(messageId), parse_mode: 'HTML', reply_markup: nut || { inline_keyboard: [] } };
+  try {
+    return await goi('editMessageText', { ...chung, text });
+  } catch (e) {
+    if (!/no text in the message/i.test(e.message)) throw e;
+    return goi('editMessageCaption', { ...chung, caption: text });
+  }
+}
+
+// Sau khi Admin duyet: nut cho Ke toan bao "da chi" (kem anh bill) ngay trong nhom.
+export const nutDaChi = (id) => ({ inline_keyboard: [[{ text: '💸 Đã chi – gửi ảnh bill', callback_data: `dxc:${id}:chi` }]] });
+
+export async function hoiAnhBill(chatId, replyTo, id) {
+  const msg = await goi('sendMessage', {
+    chat_id: chatId,
+    reply_to_message_id: Number(replyTo),
+    text: `📎 DXC-${id}: TRẢ LỜI tin nhắn này bằng ẢNH bill/UNC chuyển khoản.`,
+    reply_markup: { force_reply: true, selective: true, input_field_placeholder: 'Gửi ảnh bill' },
+  });
+  return String(msg.message_id);
+}
+
+// Tai file Telegram (anh bill) ve dang Buffer: getFile -> file_path -> tai qua duong dan file cua bot.
+export async function taiFile(fileId) {
+  const f = await goi('getFile', { file_id: fileId });
+  const res = await fetch(`https://api.telegram.org/file/bot${process.env.TELEGRAM_BOT_TOKEN}/${f.file_path}`, { signal: AbortSignal.timeout(20000) });
+  if (!res.ok) throw new Error(`Telegram tải file: ${res.status}`);
+  return Buffer.from(await res.arrayBuffer());
+}
 
 export const traLoiNut = (callbackId, text) => goi('answerCallbackQuery', { callback_query_id: callbackId, text, show_alert: false });
 

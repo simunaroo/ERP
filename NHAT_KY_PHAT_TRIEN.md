@@ -421,6 +421,34 @@ Tất cả vật tư Sẵn hàng ─► Vận hành [Đăng ký giao hàng]
 
 ---
 
+## Vòng 3.11 — QR chuyển khoản trong đề xuất chi; link thông báo theo vai trò (08/10/2026)
+
+- **QR VietQR kèm ngay từ lúc lập đề xuất** (trước chỉ hiện sau khi duyệt): đúng ngân hàng + STK người nhận + **số tiền** + nội dung CK hệ thống sinh (đối soát sao kê theo nội dung này).
+  - Telegram nhóm duyệt chi: gửi **ảnh QR**, nội dung đề xuất làm chú thích (có ngân hàng, STK, chủ TK, nội dung CK) kèm nút Duyệt/Từ chối. Telegram không tải được ảnh → tự gửi dạng chữ kèm link QR (đề xuất không bị kẹt).
+  - Duyệt/từ chối sửa lại tin: tin ảnh phải dùng `editMessageCaption` (không có text) → hàm sửa tin tự thử text rồi chuyển caption.
+  - Web: chi tiết đề xuất hiện QR + STK + số tiền + nội dung CK; không tạo được QR thì ghi lý do (người nhận chưa có STK / ngân hàng chưa hỗ trợ).
+- **Lỗi:** Vận hành bấm thông báo "đã duyệt cọc" → vào màn Công nợ (không có quyền) → báo lỗi. Sửa: `gui()` nhận `linkTheoVaiTro`, chọn link theo vai trò từng người nhận ngay trong câu INSERT (`COALESCE($8::jsonb ->> vai_tro, $7)`): Kế toán/Admin → mở thẳng đề xuất (`/cong-no?q=…&mo=id`), Vận hành → màn mua hàng của đơn, Sale → chi tiết đơn. Sửa luôn 2 thông báo cũ trong CSDL.
+
+**Kiểm thử:** 12 ca (QR khi chờ duyệt, ảnh + caption + nút, sửa caption khi duyệt, dự phòng khi gửi ảnh lỗi, link theo vai trò, NCC không có STK) + tải thử ảnh VietQR thật (PNG 200).
+
+---
+
+## Vòng 3.12 — Kế toán chi ngay trong nhóm Telegram duyệt chi (08/10/2026, migration 020)
+
+```
+Admin ✅ Duyệt ─► tin đề xuất (ảnh QR) đổi "Đã duyệt" + nút [💸 Đã chi – gửi ảnh bill]
+Kế toán quét QR chuyển khoản ─► bấm nút ─► bot hỏi ảnh bill (ForceReply)
+Kế toán trả lời bằng ảnh ─► bot tải ảnh (getFile) ─► daChi() như trên web ─► tin đổi "💸 Đã chi (qua Telegram)", bỏ nút
+```
+- **Gắn Telegram với người dùng ERP** (`users.telegram_username`, UNIQUE không phân biệt hoa/thường; Admin gắn ở trang Người dùng): phiếu chi, thông báo, nhật ký ghi **đúng người**. Chỉ Kế toán đã gắn mới bấm "Đã chi"/gửi bill được; Admin đã gắn duyệt được mà không cần khai trong `TELEGRAM_NGUOI_DUYET` (biến này vẫn dùng được).
+- Dùng **chung hàm `daChi`** với web: kiểm tra trạng thái, lưu ảnh (kiểm tra magic bytes, ≤ 4MB), sau cọc thì vật tư tự Sẵn hàng + quyết toán phần còn lại. Chi trên web thì tin Telegram cũng được sửa "Đã chi" và bỏ nút (không ai bấm chi lần 2); thu hồi cũng bỏ nút.
+- Chống giả mạo: nút phải bấm trong đúng nhóm duyệt chi, đúng tin của đề xuất; ảnh phải là trả lời đúng tin bot hỏi, của đúng Kế toán đã gắn.
+- Router Telegram: tin trả lời thử "ảnh bill" trước, không phải thì chuyển xử lý nhóm NCC.
+
+**Kiểm thử:** 21 ca (gắn/trùng/sai định dạng Telegram, bấm chi khi chưa duyệt, người lạ, sai nhóm, trả lời bằng chữ, người lạ gửi ảnh, chi thành công + phiếu đúng người + tải ảnh lớn nhất, chi 2 lần bị chặn, chi trên web cũng bỏ nút Telegram). Dọn 11 ảnh bill giả do các lần test để lại (chỉ xoá file không được CSDL tham chiếu).
+
+---
+
 ## Vòng 3 — (dự kiến) Giai đoạn đơn hàng + NCC & bảng giá
 
 **Đề xuất đang cân nhắc**

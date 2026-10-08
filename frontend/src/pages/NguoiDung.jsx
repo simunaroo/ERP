@@ -51,7 +51,7 @@ export function NguoiDung() {
       <div className="card">
         <div className="table-wrap">
           <table>
-            <thead><tr><th>Họ tên</th><th>Tên đăng nhập</th><th>Vai trò</th><th>Trạng thái</th><th>Đổi mật khẩu</th><th className="num">Khách / đơn</th><th /></tr></thead>
+            <thead><tr><th>Họ tên</th><th>Tên đăng nhập</th><th>Vai trò</th><th>Trạng thái</th><th>Telegram</th><th>Đổi mật khẩu</th><th className="num">Khách / đơn</th><th /></tr></thead>
             <tbody>
               {(ds || []).map((u) => (
                 <tr key={u.id} className={u.trang_thai !== 'active' ? 'dong-mo' : ''}>
@@ -64,6 +64,13 @@ export function NguoiDung() {
                     </select>
                   </td>
                   <td><span className={`pill ${u.trang_thai === 'active' ? 'p-done' : 'p-lost'}`}>{u.trang_thai === 'active' ? 'Hoạt động' : 'Đã khoá'}</span></td>
+                  <td className="small nowrap">
+                    {u.telegram_username ? <code>@{u.telegram_username}</code> : <span className="muted">chưa gắn</span>}{' '}
+                    <button className="link small" onClick={() => {
+                      const v = window.prompt(`Username Telegram của ${u.ho_ten} (để trống = bỏ gắn).\nKế toán gắn Telegram mới bấm "Đã chi" trong nhóm duyệt chi được.`, u.telegram_username || '');
+                      if (v !== null) lam(() => api.put(`/nguoi-dung/${u.id}`, { telegram_username: v }), v.trim() ? `Đã gắn Telegram cho ${u.username}` : `Đã bỏ gắn Telegram của ${u.username}`);
+                    }}>{u.telegram_username ? 'Sửa' : 'Gắn'}</button>
+                  </td>
                   <td className="small">{u.doi_mat_khau_luc ? ngay(u.doi_mat_khau_luc) : <span className="muted">chưa đổi</span>}</td>
                   <td className="num small">{u.so_khach} / {u.so_don_sale}</td>
                   <td className="nowrap hanh-dong">

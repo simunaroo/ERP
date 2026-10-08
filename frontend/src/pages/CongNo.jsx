@@ -64,10 +64,12 @@ function ChiTietDxc({ dxc, vaiTro, onLam }) {
           </div>
         )}
       </div>
-      {(dxc.qr || dxc.phieu) && (
+      {(dxc.qr || dxc.phieu || dxc.qr_ly_do) && (
         <div className="phieu">
-          {dxc.phieu ? <><b>Đã chi {ngay(dxc.phieu.ngay_thanh_toan)}</b><AnhBill id={dxc.id} /></> : <b>Quét để chuyển khoản</b>}
+          {dxc.phieu ? <><b>Đã chi {ngay(dxc.phieu.ngay_thanh_toan)}</b><AnhBill id={dxc.id} /></> : <b>{dxc.trang_thai === 'cho_duyet' ? 'Mã chuyển khoản (sau khi duyệt)' : 'Quét để chuyển khoản'}</b>}
           {dxc.qr && !dxc.phieu && <img src={dxc.qr} alt={`Mã VietQR ${tien(dxc.so_tien)}`} width="200" loading="lazy" />}
+          {dxc.nguoi_nhan && !dxc.phieu && <span className="small">{dxc.nguoi_nhan.ten_ngan_hang} · <b>{dxc.nguoi_nhan.so_tk}</b> · {dxc.nguoi_nhan.chu_tk}<br />Số tiền <b>{tien(dxc.so_tien)}</b> · ND: <code>{dxc.noi_dung_ck}</code></span>}
+          {dxc.qr_ly_do && <span className="error-text small">{dxc.qr_ly_do}</span>}
         </div>
       )}
     </div>
@@ -93,6 +95,9 @@ export function DeXuatChi() {
   useEffect(tai, [tai]);
   const datLoc = (k, v) => { const m = new URLSearchParams(params); v ? m.set(k, v) : m.delete(k); if (k !== 'page') m.delete('page'); setParams(m, { replace: true }); };
   const xem = async (id) => { if (mo?.id === id) return setMo(null); try { setMo((await api.get(`/cong-no/de-xuat-chi/${id}`)).data); } catch (e) { setLoi(loiCua(e)); } };
+  // Den tu thong bao (?mo=id): mo san chi tiet de xuat do.
+  const moTuLink = params.get('mo');
+  useEffect(() => { if (moTuLink) xem(Number(moTuLink)); }, [moTuLink]);
   const lam = async (fn, tb) => {
     setLoi(''); setThongBao('');
     try { const r = await fn(); if (r?.data?.id) setMo(r.data); else setMo(null); setThongBao(tb); tai(); } catch (e) { setLoi(loiCua(e)); }
