@@ -47,9 +47,11 @@ export async function chiTiet(id) {
   const dxc = await repo.findDxc(id);
   if (!dxc) throw new AppError(404, 'Không tìm thấy đề xuất chi');
   const [dong, log, phieu, stk] = await Promise.all([repo.dongCua(id), repo.lichSuDuyet(id), repo.phieuCua(id), repo.stkNguoiNhan({ query }, dxc)]);
-  // QR chi hien khi da duyet (de chuyen khoan) hoac da chi (de doi chieu).
-  const qr = ['da_duyet', 'da_thanh_toan'].includes(dxc.trang_thai) && stk && Number(dxc.so_tien) > 0 ? linkVietQr(stk, Number(dxc.so_tien), dxc.noi_dung_ck) : null;
-  return { ...chuanSo(dxc), dong, lich_su_duyet: log, phieu, nguoi_nhan: stk, qr };
+  // QR VietQR (ngan hang + STK + so tien + noi dung CK) kem ngay tu luc lap: Admin thay chuyen cho ai bao nhieu, Ke toan quet de chi.
+  const conHieuLuc = ['cho_duyet', 'da_duyet', 'da_thanh_toan'].includes(dxc.trang_thai) && Number(dxc.so_tien) > 0;
+  const qr = conHieuLuc && stk ? linkVietQr(stk, Number(dxc.so_tien), dxc.noi_dung_ck) : null;
+  const qrLyDo = !conHieuLuc || qr ? null : !stk ? 'Người nhận chưa có tài khoản ngân hàng — bổ sung ở hồ sơ NCC/đội thợ' : `Ngân hàng "${stk.ten_ngan_hang}" chưa hỗ trợ tạo QR — chuyển khoản tay theo STK`;
+  return { ...chuanSo(dxc), dong, lich_su_duyet: log, phieu, nguoi_nhan: stk, qr, qr_ly_do: qrLyDo };
 }
 
 // ---------- Tinh so tien tung loai (server tinh, khong nhan so tien tu client tru coc/ung) ----------
@@ -238,7 +240,10 @@ async function xuLyDuyet({ id, hanhDong, nguoiDuyet, nguoiId, ghiChu }) {
   const dxc = await chiTiet(id);
   if (dxc.telegram_message_id && tg.daCauHinh()) {
     const kq = hanhDong === 'duyet' ? `✅ <b>Đã duyệt</b> bởi ${tg.esc(nguoiDuyet)}` : `❌ <b>Từ chối</b> bởi ${tg.esc(nguoiDuyet)}: ${tg.esc(ghiChu)}`;
-    tg.capNhatTinNhan(dxc.telegram_chat_id, dxc.telegram_message_id, tg.noiDungDeXuatChi(dxc, kq)).catch((e) => console.error(e.message));
+    // Duyet xong (con phai chuyen tien) -> them nut cho Ke toan bao da chi ngay trong nhom.
+    const nut = hanhDong === 'duyet' && dxc.trang_thai === 'da_duyet' ? tg.nutDaChi(dxc.id) : null;
+    const loiNhac = nut ? '\n💳 Kế toán: quét QR chuyển khoản rồi bấm nút bên dưới, gửi ảnh bill.' : '';
+    tg.capNhatTinNhan(dxc.telegram_chat_id, dxc.telegram_message_id, tg.noiDungDeXuatChi(dxc, kq + loiNhac), nut).catch((e) => console.error(e.message));
   }
   return dxc;
 }
@@ -255,11 +260,13 @@ export async function thuHoi(user, id, { ly_do }) {
     await repo.ghiLogDuyet(client, { id, nguoiDuyet: `web:${user.ho_ten}`, nguoiId: user.id, hanhDong: 'tu_choi', ghiChu: `Thu hồi: ${lyDo}` });
     await thongBao.deXuatChi(client, id, 'thu_hoi', { nguoiGayId: user.id, ghiChu: lyDo });
   });
-  return chiTiet(id);
+  const dxc = await chiTiet(id);
+  suaTinDuyet(dxc, `↩️ <b>Admin thu hồi duyệt</b> (${tg.esc(user.ho_ten)}): ${tg.esc(lyDo)}`);
+  return dxc;
 }
 
 // "Da chi": bat buoc anh bill/UNC. Chi cho tho -> ghi so tho (da_tra / tam_ung).
-export async function daChi(user, id, { bill }) {
+export async function daChi(user, id, { bill }, kenh = 'web') {
   const ten = await luuAnhBase64(bill, 'bill');
   let sauCoc = null;
   try {
@@ -285,6 +292,8 @@ export async function daChi(user, id, { bill }) {
     await fs.unlink(duongDanAnh(ten).file).catch(() => {}); // giao dich loi -> xoa anh vua luu
     throw e;
   }
+  const dxc = await chiTiet(id);
+  suaTinDuyet(dxc, `💸 <b>Đã chi</b> bởi ${tg.esc(user.ho_ten)}${kenh === 'telegram' ? ' (qua Telegram)' : ''}`);
   if (sauCoc) {
     await guiTelegramSauCommit(sauCoc.qtId); // quyet toan phan con lai -> nhom duyet chi
     if (sauCoc.dh.tg_message_id && tg.daCauHinhNcc()) {
@@ -292,7 +301,7 @@ export async function daChi(user, id, { bill }) {
         .catch((e) => console.error('Telegram NCC:', e.message));
     }
   }
-  return chiTiet(id);
+  return dxc;
 }
 
 export async function anhBill(id) {
@@ -307,22 +316,71 @@ export async function xoa(id) {
 }
 
 // ---------- Telegram ----------
+// Tai khoan ERP gan voi Telegram (Admin gan o trang Nguoi dung). Dung de biet AI duyet / AI chi.
+async function nguoiDungTheoTelegram(username, vaiTro) {
+  if (!username) return null;
+  const { rows } = await query(
+    `SELECT id, ho_ten, vai_tro FROM users WHERE lower(telegram_username) = lower($1) AND trang_thai = 'active' AND vai_tro::text = ANY($2)`,
+    [username, vaiTro],
+  );
+  return rows[0] || null;
+}
+
+// Sua tin de xuat trong nhom duyet chi (bo nut) sau khi thu hoi / da chi. Loi Telegram khong anh huong nghiep vu.
+function suaTinDuyet(dxc, ketQua) {
+  if (!dxc.telegram_message_id || !tg.daCauHinh()) return;
+  tg.capNhatTinNhan(dxc.telegram_chat_id, dxc.telegram_message_id, tg.noiDungDeXuatChi(dxc, ketQua)).catch((e) => console.error('Telegram:', e.message));
+}
+
 export async function xuLyUpdateTelegram(update) {
   const cb = update?.callback_query;
   if (!cb) return;
-  const m = /^dxc:(\d+):(duyet|tu_choi)$/.exec(cb.data || '');
+  const m = /^dxc:(\d+):(duyet|tu_choi|chi)$/.exec(cb.data || '');
   if (!m) return tg.traLoiNut(cb.id, 'Nút không hợp lệ');
-  // Khac ERP (tin bat ky ai trong nhom): chi username trong danh sach duyet moi co tac dung.
-  if (!tg.duocDuyet(cb.from?.username)) return tg.traLoiNut(cb.id, 'Bạn không có quyền duyệt chi');
+  if (String(cb.message?.chat?.id) !== String(process.env.TELEGRAM_CHAT_ID_DUYET)) return tg.traLoiNut(cb.id, 'Không đúng nhóm duyệt chi');
   const dxc = await repo.findDxc(Number(m[1]));
   if (!dxc || String(cb.message?.message_id) !== dxc.telegram_message_id) return tg.traLoiNut(cb.id, 'Không tìm thấy đề xuất chi');
+  if (m[2] === 'chi') {
+    // Chi Ke toan da gan Telegram trong ERP moi bao chi duoc (phieu chi phai gan voi 1 nguoi dung that).
+    const keToan = await nguoiDungTheoTelegram(cb.from?.username, ['ke_toan']);
+    if (!keToan) return tg.traLoiNut(cb.id, 'Tài khoản Telegram này chưa gắn với Kế toán trong ERP (Admin gắn ở trang Người dùng)');
+    if (dxc.trang_thai !== 'da_duyet') return tg.traLoiNut(cb.id, 'Đề xuất không ở trạng thái chờ chi');
+    const hoiId = await tg.hoiAnhBill(cb.message.chat.id, cb.message.message_id, dxc.id);
+    await query('UPDATE de_xuat_chi SET tg_hoi_bill_message_id = $2 WHERE id = $1', [dxc.id, hoiId]);
+    return tg.traLoiNut(cb.id, 'Trả lời tin nhắn của bot bằng ảnh bill');
+  }
+  // Duyet: username trong TELEGRAM_NGUOI_DUYET hoac tai khoan Admin da gan Telegram.
+  const admin = await nguoiDungTheoTelegram(cb.from?.username, ['admin']);
+  if (!admin && !tg.duocDuyet(cb.from?.username)) return tg.traLoiNut(cb.id, 'Bạn không có quyền duyệt chi');
   try {
     // Tu choi tren Telegram: ghi ly do mac dinh, nguoi duyet bo sung chi tiet tren web neu can.
-    await xuLyDuyet({ id: dxc.id, hanhDong: m[2], nguoiDuyet: `@${cb.from.username}`, nguoiId: null, ghiChu: m[2] === 'tu_choi' ? 'Từ chối qua Telegram' : null });
+    await xuLyDuyet({ id: dxc.id, hanhDong: m[2], nguoiDuyet: `@${cb.from.username}`, nguoiId: admin?.id ?? null, ghiChu: m[2] === 'tu_choi' ? 'Từ chối qua Telegram' : null });
     return tg.traLoiNut(cb.id, m[2] === 'duyet' ? 'Đã duyệt' : 'Đã từ chối');
   } catch (e) {
     return tg.traLoiNut(cb.id, e instanceof AppError ? e.message : 'Lỗi xử lý, vui lòng duyệt trên web');
   }
+}
+
+// Ke toan tra loi tin "gui anh bill" bang anh -> ghi nhan da chi (giong bam tren web). Tra true neu tin nay la anh bill.
+export async function xuLyAnhBill(msg) {
+  if (String(msg.chat?.id) !== String(process.env.TELEGRAM_CHAT_ID_DUYET)) return false;
+  const { rows } = await query('SELECT id FROM de_xuat_chi WHERE tg_hoi_bill_message_id = $1', [String(msg.reply_to_message.message_id)]);
+  if (!rows[0]) return false;
+  const id = rows[0].id;
+  const keToan = await nguoiDungTheoTelegram(msg.from?.username, ['ke_toan']);
+  if (!keToan) { await tg.guiTin(msg.chat.id, '⛔ Tài khoản Telegram này chưa gắn với Kế toán trong ERP.', msg.message_id).catch(() => {}); return true; }
+  // Anh nen (photo: lay ban lon nhat) hoac file anh gui dang tai lieu.
+  const fileId = msg.photo?.length ? msg.photo[msg.photo.length - 1].file_id : (msg.document?.mime_type?.startsWith('image/') ? msg.document.file_id : null);
+  if (!fileId) { await tg.guiTin(msg.chat.id, '⚠️ Cần gửi ẢNH bill (trả lời lại tin nhắn của bot).', msg.message_id).catch(() => {}); return true; }
+  try {
+    const buf = await tg.taiFile(fileId);
+    await daChi(keToan, id, { bill: { data: buf.toString('base64') } }, 'telegram');
+    await tg.guiTin(msg.chat.id, `✅ Đã ghi nhận chi DXC-${id} (${tg.esc(keToan.ho_ten)}).`, msg.message_id);
+  } catch (e) {
+    await tg.guiTin(msg.chat.id, `⚠️ ${tg.esc(e instanceof AppError ? e.message : 'Lỗi xử lý, vui lòng xác nhận chi trên web')}`, msg.message_id).catch(() => {});
+    if (!(e instanceof AppError)) console.error('Telegram bill:', e.message);
+  }
+  return true;
 }
 
 export function dungSecret(nhan) {

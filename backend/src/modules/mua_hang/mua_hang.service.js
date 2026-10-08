@@ -242,7 +242,10 @@ export async function huyDatHang(user, datHangId) {
   if (tg.coBot()) {
     const sua = (chat, msg, text) => tg.goi('editMessageText', { chat_id: chat, message_id: Number(msg), text }).catch((e) => console.error('Telegram:', e.message));
     if (kq.dh.tg_message_id) sua(kq.dh.tg_chat_id, kq.dh.tg_message_id, `${kq.dh.noi_dung}\n\n❌ Công ty đã HUỶ đơn đặt hàng này (${user.ho_ten}).`);
-    if (kq.tinDuyet?.telegram_message_id) sua(kq.tinDuyet.telegram_chat_id, kq.tinDuyet.telegram_message_id, `Đề xuất cọc ĐH-${kq.dh.id} đã huỷ theo đơn đặt hàng.`);
+    if (kq.tinDuyet?.telegram_message_id) {
+      tg.capNhatTinNhan(kq.tinDuyet.telegram_chat_id, kq.tinDuyet.telegram_message_id, `❌ Đề xuất cọc ĐH-${kq.dh.id} đã huỷ theo đơn đặt hàng.`)
+        .catch((e) => console.error('Telegram:', e.message));
+    }
   }
   return { ok: true };
 }

@@ -10,15 +10,16 @@ const BUOC = {
 
 // Gui thong bao trong CUNG transaction voi thao tac goc (truyen client). Nguoi nhan = theo id va/hoac theo vai tro,
 // chi tai khoan dang hoat dong, khong gui cho chinh nguoi vua thao tac.
-export async function gui(client, { nguoiIds = [], vaiTro = [], nguoiGayId = null, loai, tieuDe, noiDung = null, link = null }) {
+// linkTheoVaiTro: { van_hanh: '/mua-hang/don/5' } -> moi nguoi nhan duoc link toi man HO CO QUYEN mo (Van hanh khong vao duoc Cong no).
+export async function gui(client, { nguoiIds = [], vaiTro = [], nguoiGayId = null, loai, tieuDe, noiDung = null, link = null, linkTheoVaiTro = {} }) {
   const ids = nguoiIds.filter(Boolean);
   if (!ids.length && !vaiTro.length) return 0;
   const { rowCount } = await client.query(
     `INSERT INTO thong_bao (nguoi_nhan_id, nguoi_gay_id, loai, tieu_de, noi_dung, link)
-     SELECT u.id, $3, $4, $5, $6, $7 FROM users u
+     SELECT u.id, $3, $4, $5, $6, COALESCE($8::jsonb ->> u.vai_tro::text, $7) FROM users u
       WHERE u.trang_thai = 'active' AND (u.id = ANY($1::int[]) OR u.vai_tro::text = ANY($2::text[]))
         AND u.id IS DISTINCT FROM $3`,
-    [ids, vaiTro, nguoiGayId, loai, tieuDe, noiDung, link],
+    [ids, vaiTro, nguoiGayId, loai, tieuDe, noiDung, link, JSON.stringify(linkTheoVaiTro)],
   );
   return rowCount;
 }
@@ -28,7 +29,7 @@ export async function gui(client, { nguoiIds = [], vaiTro = [], nguoiGayId = nul
 // De xuat chi: moi / gui lai / duyet / tu choi / thu hoi / da chi.
 export async function deXuatChi(client, id, suKien, { nguoiGayId = null, ghiChu = null } = {}) {
   const { rows } = await client.query(
-    `SELECT c.id, c.loai_chi, c.so_tien, c.nguoi_tao_id, dh.ma_don, dh.vanhanh_phu_trach_id, COALESCE(n.ten, t.ten) AS nguoi_nhan_tien
+    `SELECT c.id, c.loai_chi, c.so_tien, c.nguoi_tao_id, c.ncc_id, c.don_hang_id, dh.ma_don, dh.vanhanh_phu_trach_id, COALESCE(n.ten, t.ten) AS nguoi_nhan_tien
        FROM de_xuat_chi c LEFT JOIN don_hang dh ON dh.id = c.don_hang_id
        LEFT JOIN nha_cung_cap n ON n.id = c.ncc_id LEFT JOIN doi_tho t ON t.id = c.doi_tho_id
       WHERE c.id = $1`,
@@ -37,7 +38,10 @@ export async function deXuatChi(client, id, suKien, { nguoiGayId = null, ghiChu 
   const c = rows[0];
   if (!c) return;
   const ten = `DXC-${c.id} · ${LOAI_CHI[c.loai_chi]} ${c.nguoi_nhan_tien || ''} ${tien(c.so_tien)}`.replace(/\s+/g, ' ');
-  const link = `/cong-no${c.ma_don ? `?q=${encodeURIComponent(c.ma_don)}` : ''}`;
+  // Ke toan/Admin: mo thang de xuat trong man Cong no. Van hanh/Sale: ve man don (mua hang neu la chi NCC).
+  const link = `/cong-no?${new URLSearchParams({ ...(c.ma_don ? { q: c.ma_don } : {}), mo: String(c.id) })}`;
+  const linkDon = c.don_hang_id ? (c.ncc_id ? `/mua-hang/don/${c.don_hang_id}` : `/don-hang/${c.don_hang_id}`) : '/';
+  const linkTheoVaiTro = { van_hanh: linkDon, sale: c.don_hang_id ? `/don-hang/${c.don_hang_id}` : '/' };
   const noiDung = [c.ma_don && `Đơn ${c.ma_don}`, ghiChu].filter(Boolean).join(' — ') || null;
   const CAU_HINH = {
     moi: { vaiTro: ['admin'], tieuDe: `Đề xuất chi chờ duyệt: ${ten}` },
@@ -50,7 +54,7 @@ export async function deXuatChi(client, id, suKien, { nguoiGayId = null, ghiChu 
     da_chi: { nguoiIds: [c.nguoi_tao_id, c.vanhanh_phu_trach_id], tieuDe: `Đã chi: ${ten}` },
   };
   const ch = CAU_HINH[suKien];
-  await gui(client, { nguoiIds: ch.nguoiIds || [], vaiTro: ch.vaiTro || [], nguoiGayId, loai: `de_xuat_${suKien}`, tieuDe: ch.tieuDe, noiDung, link });
+  await gui(client, { nguoiIds: ch.nguoiIds || [], vaiTro: ch.vaiTro || [], nguoiGayId, loai: `de_xuat_${suKien}`, tieuDe: ch.tieuDe, noiDung, link, linkTheoVaiTro });
 }
 
 // Don hang chuyen buoc (tay hoac tu dong) -> bao Sale phu trach don.

@@ -1,6 +1,6 @@
 import { query } from '../../config/db.js';
 
-const COT = 'id, ho_ten, username, vai_tro, trang_thai, doi_mat_khau_luc, created_at';
+const COT = 'id, ho_ten, username, vai_tro, trang_thai, doi_mat_khau_luc, telegram_username, created_at';
 
 export async function findAll() {
   const { rows } = await query(
@@ -36,9 +36,10 @@ export async function capNhat(client, id, d) {
   const { rows } = await client.query(
     `UPDATE users SET ho_ten = $2, vai_tro = $3, trang_thai = $4,
             password_hash = COALESCE($5, password_hash),
-            phien_ban_token = phien_ban_token + CASE WHEN $6 THEN 1 ELSE 0 END
+            phien_ban_token = phien_ban_token + CASE WHEN $6 THEN 1 ELSE 0 END,
+            telegram_username = $7
       WHERE id = $1 RETURNING ${COT}`,
-    [id, d.ho_ten, d.vai_tro, d.trang_thai, d.hash ?? null, d.tangPhienBan],
+    [id, d.ho_ten, d.vai_tro, d.trang_thai, d.hash ?? null, d.tangPhienBan, d.telegram_username],
   );
   return rows[0];
 }

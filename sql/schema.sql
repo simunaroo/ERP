@@ -490,3 +490,8 @@ CREATE TABLE dat_hang_ncc (
 CREATE INDEX idx_dat_hang_ncc_don ON dat_hang_ncc (don_hang_id);
 CREATE INDEX idx_dat_hang_ncc_dxc ON dat_hang_ncc (de_xuat_chi_id);
 ALTER TABLE mua_hang_dong ADD COLUMN dat_hang_ncc_id INTEGER REFERENCES dat_hang_ncc(id) ON DELETE SET NULL;
+
+-- Gan Telegram voi nguoi dung (duyet/chi trong nhom Telegram ghi dung nguoi); tin "gui anh bill" cua bot.
+ALTER TABLE users ADD COLUMN telegram_username TEXT;
+CREATE UNIQUE INDEX ux_users_telegram ON users (lower(telegram_username)) WHERE telegram_username IS NOT NULL;
+ALTER TABLE de_xuat_chi ADD COLUMN tg_hoi_bill_message_id TEXT;

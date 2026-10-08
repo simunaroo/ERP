@@ -108,7 +108,7 @@ function DongMua({ d, onLuu, duocSua }) {
       <td className="num nowrap"><b>{d.thanh_tien === null ? '—' : tien(d.thanh_tien)}</b></td>
       <td>
         <span className={`pill ${tt.lop}`}>{tt.nhan}</span>
-        {duocSua && !khoa && d.trang_thai !== 'huy' && <button className="link danger small" onClick={() => window.confirm(`Huỷ dòng ${d.vat_tu}? (không mua vật tư này)`) && onLuu({ huy: true })}>Huỷ dòng</button>}
+        {duocSua && !khoa && d.trang_thai !== 'huy' && !(d.dat_hang_ncc_id && ['da_dat_hang', 'cho_coc'].includes(d.trang_thai)) && <button className="link danger small" onClick={() => window.confirm(`Huỷ dòng ${d.vat_tu}? (không mua vật tư này)`) && onLuu({ huy: true })}>Huỷ dòng</button>}
         {duocSua && d.trang_thai === 'huy' && <button className="link small" onClick={() => onLuu({ huy: false })}>Khôi phục</button>}
         {d.khoa && d.dxc_quyet_toan_id && <div className="muted small">🔒 trong DXC-{d.dxc_quyet_toan_id}</div>}
       </td>
@@ -296,8 +296,16 @@ function NutChep({ text }) {
   return <button type="button" className="btn sec" onClick={chep}>{xong ? '✓ Đã chép' : '📋 Chép nội dung'}</button>;
 }
 
+// Cho coc: noi ro dang cho ai (Admin duyet / Ke toan chi / Ke toan sua sau khi bi tu choi).
+const BUOC_COC = {
+  cho_duyet: { nhan: '💰 Cọc chờ Admin duyệt', lop: 'p-wip' },
+  da_duyet: { nhan: '💰 Cọc đã duyệt — chờ Kế toán chi', lop: 'p-new' },
+  tu_choi: { nhan: '💰 Cọc bị từ chối — Kế toán sửa', lop: 'p-lost' },
+  thu_hoi: { nhan: '💰 Cọc bị thu hồi', lop: 'p-lost' },
+};
+
 function DatHangNcc({ h, n, moSan, duocSua, onPhanHoi, onHuy }) {
-  const tt = TT_DAT_HANG[h.trang_thai];
+  const tt = (h.trang_thai === 'cho_coc' && BUOC_COC[h.coc_trang_thai]) || TT_DAT_HANG[h.trang_thai];
   const choCoc = h.trang_thai === 'cho_coc';
   return (
     <li className={h.trang_thai === 'huy' ? 'dong-mo' : ''}>

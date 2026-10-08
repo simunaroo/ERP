@@ -50,10 +50,16 @@ export async function capNhat(admin, id, body) {
     // Luon con it nhat 1 Admin hoat dong.
     const boAdmin = u.vai_tro === 'admin' && u.trang_thai === 'active' && (vaiTro !== 'admin' || trangThai !== 'active');
     if (boAdmin && (await repo.demAdminHoatDong(client)) <= 1) throw new AppError(409, 'Hệ thống phải còn ít nhất một Admin đang hoạt động');
+    // Telegram username (khong '@'): gan de duyet/chi trong nhom Telegram duoc ghi dung nguoi. '' -> bo gan. Trung -> 409 (UNIQUE).
+    let telegram = u.telegram_username;
+    if (body.telegram_username !== undefined) {
+      telegram = chu(String(body.telegram_username ?? '').replace(/^@/, ''));
+      if (telegram && !/^[A-Za-z0-9_]{5,32}$/.test(telegram)) throw new AppError(400, 'Username Telegram 5–32 ký tự: chữ, số, "_"');
+    }
     const matKhauMoi = body.dat_lai_mat_khau === true ? matKhauTam() : null;
     const tangPhienBan = vaiTro !== u.vai_tro || trangThai !== u.trang_thai || matKhauMoi !== null;
     const kq = await repo.capNhat(client, id, {
-      ho_ten: hoTen, vai_tro: vaiTro, trang_thai: trangThai, hash: matKhauMoi && (await bcrypt.hash(matKhauMoi, 10)), tangPhienBan,
+      ho_ten: hoTen, vai_tro: vaiTro, trang_thai: trangThai, hash: matKhauMoi && (await bcrypt.hash(matKhauMoi, 10)), tangPhienBan, telegram_username: telegram,
     });
     return { ...kq, mat_khau_tam: matKhauMoi || undefined };
   });
