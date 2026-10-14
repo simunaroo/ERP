@@ -458,6 +458,50 @@ export async function seedLon(conn) {
   }
   await insertMany(db, 'giao_dich_tho', ['doi_tho_id', 'don_hang_id', 'thi_cong_id', 'loai', 'so_tien', 'de_xuat_chi_id', 'phat_sinh_id', 'ghi_chu', 'created_at'], gdTho);
 
+  // ---- Thu tien khach (phieu thu) + boc khoi luong da xac nhan ----
+  // Don da qua Boc khoi luong: coi nhu da xac nhan khoi luong.
+  await db.query(`UPDATE don_hang SET boc_khoi_luong_luc = COALESCE(ngay_chot::timestamptz, created_at)
+                   WHERE hinh_thuc = 'hoan_thien' AND giai_doan IN ('mua_hang', 'giao_hang', 'thi_cong', 'nghiem_thu', 'quyet_toan', 'hoan_tat')`);
+  // Coc gan luc tao don (chua biet tong) -> gioi han toi da 50% tong don (lam tron trieu) cho hop ly.
+  await db.query(`UPDATE don_hang dh SET tien_coc = GREATEST(0, floor(t.tong_don * 0.5 / 1000000) * 1000000)
+                    FROM v_don_hang_tien t WHERE t.don_hang_id = dh.id AND dh.tien_coc > t.tong_don * 0.5`);
+  const { rows: tienDon } = await db.query(
+    `SELECT dh.id, dh.giai_doan, dh.ty_le_tam_ung, dh.tien_coc, dh.sale_id, t.tong_don, t.tho_thu_ho
+       FROM don_hang dh JOIN v_don_hang_tien t ON t.don_hang_id = dh.id WHERE dh.trang_thai <> 'nhap' AND dh.giai_doan <> 'huy'`,
+  );
+  const specTheoId = new Map(donSpec.map((d) => [d.id, d]));
+  const thuRows = [];
+  const phieu = (dh, loai, soTien, ngay, xacNhan) => {
+    const ck = chance(0.85);
+    thuRows.push([dh.id, loai, Math.round(soTien), ck ? 'chuyen_khoan' : 'tien_mat', isoDate(ngay), ck ? 'du-lieu-cu' : null,
+      xacNhan ? 'da_xac_nhan' : 'cho_xac_nhan', dh.sale_id, xacNhan ? pick(keToan) : null, xacNhan ? addDays(ngay, 0.3) : null, ngay]);
+  };
+  for (const dh of tienDon) {
+    const sp = specTheoId.get(dh.id);
+    const tong = Number(dh.tong_don);
+    const coc = Number(dh.tien_coc);
+    // Tam ung phan con thieu theo %, khong de tong da thu (coc + tho thu ho + tam ung) vuot tong don.
+    const tamUng = Math.max(0, Math.min(Math.round((tong * dh.ty_le_tam_ung) / 100) - coc, tong - coc - Number(dh.tho_thu_ho)));
+    const ngayTu = addDays(sp?.tBuoc?.giao_hang || sp?.ngay || HOM_NAY, -1);
+    const daGiao = ['giao_hang', 'thi_cong', 'nghiem_thu', 'quyet_toan', 'hoan_tat'].includes(dh.giai_doan);
+    let daThu = coc + Number(dh.tho_thu_ho);
+    if (daGiao && tamUng > 0 && chance(0.93)) { phieu(dh, 'tam_ung', tamUng, ngayTu, true); daThu += tamUng; }
+    if (dh.giai_doan === 'mua_hang' && tamUng > 0) {
+      if (chance(0.45)) phieu(dh, 'tam_ung', tamUng, addDays(HOM_NAY, -int(1, 5)), true);
+      else if (chance(0.3)) phieu(dh, 'tam_ung', tamUng, addDays(HOM_NAY, -int(0, 2)), false); // cho Ke toan xac nhan
+    }
+    const conLai = tong - daThu;
+    const ngayQt = addDays(sp?.tBuoc?.hoan_tat || sp?.tBuoc?.quyet_toan || HOM_NAY, int(0, 6));
+    if (conLai > 0 && dh.giai_doan === 'hoan_tat') {
+      const r = rand();
+      if (r < 0.75) phieu(dh, 'quyet_toan', conLai, ngayQt > HOM_NAY ? HOM_NAY : ngayQt, true);
+      else if (r < 0.9) phieu(dh, 'quyet_toan', conLai * 0.5, ngayQt > HOM_NAY ? HOM_NAY : ngayQt, true); // tra mot phan -> con no
+    }
+    if (conLai > 0 && dh.giai_doan === 'quyet_toan' && chance(0.3)) phieu(dh, 'quyet_toan', conLai, HOM_NAY, chance(0.6));
+  }
+  await insertMany(db, 'thanh_toan_khach', ['don_hang_id', 'loai', 'so_tien', 'hinh_thuc', 'ngay_thu', 'bill_anh', 'trang_thai', 'nguoi_tao_id',
+    'nguoi_xac_nhan_id', 'xac_nhan_luc', 'created_at'], thuRows);
+
   // ---- Cham soc khach hang ----
   // Khach da co don: lich su moi -> tu van -> bao gia -> chot, truoc ngay don dau tien.
   const donDauTien = {};
@@ -502,6 +546,6 @@ export async function seedLon(conn) {
   await db.end();
   return {
     don: SO_DON, khachHang: khRows.length + leads.length, dongMuaHang: mhd.length, muaBoSung: mbs.length, giaiDoanThiCong: tc.length,
-    phatSinh: ps.length, deXuatChi: dxc.length, soTho: gdTho.length, nhatKyChamSoc: logRows.length, lichSuTienDo: gdLog.length,
+    phatSinh: ps.length, deXuatChi: dxc.length, soTho: gdTho.length, phieuThu: thuRows.length, nhatKyChamSoc: logRows.length, lichSuTienDo: gdLog.length,
   };
 }

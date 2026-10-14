@@ -15,6 +15,7 @@ import PhanTichNcc from './pages/PhanTichNcc.jsx';
 import { MuaBoSungDs, MuaHangDanhSach, MuaHangDon } from './pages/MuaHang.jsx';
 import { DoiTho, LichThiCong, NghiemThu, QuyetToan } from './pages/ThiCong.jsx';
 import { CongNoNcc, CongNoTho, DeXuatChi } from './pages/CongNo.jsx';
+import { CongNoKhach } from './pages/ThuTien.jsx';
 import TongQuan from './pages/TongQuan.jsx';
 import { DoiMatKhau, NguoiDung } from './pages/NguoiDung.jsx';
 import DanhMucVatTu from './pages/DanhMucVatTu.jsx';
@@ -57,6 +58,7 @@ export default function App() {
         <Route path="/cong-no" element={<DeXuatChi />} />
         <Route path="/cong-no/ncc" element={<CongNoNcc />} />
         <Route path="/cong-no/tho" element={<CongNoTho />} />
+        <Route path="/cong-no/khach" element={<CongNoKhach />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

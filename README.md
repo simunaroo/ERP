@@ -71,3 +71,5 @@ Tài khoản demo — mật khẩu là tên tài khoản + `123456` (ví dụ `d
 - [x] Trạng thái dòng mua hàng tự động; tự lập đề xuất quyết toán khi NCC báo sẵn hàng
 - [x] Thông báo trong hệ thống (nút chuông): thao tác xong báo người liên quan
 - [x] Đặt hàng NCC (gửi nhóm Telegram NCC / chép gửi Zalo), NCC cho xuất hoặc yêu cầu cọc → tự lập đề xuất cọc/quyết toán
+- [x] Công nợ khách hàng: phiếu thu (Kế toán xác nhận tiền về), điều kiện tạm ứng trước giao hàng, QR thu tiền
+- [x] Bộ kiểm thử tự động 69 ca (`cd backend && npm test`, báo cáo: `npm run test:bao-cao`)

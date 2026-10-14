@@ -449,6 +449,37 @@ Kế toán trả lời bằng ảnh ─► bot tải ảnh (getFile) ─► daCh
 
 ---
 
+## Vòng 3.13 — Đăng ký giao hàng ngay ở chi tiết đơn (08/10/2026)
+
+- Chi tiết đơn ở bước Mua hàng hiện tiến độ vật tư: chưa đủ → "Đang mua hàng x/y dòng sẵn hàng" + link sang Mua hàng; đủ 100% → banner "Sẵn sàng giao hàng" + nút **Đăng ký giao hàng** (cùng API chuyển bước, server vẫn kiểm tra đủ hàng).
+- Nút chuyển bước ở bước Mua hàng đổi nhãn thành "🚚 Đăng ký giao hàng", bị làm mờ (kèm số dòng còn thiếu) khi chưa đủ hàng thay vì bấm xong mới báo lỗi.
+- API chi tiết đơn trả thêm `mua_hang: { tong_dong, dong_san_sang }` (dùng lại truy vấn điều kiện rời bước).
+
+---
+
+## Vòng 3.14 — Công nợ khách hàng, chốt bước Bóc khối lượng, bộ kiểm thử tự động (14/10/2026, migration 021)
+
+**Công nợ khách (phải thu)** — tham khảo luồng ERP công ty (chỉ đọc cấu trúc), rút gọn:
+- Bảng `thanh_toan_khach` (phiếu thu): Sale/Vận hành ghi nhận "khách đã trả" (chuyển khoản **bắt buộc ảnh bill**, CHECK trong CSDL) → **Kế toán xác nhận tiền về** (đối chiếu sao kê theo nội dung CK có mã đơn) hoặc từ chối kèm lý do. Kế toán tự nhập (tiền mặt) → xác nhận luôn.
+- **Đã thu = cọc lúc chốt + phiếu ĐÃ xác nhận + thợ thu hộ** → view `v_don_hang_tien` thêm cột `da_thu_khach` (CREATE OR REPLACE chỉ thêm cột cuối), `con_phai_thu` trừ thêm. Phiếu chờ xác nhận chưa tính (chưa chắc tiền về).
+- Chặn ghi vượt số còn nợ (khoá dòng đơn `FOR UPDATE` để 2 phiếu cùng lúc không cùng vượt), ngày thu không ở tương lai, phân quyền theo đơn (Sale của đơn, Vận hành phụ trách, Kế toán, Admin).
+- **Đăng ký giao hàng cần đủ tạm ứng** theo `ty_le_tam_ung` (đúng điều khoản thanh toán in trên đơn). Thiếu vẫn đi được nhưng **bắt buộc lý do** → ghi lịch sử tiến độ + báo Admin/Kế toán (giống ERP: cho bỏ qua nhưng lưu vết).
+- **QR thu tiền** (tài khoản công ty trong `.env`, số tiền gợi ý = phần tạm ứng còn thiếu hoặc phần còn lại, nội dung = mã đơn) để Sale gửi khách.
+- Tab **Công nợ khách** (Kế toán/Admin): phiếu chờ xác nhận + danh sách đơn còn nợ, ưu tiên "đến hạn" (đã quyết toán/hoàn tất). Tổng quan: KPI "Khách nợ đến hạn", việc cần làm cho Kế toán (phiếu chờ xác nhận — gấp) và Sale (đơn hoàn tất khách còn nợ).
+
+**Bóc khối lượng có điều kiện:** Vận hành nhập số lượng thực đo → "Xác nhận khối lượng" (đổi số → tổng đơn đổi, Sale được báo; dòng đã đặt hàng NCC không đổi được). Chưa xác nhận thì không sang Mua hàng; lùi về bước này phải xác nhận lại. Đơn cũ đã qua bước được đánh dấu đã xác nhận.
+
+**Bộ kiểm thử tự động** (`backend/test/`, `npm test`):
+- `node:test` có sẵn, server chạy trong tiến trình test, gọi API qua HTTP thật; mỗi file tạo lại CSDL riêng `datn_erp_test` từ `schema.sql` + `seed.sql`. Helper **từ chối chạy nếu tên DB không kết thúc `_test`** (không xoá nhầm DB phát triển). Telegram giả lập bằng cách chặn `fetch` tới api.telegram.org; ảnh upload vào thư mục tạm (`THU_MUC_UPLOAD`).
+- **69 ca** / 8 nhóm: xác thực (8), đơn hàng (10), mua hàng (8), Telegram (7), thu tiền (10), thi công (6), thông báo + phân quyền (17), hàm tiện ích (3). Chạy ~26 giây.
+- `npm run test:bao-cao` sinh `test/KET_QUA_KIEM_THU.md` (bảng Mã / Mô tả / Kết quả / Thời gian) cho chương Kiểm thử.
+- Kiểm chứng bộ test có tác dụng: cố ý đưa lại lỗi "Không tìm thấy đơn hàng" ở nghiệm thu → TC-TC-04 trượt đúng.
+- Dữ liệu mẫu lớn: thêm 2.280 phiếu thu; sửa lỗi cũ cọc 10 triệu trên đơn < 10 triệu (giới hạn ≤ 50% tổng đơn) → không còn đơn "trả thừa".
+
+**Telegram thật:** token mới hoạt động, bot ở trong cả 2 nhóm, token cũ đã vô hiệu.
+
+---
+
 ## Vòng 3 — (dự kiến) Giai đoạn đơn hàng + NCC & bảng giá
 
 **Đề xuất đang cân nhắc**

@@ -5,7 +5,8 @@ import { fileURLToPath } from 'url';
 import { AppError } from './AppError.js';
 
 // Thu muc luu file nguoi dung tai len (khong nam trong git, xem .gitignore).
-export const THU_MUC_UPLOAD = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../uploads');
+// Mac dinh backend/uploads; test dat THU_MUC_UPLOAD sang thu muc tam de khong lam ban du lieu that.
+export const THU_MUC_UPLOAD = process.env.THU_MUC_UPLOAD || path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../uploads');
 const TOI_DA = 4 * 1024 * 1024;
 // Nhan dang dinh dang bang "magic bytes" dau file, KHONG tin mime client gui len.
 const DINH_DANG = [

@@ -6,10 +6,12 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "dev": "node --watch src/server.js",
+    "dev": "node --watch-path=./src --watch-path=./.env src/server.js",
     "db:reset": "node scripts/db-reset.js",
     "db:reset:lon": "node scripts/db-reset.js --lon",
-    "db:migrate": "node scripts/migrate.js"
+    "db:migrate": "node scripts/migrate.js",
+    "test": "node --test --test-concurrency=1 \"test/**/*.test.js\"",
+    "test:bao-cao": "node --test --test-concurrency=1 --test-reporter=spec --test-reporter-destination=stdout --test-reporter=./test/bao-cao-md.mjs --test-reporter-destination=test/KET_QUA_KIEM_THU.md \"test/**/*.test.js\""
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

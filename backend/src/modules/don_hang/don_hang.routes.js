@@ -16,6 +16,7 @@ router.post('/:id/giai-doan', phanQuyen('van_hanh', 'ke_toan', 'admin'), c.giaiD
 router.post('/:id/huy', phanQuyen('van_hanh', 'admin'), c.huy);
 router.put('/:id/phu-trach', phanQuyen('admin'), c.doiPhuTrach);
 router.patch('/:id/phuong-an', phanQuyen('van_hanh'), c.updatePhuongAn);
+router.put('/:id/boc-khoi-luong', phanQuyen('van_hanh', 'admin'), c.bocKhoiLuong);
 router.post('/:id/yeu-cau-sua', phanQuyen('sale'), c.createYeuCauSua);
 router.patch('/:id/yeu-cau-sua/:ycId/xu-ly', phanQuyen('van_hanh'), c.xuLyYeuCauSua);
 

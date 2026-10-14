@@ -43,6 +43,15 @@ async function theoGiaiDoan(saleId, vhId) {
   return Object.fromEntries(rows.map((r) => [r.giai_doan, r.so]));
 }
 
+// Khach con no o cac don da quyet toan / hoan tat (den han thu).
+async function congNoKhach() {
+  const { rows } = await query(
+    `SELECT COALESCE(sum(t.con_phai_thu), 0) AS n FROM don_hang d JOIN v_don_hang_tien t ON t.don_hang_id = d.id
+      WHERE d.giai_doan IN ('quyet_toan', 'hoan_tat') AND t.con_phai_thu > 0`,
+  );
+  return Number(rows[0].n);
+}
+
 async function congNoNcc() {
   const { rows } = await query(
     `SELECT COALESCE(sum(GREATEST(0, th - dc)), 0) AS con_phai_tra FROM (
@@ -62,6 +71,11 @@ const VIEC = {
     ['Khách đang tư vấn/báo giá, quá 7 ngày chưa liên hệ', '/khach-hang?trang_thai=dang_tu_van',
       `SELECT count(*) FROM khach_hang k WHERE k.sale_phu_trach_id = $1 AND k.trang_thai_cham_soc IN ('dang_tu_van', 'da_bao_gia')
          AND COALESCE((SELECT max(created_at) FROM khach_hang_cham_soc c WHERE c.khach_hang_id = k.id), k.created_at) < now() - interval '7 days'`],
+    ['Đơn đã quyết toán/hoàn tất, khách còn nợ', '/don-hang?con_no=con',
+      `SELECT count(*) FROM don_hang d JOIN v_don_hang_tien t ON t.don_hang_id = d.id
+        WHERE d.sale_id = $1 AND d.giai_doan IN ('quyet_toan', 'hoan_tat') AND t.con_phai_thu > 0`, 'gap'],
+    ['Phiếu thu Kế toán báo chưa thấy tiền về (7 ngày)', '/don-hang',
+      `SELECT count(*) FROM thanh_toan_khach WHERE nguoi_tao_id = $1 AND trang_thai = 'tu_choi' AND xac_nhan_luc > now() - interval '7 days'`],
     ['Yêu cầu sửa đơn đang chờ Vận hành', '/don-hang',
       `SELECT count(*) FROM don_hang_yeu_cau_sua y JOIN don_hang d ON d.id = y.don_hang_id WHERE y.trang_thai = 'cho_xu_ly' AND d.sale_id = $1`],
   ],
@@ -96,6 +110,9 @@ const VIEC = {
       `SELECT count(*) FROM mua_hang_dong m JOIN don_hang_vat_tu v ON v.id = m.don_hang_vat_tu_id JOIN don_hang d ON d.id = v.don_hang_id
         WHERE d.giai_doan <> 'huy' AND m.trang_thai IN ('san_hang', 'da_lay_hang', 'da_giao_hang')
           AND NOT EXISTS (SELECT 1 FROM de_xuat_chi_dong x JOIN de_xuat_chi c ON c.id = x.de_xuat_chi_id WHERE x.mua_hang_dong_id = m.id AND c.trang_thai <> 'thu_hoi')`],
+    ['Phiếu thu khách chờ xác nhận tiền về', '/cong-no/khach', `SELECT count(*) FROM thanh_toan_khach WHERE trang_thai = 'cho_xac_nhan'`, 'gap'],
+    ['Đơn đến hạn khách còn nợ (đã quyết toán/hoàn tất)', '/cong-no/khach?loc=den_han',
+      `SELECT count(*) FROM don_hang d JOIN v_don_hang_tien t ON t.don_hang_id = d.id WHERE d.giai_doan IN ('quyet_toan', 'hoan_tat') AND t.con_phai_thu > 0`],
     ['Đề xuất chi bị từ chối cần sửa', '/cong-no?trang_thai=tu_choi', `SELECT count(*) FROM de_xuat_chi WHERE trang_thai = 'tu_choi'`],
     ['Đề xuất đã duyệt, chờ chuyển khoản', '/cong-no?trang_thai=da_duyet', `SELECT count(*) FROM de_xuat_chi WHERE trang_thai = 'da_duyet'`, 'gap'],
     ['Cọc NCC chờ duyệt (NCC chưa xuất hàng)', '/cong-no?trang_thai=cho_duyet&loai_chi=coc', `SELECT count(*) FROM de_xuat_chi WHERE trang_thai = 'cho_duyet' AND loai_chi = 'coc'`],
@@ -124,10 +141,11 @@ export async function tongQuan(user) {
   const saleId = user.vai_tro === 'sale' ? user.id : null;
   const vhId = user.vai_tro === 'van_hanh' ? user.id : null;
   const xemTien = ['admin', 'ke_toan'].includes(user.vai_tro);
-  const [k, bieuDo, gd, viec, cnNcc, choDuyet] = await Promise.all([
+  const [k, bieuDo, gd, viec, cnNcc, choDuyet, cnKhach] = await Promise.all([
     kpi(saleId, vhId), doanhThu6Thang(saleId, vhId), theoGiaiDoan(saleId, vhId), viecCanLam(user),
     xemTien ? congNoNcc() : null,
     xemTien ? query(`SELECT count(*)::int so, COALESCE(sum(so_tien), 0) tien FROM de_xuat_chi WHERE trang_thai = 'cho_duyet'`).then((r) => so(r.rows[0])) : null,
+    xemTien ? congNoKhach() : null,
   ]);
-  return { pham_vi: saleId || vhId ? 'cua_toi' : 'cong_ty', kpi: { ...k, cong_no_ncc: cnNcc, cho_duyet: choDuyet }, doanh_thu_6_thang: bieuDo, theo_giai_doan: gd, viec };
+  return { pham_vi: saleId || vhId ? 'cua_toi' : 'cong_ty', kpi: { ...k, cong_no_ncc: cnNcc, cho_duyet: choDuyet, cong_no_khach: cnKhach }, doanh_thu_6_thang: bieuDo, theo_giai_doan: gd, viec };
 }

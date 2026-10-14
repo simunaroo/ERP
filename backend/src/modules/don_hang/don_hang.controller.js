@@ -20,6 +20,10 @@ export async function giaiDoan(req, res) {
   res.json(await service.chuyenGiaiDoan(req.user, Number(req.params.id), req.body || {}));
 }
 
+export async function bocKhoiLuong(req, res) {
+  res.json(await service.bocKhoiLuong(req.user, Number(req.params.id), req.body || {}));
+}
+
 export async function huy(req, res) {
   res.json(await service.huyDon(req.user, Number(req.params.id), req.body || {}));
 }

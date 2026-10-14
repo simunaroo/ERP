@@ -81,6 +81,8 @@ export default function TongQuan() {
         <div className="kpi"><span className="kpi-nhan">Đơn đang xử lý</span><span className="kpi-so">{kpi.dang_xu_ly}</span></div>
         {kpi.cong_no_ncc !== null && <div className="kpi"><span className="kpi-nhan">Còn phải trả NCC</span><span className="kpi-so">{tienGon(kpi.cong_no_ncc)}</span>
           <span className="muted small">{kpi.cho_duyet.so} đề xuất chờ duyệt · {tienGon(kpi.cho_duyet.tien)}</span></div>}
+        {kpi.cong_no_khach !== null && kpi.cong_no_khach !== undefined && <Link to="/cong-no/khach?loc=den_han" className="kpi kpi-link"><span className="kpi-nhan">Khách nợ đến hạn</span><span className="kpi-so">{tienGon(kpi.cong_no_khach)}</span>
+          <span className="muted small">đơn đã quyết toán/hoàn tất chưa trả đủ</span></Link>}
       </div>
 
       <div className="card">
