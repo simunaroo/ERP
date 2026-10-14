@@ -4,6 +4,7 @@ import { api, loiCua } from '../api/client.js';
 import { useAuthStore } from '../store/authStore.js';
 import TienDo from '../components/TienDo.jsx';
 import { ThiCongCuaDon } from './ThiCong.jsx';
+import { ThuTienCuaDon } from './ThuTien.jsx';
 import { BUOC_DON, GIAI_DOAN, HUY_DUOC, tinhTienDo, vaiTroPhuTrach, HINH_THUC, LOAI_THI_CONG, NGHIEM_THU, NHOM_KHACH, TRANG_THAI_DON, kichThuoc, ngay, ngayGio, tien } from '../utils.js';
 
 const BUOC_DON_CUA = (don) => BUOC_DON[don.hinh_thuc];
@@ -67,6 +68,19 @@ export default function DonHangChiTiet() {
     if (!lyDo) return;
     chay(() => api.put(`/don-hang/${id}/phu-trach`, { van_hanh_id: Number(vhId), ly_do: lyDo }), `Đã chuyển đơn cho ${nguoi?.ho_ten}`)();
   };
+  // Khach chua du tam ung: van giao duoc nhung bat buoc ghi ly do (luu lich su + bao Admin/Ke toan).
+  const dangKyBoQuaTamUng = () => {
+    const lyDo = window.prompt('Khách chưa đủ tạm ứng. Lý do vẫn giao hàng (vd: khách quen, cam kết chuyển khi nhận hàng):');
+    if (!lyDo?.trim()) return;
+    chay(() => api.post(`/don-hang/${id}/giai-doan`, { huong: 'tiep', ghi_chu: lyDo, bo_qua_tam_ung: true }), 'Đã đăng ký giao hàng (ghi nhận chưa đủ tạm ứng)')();
+  };
+  const [slBoc, setSlBoc] = useState({});
+  const xacNhanKhoiLuong = () => chay(async () => {
+    const dong = don.vat_tu.map((v) => ({ id: v.id, so_luong_can: slBoc[v.id] ?? v.so_luong_can }));
+    const r = await api.put(`/don-hang/${id}/boc-khoi-luong`, { dong });
+    setSlBoc({});
+    return r;
+  }, 'Đã xác nhận khối lượng — có thể chuyển sang Mua hàng')();
   const huyDon = () => {
     if (!window.confirm('Huỷ đơn này? Thao tác không hoàn tác được.')) return;
     chay(async () => { await api.post(`/don-hang/${id}/huy`, { ly_do: ghiChuBuoc }); setGhiChuBuoc(''); }, 'Đã huỷ đơn')();
@@ -83,6 +97,9 @@ export default function DonHangChiTiet() {
   const laPhuTrach = vaiTro !== 'van_hanh' || !don.vanhanh_phu_trach_id || don.vanhanh_phu_trach_id === toiId;
   const vhThaoTac = vaiTro === 'van_hanh' && laPhuTrach;
   const duocChuyen = !laNhap && !dongDon && laPhuTrach && (vaiTro === 'admin' || vaiTro === vaiTroPhuTrach(don.giai_doan));
+  // Buoc Mua hang chi qua duoc khi 100% vat tu san hang (server cung kiem tra) -> lam mo nut cho de hieu.
+  const chuaDuHang = (don.giai_doan === 'mua_hang' && don.mua_hang.dong_san_sang < don.mua_hang.tong_dong)
+    || (don.giai_doan === 'boc_khoi_luong' && !don.boc_khoi_luong_luc);
   const duocHuy = duocChuyen && HUY_DUOC.includes(don.giai_doan) && vaiTro !== 'ke_toan';
   const buocTruoc = td.soXong > 1 ? ['chot', ...BUOC_DON_CUA(don)][td.soXong - 1] : null;
 
@@ -102,6 +119,27 @@ export default function DonHangChiTiet() {
       {loi && <div className="error">{loi}</div>}
       {thongBao && <div className="success">{thongBao}</div>}
 
+      {/* Buoc Mua hang: hien ngay o chi tiet don — du hang thi dang ky giao hang luon, chua du thi biet con bao nhieu dong. */}
+      {don.giai_doan === 'mua_hang' && don.mua_hang.tong_dong > 0 && (
+        don.mua_hang.dong_san_sang === don.mua_hang.tong_dong ? (
+          <div className="banner">
+            <span>🚚 <b>Sẵn sàng giao hàng</b> — 100% vật tư đã sẵn hàng ({don.mua_hang.tong_dong}/{don.mua_hang.tong_dong}).{' '}
+              {don.thanh_toan.du_tam_ung
+                ? <>Khách đã thanh toán đủ tạm ứng ({tien(don.thanh_toan.da_thu)}).</>
+                : <b>Khách mới thanh toán {tien(don.thanh_toan.da_thu)} / cần tạm ứng {tien(don.thanh_toan.can_tam_ung)}{don.thanh_toan.cho_xac_nhan > 0 && ` (${tien(don.thanh_toan.cho_xac_nhan)} chờ Kế toán xác nhận)`}.</b>}
+            </span>
+            {duocChuyen && (don.thanh_toan.du_tam_ung
+              ? <button className="btn" onClick={() => chuyenBuoc('tiep')}>Đăng ký giao hàng</button>
+              : <button className="btn sec" onClick={dangKyBoQuaTamUng}>Vẫn giao hàng (ghi lý do)</button>)}
+          </div>
+        ) : (
+          <div className="banner banner-nhe">
+            <span>🛒 Đang mua hàng: <b>{don.mua_hang.dong_san_sang}/{don.mua_hang.tong_dong}</b> dòng vật tư đã sẵn hàng.</span>
+            {['van_hanh', 'ke_toan', 'admin'].includes(vaiTro) && <Link className="btn sec" to={`/mua-hang/don/${don.id}`}>Xem mua hàng →</Link>}
+          </div>
+        )
+      )}
+
       {!laNhap && (
         <div className="card">
           <div className="tien-do-dau">
@@ -117,8 +155,9 @@ export default function DonHangChiTiet() {
             <div className="tien-do-thao-tac">
               <input className="grow" value={ghiChuBuoc} onChange={(e) => setGhiChuBuoc(e.target.value)}
                 placeholder="Ghi chú (bắt buộc khi lùi bước hoặc huỷ đơn)" aria-label="Ghi chú chuyển bước" />
-              <button className="btn" onClick={() => chuyenBuoc('tiep')}>
-                ✓ Xong «{GIAI_DOAN[don.giai_doan].nhan}» → {GIAI_DOAN[td.buocTiep].nhan}
+              <button className="btn" onClick={() => chuyenBuoc('tiep')} disabled={chuaDuHang}
+                title={!chuaDuHang ? undefined : don.giai_doan === 'boc_khoi_luong' ? 'Bấm "Xác nhận khối lượng" trước' : `Còn ${don.mua_hang.tong_dong - don.mua_hang.dong_san_sang} dòng vật tư chưa sẵn hàng`}>
+                {don.giai_doan === 'mua_hang' ? '🚚 Đăng ký giao hàng' : <>✓ Xong «{GIAI_DOAN[don.giai_doan].nhan}» → {GIAI_DOAN[td.buocTiep].nhan}</>}
               </button>
               {buocTruoc && <button className="btn sec" onClick={() => chuyenBuoc('lui')}>← Lùi về «{GIAI_DOAN[buocTruoc].nhan}»</button>}
               {duocHuy && <button className="link danger" onClick={huyDon}>Huỷ đơn</button>}
@@ -186,6 +225,8 @@ export default function DonHangChiTiet() {
             {Number(don.phu_thu) > 0 && <><dt>Phụ thu</dt><dd>{tien(don.phu_thu)}</dd></>}
             <dt className="total">Tổng đơn</dt><dd className="total">{tien(don.tong_don)}</dd>
             {Number(don.tien_coc) > 0 && <><dt>Đã cọc{don.ngay_coc ? ` (${ngay(don.ngay_coc)})` : ''}</dt><dd>−{tien(don.tien_coc)}</dd></>}
+            {Number(don.da_thu_khach) > 0 && <><dt>Khách đã trả (phiếu thu)</dt><dd>−{tien(don.da_thu_khach)}</dd></>}
+            {Number(don.tho_thu_ho) > 0 && <><dt>Thợ thu hộ</dt><dd>−{tien(don.tho_thu_ho)}</dd></>}
             <dt>Còn phải thu</dt><dd>{tien(don.con_phai_thu)}</dd>
           </dl>
           <p className="small mt"><b>Điều khoản thanh toán:</b> {don.dieu_khoan_thanh_toan}</p>
@@ -241,6 +282,38 @@ export default function DonHangChiTiet() {
           )}
         </div>
       )}
+
+      {don.giai_doan === 'boc_khoi_luong' && (
+        <div className="card">
+          <div className="tien-do-dau">
+            <h3>Bóc khối lượng</h3>
+            {don.boc_khoi_luong_luc ? <span className="pill p-done">Đã xác nhận {ngayGio(don.boc_khoi_luong_luc)}</span> : <span className="pill p-wip">Chưa xác nhận</span>}
+          </div>
+          <p className="muted small">Đo thực tế tại công trình, sửa số lượng nếu khác lúc chốt (Sale được thông báo khi tổng đơn đổi). Phải xác nhận mới sang Mua hàng được.</p>
+          <div className="table-wrap">
+            <table>
+              <thead><tr><th>Vật tư</th><th className="num">SL lúc chốt</th><th className="num">SL thực đo</th><th>ĐVT</th></tr></thead>
+              <tbody>
+                {don.vat_tu.map((v) => (
+                  <tr key={v.id}>
+                    <td>{v.ten}</td>
+                    <td className="num">{Number(v.so_luong_can).toLocaleString('vi-VN')}</td>
+                    <td className="num">
+                      {duocChuyen
+                        ? <input aria-label={`Số lượng thực đo ${v.ten}`} type="number" min="0" step="0.01" style={{ width: 100 }} value={slBoc[v.id] ?? Number(v.so_luong_can)} onChange={(e) => setSlBoc({ ...slBoc, [v.id]: e.target.value })} />
+                        : Number(v.so_luong_can).toLocaleString('vi-VN')}
+                    </td>
+                    <td>{v.don_vi_tinh}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {duocChuyen && <div className="actions"><button className="btn" onClick={xacNhanKhoiLuong}>✓ Xác nhận khối lượng</button></div>}
+        </div>
+      )}
+
+      {!laNhap && <ThuTienCuaDon donId={don.id} onDoi={tai} />}
 
       {!laNhap && hoanThien && <ThiCongCuaDon donHangId={don.id} />}
 

@@ -70,7 +70,7 @@ export async function findById(id) {
   const { rows } = await query(
     `SELECT dh.*, kh.ten AS khach_hang, kh.sdt AS khach_hang_sdt, kh.nhom_khach_hang,
             s.ho_ten AS sale, vh.ho_ten AS van_hanh,
-            t.tong_vat_tu, t.tien_chiet_khau, t.tong_don, t.con_phai_thu
+            t.tong_vat_tu, t.tien_chiet_khau, t.tong_don, t.con_phai_thu, t.da_thu_khach, t.tho_thu_ho
        FROM don_hang dh
        JOIN khach_hang kh ON kh.id = dh.khach_hang_id
        JOIN users s ON s.id = dh.sale_id
@@ -181,6 +181,8 @@ export async function dieuKienRoiBuoc(client, donHangId) {
     `SELECT
        (SELECT count(*) FROM mua_hang_dong m JOIN don_hang_vat_tu v ON v.id = m.don_hang_vat_tu_id
          WHERE v.don_hang_id = $1 AND m.trang_thai NOT IN ('san_hang', 'da_lay_hang', 'da_giao_hang', 'huy'))::int AS dong_chua_san,
+       (SELECT count(*) FROM mua_hang_dong m JOIN don_hang_vat_tu v ON v.id = m.don_hang_vat_tu_id
+         WHERE v.don_hang_id = $1 AND m.trang_thai <> 'huy')::int AS tong_dong_mua,
        (SELECT count(*) FROM thi_cong WHERE don_hang_id = $1)::int AS so_giai_doan,
        (SELECT count(*) FROM thi_cong WHERE don_hang_id = $1 AND ngay_hoan_thanh IS NULL)::int AS giai_doan_chua_xong`,
     [donHangId],

@@ -11,28 +11,31 @@ const TT_CONG_NO = {
   da_thanh_toan_du: { nhan: 'Đã thanh toán đủ', lop: 'p-done' },
 };
 
-function TabTc() {
+export function TabTc() {
   return (
     <div className="tabs" role="tablist">
       <NavLink end to="/cong-no" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}>💸 Đề xuất chi</NavLink>
       <NavLink to="/cong-no/ncc" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}>🏭 Công nợ NCC</NavLink>
       <NavLink to="/cong-no/tho" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}>👷 Công nợ thợ</NavLink>
+      <NavLink to="/cong-no/khach" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}>💵 Công nợ khách</NavLink>
     </div>
   );
 }
 
 // Anh bill tai qua API co token (the <img> khong gui Authorization) -> doc blob roi tao URL tam.
-function AnhBill({ id }) {
+// id: bill de xuat chi; src: duong dan API khac (vd bill phieu thu khach).
+export function AnhBill({ id, src, ten }) {
+  const duongDan = src || `/cong-no/de-xuat-chi/${id}/bill`;
   const [url, setUrl] = useState(null);
   const [loi, setLoi] = useState(false);
   useEffect(() => {
     let u;
-    api.get(`/cong-no/de-xuat-chi/${id}/bill`, { responseType: 'blob' })
+    api.get(duongDan, { responseType: 'blob' })
       .then((r) => { u = URL.createObjectURL(r.data); setUrl(u); }).catch(() => setLoi(true));
     return () => u && URL.revokeObjectURL(u);
-  }, [id]);
+  }, [duongDan]);
   if (loi) return <span className="muted small">(dữ liệu mẫu — không có ảnh bill)</span>;
-  return url ? <a href={url} target="_blank" rel="noreferrer"><img src={url} alt={`Bill chuyển khoản DXC-${id}`} className="anh-bill" /></a> : <span className="muted small">Đang tải ảnh...</span>;
+  return url ? <a href={url} target="_blank" rel="noreferrer"><img src={url} alt={ten || `Bill chuyển khoản DXC-${id}`} className="anh-bill" /></a> : <span className="muted small">Đang tải ảnh...</span>;
 }
 
 function ChiTietDxc({ dxc, vaiTro, onLam }) {
