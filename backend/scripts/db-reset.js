@@ -40,4 +40,6 @@ if (process.argv.includes('--lon')) {
   const { seedLon } = await import('./seed-lon.js');
   const kq = await seedLon({ ...conn, database: dbName });
   console.log('Da sinh du lieu lon:', kq);
+  const { seedBoSung } = await import('./seed-bo-sung.js');
+  console.log('Da bo sung du lieu nhap so:', await seedBoSung({ ...conn, database: dbName }));
 }

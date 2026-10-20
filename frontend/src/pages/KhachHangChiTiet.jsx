@@ -3,6 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { api, loiCua } from '../api/client.js';
 import { useAuthStore } from '../store/authStore.js';
 import { NHOM_KHACH, TRANG_THAI_CHAM_SOC, TRANG_THAI_DON, ngay, ngayGio } from '../utils.js';
+import { ChuyenSale, KIEU_GIAO, NGUON_SO, useDsSale } from './NhapSo.jsx';
+import Icon from '../components/Icon.jsx';
 
 function HoiLenDon({ khachHangId, onDong }) {
   const navigate = useNavigate();
@@ -21,7 +23,7 @@ function HoiLenDon({ khachHangId, onDong }) {
         <h3 id="hoi-len-don">Khách đã chốt — lên đơn ngay?</h3>
         <p className="muted">Bạn có thể tải ảnh tin nhắn hoặc phiếu ghi chép để AI điền sẵn đơn hàng, hoặc tự nhập.</p>
         <div className="modal-choices">
-          <button ref={nutDau} className="btn" onClick={() => di('ai')}>✨ Lên đơn nhanh bằng AI</button>
+          <button ref={nutDau} className="btn" onClick={() => di('ai')}><Icon n="sparkles" /> Lên đơn nhanh bằng AI</button>
           <button className="btn sec" onClick={() => di('tay')}>Nhập đơn thủ công</button>
           <button className="link" onClick={onDong}>Để sau</button>
         </div>
@@ -39,6 +41,7 @@ export default function KhachHangChiTiet() {
   const [noiDung, setNoiDung] = useState('');
   const [dangGui, setDangGui] = useState(false);
   const [hoiLenDon, setHoiLenDon] = useState(false);
+  const dsSale = useDsSale(vaiTro === 'admin');
 
   const tai = useCallback(() => {
     api.get(`/khach-hang/${id}`)
@@ -76,12 +79,14 @@ export default function KhachHangChiTiet() {
             <dt>Nhóm khách</dt><dd>{NHOM_KHACH[kh.nhom_khach_hang]}</dd>
             <dt>Số điện thoại</dt><dd>{kh.sdt || '—'}</dd>
             <dt>Địa chỉ</dt><dd>{kh.dia_chi || '—'}</dd>
-            <dt>Sale phụ trách</dt><dd>{kh.sale}</dd>
+            <dt>Sale phụ trách</dt><dd>{kh.sale}{vaiTro === 'admin' && <div className="mt"><ChuyenSale khachId={kh.id} saleHienTai={kh.sale} dsSale={dsSale} onXong={tai} /></div>}</dd>
+            {kh.nguon && <><dt>Nguồn số</dt><dd>{NGUON_SO[kh.nguon] || kh.nguon}{kh.chia_luc && <span className="muted small"> · nhận {ngayGio(kh.chia_luc)}</span>}</dd></>}
+            {kh.nhu_cau && <><dt>Nhu cầu</dt><dd>{kh.nhu_cau}</dd></>}
           </dl>
           {vaiTro === 'sale' && kh.trang_thai_cham_soc === 'chot' && (
             <div className="actions">
               <Link className="btn sec" to={`/don-hang/tao?khach_hang_id=${kh.id}&che_do=tay`}>Nhập đơn thủ công</Link>
-              <Link className="btn" to={`/don-hang/tao?khach_hang_id=${kh.id}&che_do=ai`}>✨ Lên đơn nhanh bằng AI</Link>
+              <Link className="btn" to={`/don-hang/tao?khach_hang_id=${kh.id}&che_do=ai`}><Icon n="sparkles" /> Lên đơn nhanh bằng AI</Link>
             </div>
           )}
         </div>
@@ -129,6 +134,21 @@ export default function KhachHangChiTiet() {
           </ol>
         )}
       </div>
+
+      {kh.giao_so?.length > 0 && (
+        <div className="card">
+          <h3>Lịch sử giao số</h3>
+          <ol className="timeline">
+            {kh.giao_so.map((g) => (
+              <li key={g.id}>
+                <span className="pill p-gray">{KIEU_GIAO[g.kieu]}</span>
+                <span>{g.kieu === 'chuyen' ? <>{g.tu_sale} → <b>{g.sale}</b> — {g.ly_do}</> : <>Giao cho <b>{g.sale}</b>{g.kenh === 'api' && ' (API tự động)'}</>}</span>
+                <span className="muted small">{g.nguoi || 'Hệ thống'} · {ngayGio(g.created_at)}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
 
       {hoiLenDon && <HoiLenDon khachHangId={kh.id} onDong={() => setHoiLenDon(false)} />}
     </>

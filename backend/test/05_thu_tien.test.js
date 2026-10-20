@@ -8,7 +8,7 @@ const thongBao = async (tk) => (await ctx.api(tk, 'GET', '/thong-bao')).d.items;
 
 before(async () => {
   ctx = await batDau();
-  [sale, saleB, vh, keToan, admin] = await Promise.all([ctx.login('doanha'), ctx.login('doanhb'), ctx.login('hanha'), ctx.login('toana'), ctx.login('ngocson')]);
+  [sale, saleB, vh, keToan, admin] = await Promise.all([ctx.login('thilan'), ctx.login('vanhung'), ctx.login('vannam'), ctx.login('thihong'), ctx.login('ngocson')]);
   // Don vat tu (tam ung 100%), coc 1.000.000 d, mua du hang -> dung o "san sang giao hang".
   don = await taoDonChot(ctx, sale, { tien_coc: 1000000, ty_le_tam_ung: 100 });
   await quaLenPhuongAn(ctx, vh, don.id);

@@ -7,7 +7,7 @@ const giaiDoan = async () => (await ctx.api(vh, 'GET', `/don-hang/${don.id}`)).d
 
 before(async () => {
   ctx = await batDau();
-  [sale, vh] = await Promise.all([ctx.login('doanha'), ctx.login('hanha')]);
+  [sale, vh] = await Promise.all([ctx.login('thilan'), ctx.login('vannam')]);
   // Don hoan thien, coc du 80% de qua dang ky giao hang khong can bo qua tam ung.
   don = await taoDonChot(ctx, sale, { hinh_thuc: 'hoan_thien', tien_coc: 3500000 });
   await quaLenPhuongAn(ctx, vh, don.id);

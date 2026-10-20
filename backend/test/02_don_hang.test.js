@@ -5,7 +5,7 @@ import { batDau, quaLenPhuongAn, taoDonChot } from './helpers/moi_truong.js';
 let ctx; let sale; let saleB; let vh; let admin;
 before(async () => {
   ctx = await batDau();
-  [sale, saleB, vh, admin] = await Promise.all([ctx.login('doanha'), ctx.login('doanhb'), ctx.login('hanha'), ctx.login('ngocson')]);
+  [sale, saleB, vh, admin] = await Promise.all([ctx.login('thilan'), ctx.login('vanhung'), ctx.login('vannam'), ctx.login('ngocson')]);
 });
 after(async () => { await ctx.ketThuc(); });
 const thongBao = async (tk) => (await ctx.api(tk, 'GET', '/thong-bao')).d.items;
@@ -26,14 +26,14 @@ describe('Đơn hàng: chốt, phân công, tiến độ', () => {
   });
 
   it('TC-DH-03: Có Vận hành mới (0 đơn) → đơn tiếp theo giao cho người đó', async () => {
-    const tao = await ctx.api(admin, 'POST', '/nguoi-dung', { ho_ten: 'Vận Hành B', username: 'hanhb', vai_tro: 'van_hanh' });
+    const tao = await ctx.api(admin, 'POST', '/nguoi-dung', { ho_ten: 'Ngô Thị Thảo', username: 'thithao', vai_tro: 'van_hanh' });
     const don = await taoDonChot(ctx, sale);
     const ct = (await ctx.api(admin, 'GET', `/don-hang/${don.id}`)).d;
     assert.equal(ct.vanhanh_phu_trach_id, tao.d.id);
-    const vhB = await ctx.login('hanhb', tao.d.mat_khau_tam);
+    const vhB = await ctx.login('thithao', tao.d.mat_khau_tam);
     // Van hanh chi thay don minh phu trach
     const ds = (await ctx.api(vhB, 'GET', '/don-hang?limit=100')).d;
-    assert.ok(ds.items.every((d) => d.van_hanh === 'Vận Hành B'));
+    assert.ok(ds.items.every((d) => d.van_hanh === 'Ngô Thị Thảo'));
     assert.equal((await ctx.api(vh, 'GET', `/don-hang/${don.id}`)).s, 403, 'Vận hành khác không xem được');
     assert.equal((await ctx.api(vh, 'PATCH', `/don-hang/${don.id}/phuong-an`, { phuong_an_van_chuyen: 'x' })).s, 403, 'Vận hành khác không thao tác được');
     // Admin chuyen phu trach: bat buoc ly do
@@ -103,7 +103,7 @@ describe('Đơn hàng: chốt, phân công, tiến độ', () => {
   });
 
   it('TC-DH-10: Chốt đồng thời nhiều đơn vẫn chia đều cho Vận hành (khoá tư vấn)', async () => {
-    const tao = await ctx.api(admin, 'POST', '/nguoi-dung', { ho_ten: 'Vận Hành C', username: 'hanhc', vai_tro: 'van_hanh' });
+    const tao = await ctx.api(admin, 'POST', '/nguoi-dung', { ho_ten: 'Dương Minh Khoa', username: 'minhkhoa', vai_tro: 'van_hanh' });
     const truoc = (await ctx.api(admin, 'GET', '/danh-muc/van-hanh')).d;
     await Promise.all(Array.from({ length: 6 }, () => taoDonChot(ctx, sale)));
     const sau = (await ctx.api(admin, 'GET', '/danh-muc/van-hanh')).d;

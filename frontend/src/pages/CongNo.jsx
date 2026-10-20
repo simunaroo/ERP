@@ -3,6 +3,7 @@ import { Link, NavLink, useSearchParams } from 'react-router-dom';
 import { api, loiCua } from '../api/client.js';
 import { useAuthStore } from '../store/authStore.js';
 import { LOAI_CHI, TRANG_THAI_CHI, ngay, ngayGio, thuNhoAnh, tien } from '../utils.js';
+import Icon from '../components/Icon.jsx';
 
 const tienGon = (n) => (Math.abs(n) >= 1e9 ? `${(n / 1e9).toLocaleString('vi-VN', { maximumFractionDigits: 2 })} tỷ` : Math.abs(n) >= 1e6 ? `${(n / 1e6).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} triệu` : tien(n));
 const TT_CONG_NO = {
@@ -14,10 +15,10 @@ const TT_CONG_NO = {
 export function TabTc() {
   return (
     <div className="tabs" role="tablist">
-      <NavLink end to="/cong-no" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}>💸 Đề xuất chi</NavLink>
-      <NavLink to="/cong-no/ncc" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}>🏭 Công nợ NCC</NavLink>
-      <NavLink to="/cong-no/tho" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}>👷 Công nợ thợ</NavLink>
-      <NavLink to="/cong-no/khach" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}>💵 Công nợ khách</NavLink>
+      <NavLink end to="/cong-no" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}><Icon n="send" /> Đề xuất chi</NavLink>
+      <NavLink to="/cong-no/ncc" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}><Icon n="factory" /> Công nợ NCC</NavLink>
+      <NavLink to="/cong-no/tho" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}><Icon n="users" /> Công nợ thợ</NavLink>
+      <NavLink to="/cong-no/khach" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}><Icon n="banknote" /> Công nợ khách</NavLink>
     </div>
   );
 }
@@ -58,11 +59,11 @@ function ChiTietDxc({ dxc, vaiTro, onLam }) {
         {dxc.dong.length > 0 && (
           <ul className="small">{dxc.dong.map((d) => <li key={d.mua_hang_dong_id}>{d.vat_tu}: {Number(d.so_luong)} {d.don_vi_tinh} × {tien(d.don_gia)} {Number(d.vat_pct) > 0 && `+ VAT ${Number(d.vat_pct)}%`} = {tien(d.thanh_tien)}</li>)}</ul>
         )}
-        {dxc.lich_su_duyet.map((l, i) => <p key={i} className="small">{l.hanh_dong === 'duyet' ? '✅ Duyệt' : '❌'} {l.telegram_user} · {ngayGio(l.thoi_gian)}{l.ghi_chu && ` — “${l.ghi_chu}”`}</p>)}
+        {dxc.lich_su_duyet.map((l, i) => <p key={i} className="small">{l.hanh_dong === 'duyet' ? <><Icon n="check" /> Duyệt</> : <Icon n="x" />} {l.telegram_user} · {ngayGio(l.thoi_gian)}{l.ghi_chu && ` — “${l.ghi_chu}”`}</p>)}
         {vaiTro === 'ke_toan' && dxc.trang_thai === 'da_duyet' && (
           <div className="mt">
             <input ref={file} type="file" accept="image/*" hidden onChange={(e) => daChi(e.target.files[0])} />
-            <button className="btn" onClick={() => file.current.click()}>📎 Đã chi — tải ảnh bill</button>
+            <button className="btn" onClick={() => file.current.click()}><Icon n="paperclip" /> Đã chi — tải ảnh bill</button>
             <span className="muted small"> Bắt buộc ảnh bill/UNC chuyển khoản.</span>
           </div>
         )}
@@ -136,7 +137,7 @@ export function DeXuatChi() {
                   <tr>
                     <td className="nowrap"><button className="link" onClick={() => xem(x.id)}>DXC-{x.id}</button></td>
                     <td className="nowrap"><Link to={`/mua-hang/don/${x.don_hang_id}`}>{x.ma_don}</Link></td>
-                    <td>{x.ncc || <>👷 {x.doi_tho}</>}</td>
+                    <td>{x.ncc || <><Icon n="users" /> {x.doi_tho}</>}</td>
                     <td className="nowrap">{LOAI_CHI[x.loai_chi]}</td>
                     <td className="num nowrap"><b>{tien(x.so_tien)}</b></td>
                     <td><span className={`pill ${TRANG_THAI_CHI[x.trang_thai].lop}`}>{TRANG_THAI_CHI[x.trang_thai].nhan}</span>
@@ -144,14 +145,14 @@ export function DeXuatChi() {
                     <td className="small">{x.nguoi_tao} · {ngayGio(x.created_at)}{x.nguoi_duyet && <div className="muted">{x.nguoi_duyet}</div>}</td>
                     <td className="nowrap hanh-dong">
                       {vaiTro === 'admin' && x.trang_thai === 'cho_duyet' && <>
-                        <button className="btn" onClick={() => lam(() => api.post(`/cong-no/de-xuat-chi/${x.id}/duyet`, { hanh_dong: 'duyet' }), `Đã duyệt DXC-${x.id}`)}>✅ Duyệt</button>
+                        <button className="btn" onClick={() => lam(() => api.post(`/cong-no/de-xuat-chi/${x.id}/duyet`, { hanh_dong: 'duyet' }), `Đã duyệt DXC-${x.id}`)}><Icon n="check" /> Duyệt</button>
                         <button className="link danger" onClick={() => hoi('Lý do từ chối:', (v) => api.post(`/cong-no/de-xuat-chi/${x.id}/duyet`, { hanh_dong: 'tu_choi', ghi_chu: v }), `Đã từ chối DXC-${x.id}`)}>Từ chối</button>
                       </>}
                       {vaiTro === 'admin' && x.trang_thai === 'da_duyet' && <button className="link danger" onClick={() => hoi('Lý do thu hồi (chưa chi):', (v) => api.post(`/cong-no/de-xuat-chi/${x.id}/thu-hoi`, { ly_do: v }), `Đã thu hồi DXC-${x.id}`)}>Thu hồi</button>}
                       {vaiTro === 'ke_toan' && x.trang_thai === 'tu_choi' && <button className="btn sec" onClick={() => {
                         if (x.loai_chi === 'coc' || x.loai_chi === 'ung_cong') hoi(`Số tiền mới (đang ${tien(x.so_tien)}):`, (v) => api.post(`/cong-no/de-xuat-chi/${x.id}/gui-lai`, { so_tien: Number(v.replace(/\D/g, '')) }), `Đã gửi lại DXC-${x.id}`);
                         else lam(() => api.post(`/cong-no/de-xuat-chi/${x.id}/gui-lai`, {}), `Đã tính lại và gửi lại DXC-${x.id}`);
-                      }}>↻ Sửa & gửi lại</button>}
+                      }}><Icon n="refresh" /> Sửa & gửi lại</button>}
                       {vaiTro === 'ke_toan' && ['cho_duyet', 'tu_choi'].includes(x.trang_thai) && <button className="link danger" onClick={() => lam(() => api.delete(`/cong-no/de-xuat-chi/${x.id}`), `Đã xoá DXC-${x.id}`)}>Xoá</button>}
                       <button className="link" onClick={() => xem(x.id)}>{mo?.id === x.id ? 'Ẩn' : 'Chi tiết'}</button>
                     </td>
@@ -209,7 +210,7 @@ export function CongNoNcc() {
                   {kq.ncc.map((n) => (
                     <Fragment key={n.ncc_id}>
                       <tr className="dong-bam" onClick={() => moRong(n.ncc_id)}>
-                        <td>{mo[n.ncc_id] ? '▾' : '▸'} {n.ncc} <span className="muted small">({n.so_don} đơn)</span></td>
+                        <td><Icon n={mo[n.ncc_id] ? 'chevron-down' : 'chevron-right'} /> {n.ncc} <span className="muted small">({n.so_don} đơn)</span></td>
                         <td className="num nowrap">{tien(n.tien_hang)}</td>
                         <td className="num nowrap">{tien(n.da_chi)}</td>
                         <td className="num nowrap"><b>{n.con_phai_tra ? tien(n.con_phai_tra) : '—'}</b></td>
@@ -223,7 +224,7 @@ export function CongNoNcc() {
                             <thead><tr><th>Đơn</th><th className="num">Tiền hàng</th><th className="num">Đã chi</th><th className="num">Còn</th></tr></thead>
                             <tbody>{mo[n.ncc_id].map((d) => (
                               <tr key={d.don_hang_id}><td><Link to={`/mua-hang/don/${d.don_hang_id}`}>{d.ma_don}</Link></td><td className="num">{tien(d.tien_hang)}</td><td className="num">{tien(d.da_chi)}</td>
-                                <td className="num">{d.con > 1 ? <b>{tien(d.con)}</b> : d.con < -1 ? <span className="muted">chi thừa {tien(-d.con)}</span> : '✓'}</td></tr>
+                                <td className="num">{d.con > 1 ? <b>{tien(d.con)}</b> : d.con < -1 ? <span className="muted">chi thừa {tien(-d.con)}</span> : <Icon n="check" />}</td></tr>
                             ))}</tbody>
                           </table>
                         </td></tr>
@@ -288,7 +289,7 @@ export function CongNoTho() {
               {(ds || []).filter((t) => t.so_don > 0).map((t) => (
                 <Fragment key={t.doi_tho_id}>
                   <tr className="dong-bam" onClick={() => moRong(t.doi_tho_id)}>
-                    <td>{mo[t.doi_tho_id] ? '▾' : '▸'} {t.doi_tho} <span className="muted small">{t.sdt} · {t.so_don} đơn</span></td>
+                    <td><Icon n={mo[t.doi_tho_id] ? 'chevron-down' : 'chevron-right'} /> {t.doi_tho} <span className="muted small">{t.sdt} · {t.so_don} đơn</span></td>
                     <td className="num nowrap">{tien(t.phai_tra)}</td><td className="num nowrap">{tien(t.da_tra)}</td>
                     <td className="num nowrap">{tien(t.tam_ung)}</td><td className="num nowrap">{tien(t.thu_ho)}</td>
                     <td className="num nowrap"><b>{tien(t.con_phai_tra)}</b></td>
@@ -300,7 +301,7 @@ export function CongNoTho() {
                           <b>Theo đơn</b>
                           <ul className="small">{theoDon(mo[t.doi_tho_id]).map((d) => (
                             <li key={d.don_hang_id}><Link to={`/don-hang/${d.don_hang_id}`}>{d.ma_don}</Link>: còn {tien(d.con)}
-                              {vaiTro === 'ke_toan' && d.coPhaiTra && d.con > 0 && <button className="link" onClick={() => traCong(t.doi_tho_id, d.don_hang_id)}>💸 Đề xuất trả công</button>}</li>
+                              {vaiTro === 'ke_toan' && d.coPhaiTra && d.con > 0 && <button className="link" onClick={() => traCong(t.doi_tho_id, d.don_hang_id)}><Icon n="send" /> Đề xuất trả công</button>}</li>
                           ))}</ul>
                         </div>
                         <div>

@@ -115,7 +115,7 @@ export default function DonHangList() {
             {Object.entries(TRANG_THAI_DON).filter(([v]) => v !== 'nhap' || vaiTro === 'sale').map(([v, t]) => <option key={v} value={v}>{t.nhan}</option>)}
           </select>
           <select aria-label="Sắp xếp" value={sapXep} onChange={(e) => capNhat({ sap_xep: e.target.value === 'moi_nhat' ? '' : e.target.value })}>
-            {Object.entries(SAP_XEP).map(([v, n]) => <option key={v} value={v}>↕ {n}</option>)}
+            {Object.entries(SAP_XEP).map(([v, n]) => <option key={v} value={v}>{n}</option>)}
           </select>
           <BoLoc truong={truong} giaTri={giaTriLoc} onApDung={capNhat} />
           <span className="grow" />

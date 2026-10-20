@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate, useParams, useSearchParams } from 'react-ro
 import { api, loiCua } from '../api/client.js';
 import { useAuthStore } from '../store/authStore.js';
 import { GIAI_DOAN, LOAI_PHAT_SINH, ngay, tien } from '../utils.js';
+import Icon from '../components/Icon.jsx';
 
 const ymd = (d) => d.toLocaleDateString('sv-SE');
 const congNgay = (s, n) => ymd(new Date(new Date(`${s}T00:00:00`).getTime() + n * 86400000));
@@ -19,10 +20,10 @@ const laVh = (v) => ['van_hanh', 'admin'].includes(v);
 function TabTc() {
   return (
     <div className="tabs" role="tablist">
-      <NavLink end to="/thi-cong" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}>🏗️ Lịch thi công</NavLink>
-      <NavLink to="/thi-cong/nghiem-thu" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}>✅ Nghiệm thu</NavLink>
-      <NavLink to="/thi-cong/quyet-toan" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}>📊 Quyết toán</NavLink>
-      <NavLink to="/thi-cong/doi-tho" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}>👷 Đội thợ</NavLink>
+      <NavLink end to="/thi-cong" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}><Icon n="calendar" /> Lịch thi công</NavLink>
+      <NavLink to="/thi-cong/nghiem-thu" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}><Icon n="check" /> Nghiệm thu</NavLink>
+      <NavLink to="/thi-cong/quyet-toan" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}><Icon n="chart" /> Quyết toán</NavLink>
+      <NavLink to="/thi-cong/doi-tho" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}><Icon n="users" /> Đội thợ</NavLink>
     </div>
   );
 }
@@ -75,17 +76,17 @@ function TheGiaiDoan({ tc, doiTho, vaiTro, onDoi }) {
         <span><Link to={`/don-hang/${tc.don_hang_id}`}><b>{tc.ma_don}</b></Link> · <b>{tc.ten_giai_doan}</b> — {tc.khach_hang} {tc.khach_hang_sdt && <span className="muted small">({tc.khach_hang_sdt})</span>}</span>
         <span className={`pill ${tt.lop}`}>{tt.nhan}</span>
       </div>
-      <div className="small">📍 {diaChi || '—'}</div>
-      <div className="small">👷 {tc.doi_tho}{tc.doi_tho_sdt && ` · ${tc.doi_tho_sdt}`} · công {tien(tc.gia_cong)}/{tc.don_vi_cong} × {so(tc.kl_du_kien)} = <b>{tien(tc.gia_cong * tc.kl_du_kien)}</b>
+      <div className="small"><Icon n="pin" /> {diaChi || '—'}</div>
+      <div className="small"><Icon n="users" /> {tc.doi_tho}{tc.doi_tho_sdt && ` · ${tc.doi_tho_sdt}`} · công {tien(tc.gia_cong)}/{tc.don_vi_cong} × {so(tc.kl_du_kien)} = <b>{tien(tc.gia_cong * tc.kl_du_kien)}</b>
         {tc.ngay_thuc_hien && <span className="muted"> · bắt đầu {ngay(tc.ngay_thuc_hien)}</span>}</div>
       <div className="hanh-dong mt">
         {laVh(vaiTro) && tc.trang_thai === 'lap_lich' && <>
-          <button className="btn" onClick={() => onDoi(() => api.post(`/thi-cong/${tc.id}/bat-dau`))}>▶ Bắt đầu thi công</button>
+          <button className="btn" onClick={() => onDoi(() => api.post(`/thi-cong/${tc.id}/bat-dau`))}><Icon n="play" /> Bắt đầu thi công</button>
           <button className="link" onClick={() => setMo(!mo)}>Đổi thợ / lịch</button>
         </>}
-        {laVh(vaiTro) && tc.trang_thai === 'dang_thi_cong' && !tc.ngay_hoan_thanh && <button className="btn" onClick={() => onDoi(() => api.post(`/thi-cong/${tc.id}/bao-xong`))}>✓ Xác nhận thi công xong</button>}
+        {laVh(vaiTro) && tc.trang_thai === 'dang_thi_cong' && !tc.ngay_hoan_thanh && <button className="btn" onClick={() => onDoi(() => api.post(`/thi-cong/${tc.id}/bao-xong`))}><Icon n="check" /> Xác nhận thi công xong</button>}
         {tc.trang_thai === 'dang_thi_cong' && tc.ngay_hoan_thanh && <Link className="btn sec" to={`/thi-cong/nghiem-thu/${tc.don_hang_id}`}>Nhập nghiệm thu →</Link>}
-        {vaiTro === 'ke_toan' && tc.trang_thai !== 'da_nghiem_thu' && <button className="btn sec" onClick={ungCong}>💸 Đề xuất ứng công</button>}
+        {vaiTro === 'ke_toan' && tc.trang_thai !== 'da_nghiem_thu' && <button className="btn sec" onClick={ungCong}><Icon n="send" /> Đề xuất ứng công</button>}
       </div>
       {mo && <FormGiaiDoan doiTho={doiTho} macDinh={tc} nhanNut="Lưu" onLuu={(b) => onDoi(() => xepLich((x) => api.put(`/thi-cong/${tc.id}`, x), b)).then((ok) => ok && setMo(false))} />}
     </li>
@@ -253,7 +254,7 @@ export function NghiemThu() {
   }), 'Đã lưu số liệu nghiệm thu');
   const xacNhan = async () => {
     const r = await luu();
-    if (r) onDoi(() => api.post(`/thi-cong/nghiem-thu/${id}/xac-nhan`), (x) => `Đã xác nhận nghiệm thu — đơn sang Quyết toán${x.data.canh_bao_hao_hut.length ? `. ⚠ ${x.data.canh_bao_hao_hut.join('; ')}` : ''}`);
+    if (r) onDoi(() => api.post(`/thi-cong/nghiem-thu/${id}/xac-nhan`), (x) => `Đã xác nhận nghiệm thu — đơn sang Quyết toán${x.data.canh_bao_hao_hut.length ? `. Cảnh báo: ${x.data.canh_bao_hao_hut.join('; ')}` : ''}`);
   };
 
   if (!id) {
@@ -282,7 +283,7 @@ export function NghiemThu() {
                 <td className="num">{sua ? <input aria-label={`SL thực tế ${d.vat_tu}`} type="number" min="0" step="0.1" value={sl[d.id]} onChange={(e) => setSl({ ...sl, [d.id]: e.target.value })} /> : so(d.so_luong_thuc_te)}</td>
                 <td className="num nowrap">{tien(d.don_gia)}</td>
                 <td className="num nowrap">{sl[d.id] === '' ? '—' : tien(Number(sl[d.id]) * Number(d.don_gia))}</td>
-                <td className="num nowrap">{d.hao_hut_pct === null ? '—' : d.canh_bao_hao_hut ? <span className="bd bd-giam">⚠ {so(d.hao_hut_pct)}%</span> : `${so(d.hao_hut_pct)}%`}</td>
+                <td className="num nowrap">{d.hao_hut_pct === null ? '—' : d.canh_bao_hao_hut ? <span className="bd bd-giam"><Icon n="alert" /> {so(d.hao_hut_pct)}%</span> : `${so(d.hao_hut_pct)}%`}</td>
               </tr>
             ))}</tbody>
           </table>
@@ -309,7 +310,7 @@ export function NghiemThu() {
       {sua && (
         <div className="actions">
           <button className="btn sec" onClick={luu}>Lưu nháp</button>
-          {kq.don.giai_doan === 'nghiem_thu' && <button className="btn" onClick={xacNhan}>✅ Xác nhận nghiệm thu</button>}
+          {kq.don.giai_doan === 'nghiem_thu' && <button className="btn" onClick={xacNhan}><Icon n="check" /> Xác nhận nghiệm thu</button>}
         </div>
       )}
     </>
@@ -372,7 +373,7 @@ export function QuyetToan() {
           {kq.phat_sinh.length > 0 && <><h4>Phát sinh</h4><ul className="small">{kq.phat_sinh.map((p) => <li key={p.id}>{LOAI_PHAT_SINH[p.loai]} {tien(p.so_tien)} — {p.ly_do}</li>)}</ul></>}
         </div>
       </div>
-      {laVh(vaiTro) && don.giai_doan === 'quyet_toan' && <div className="actions"><button className="btn" onClick={chot}>📊 Chốt quyết toán</button></div>}
+      {laVh(vaiTro) && don.giai_doan === 'quyet_toan' && <div className="actions"><button className="btn" onClick={chot}><Icon n="chart" /> Chốt quyết toán</button></div>}
     </>
   );
 }

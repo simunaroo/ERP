@@ -3,18 +3,21 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore.js';
 import { VAI_TRO } from '../utils.js';
 import ThongBao from './ThongBao.jsx';
+import Icon from './Icon.jsx';
 
 // Chi liet ke module da lam; them dong khi hoan thanh module moi.
 const NAV_ITEMS = [
-  { path: '/', label: 'Tổng quan', icon: '🏠', vaiTro: ['sale', 'van_hanh', 'ke_toan', 'admin'] },
-  { path: '/khach-hang', label: 'Khách hàng', icon: '📇', vaiTro: ['sale', 'admin'] },
-  { path: '/don-hang', label: 'Đơn hàng', icon: '📋', vaiTro: ['sale', 'van_hanh', 'ke_toan', 'admin'] },
-  { path: '/mua-hang', label: 'Mua hàng', icon: '🛒', vaiTro: ['van_hanh', 'ke_toan', 'admin'] },
-  { path: '/thi-cong', label: 'Thi công', icon: '🛠️', vaiTro: ['van_hanh', 'ke_toan', 'admin'] },
-  { path: '/cong-no', label: 'Chi & công nợ', icon: '💰', vaiTro: ['ke_toan', 'admin'] },
-  { path: '/vat-tu', label: 'Danh mục vật tư', icon: '📦', vaiTro: ['van_hanh', 'ke_toan', 'admin'] },
-  { path: '/nha-cung-cap', label: 'Nhà cung cấp', icon: '🏭', vaiTro: ['ke_toan', 'van_hanh', 'admin'] },
-  { path: '/nguoi-dung', label: 'Người dùng', icon: '👤', vaiTro: ['admin'] },
+  { path: '/', label: 'Tổng quan', icon: 'home', vaiTro: ['sale', 'van_hanh', 'ke_toan', 'admin'] },
+  { path: '/khach-hang', label: 'Khách hàng', icon: 'contact', vaiTro: ['sale', 'admin'] },
+  { path: '/nhap-so', label: 'Nhập số', icon: 'phone', vaiTro: ['sale', 'admin'] },
+  { path: '/don-hang/tao', label: 'Nhập đơn', icon: 'plus', vaiTro: ['sale'] },
+  { path: '/don-hang', label: 'Đơn hàng', icon: 'clipboard', vaiTro: ['sale', 'van_hanh', 'ke_toan', 'admin'] },
+  { path: '/mua-hang', label: 'Mua hàng', icon: 'cart', vaiTro: ['van_hanh', 'ke_toan', 'admin'] },
+  { path: '/thi-cong', label: 'Thi công', icon: 'wrench', vaiTro: ['van_hanh', 'ke_toan', 'admin'] },
+  { path: '/cong-no', label: 'Chi & công nợ', icon: 'wallet', vaiTro: ['ke_toan', 'admin'] },
+  { path: '/vat-tu', label: 'Danh mục vật tư', icon: 'package', vaiTro: ['van_hanh', 'ke_toan', 'admin'] },
+  { path: '/nha-cung-cap', label: 'Nhà cung cấp', icon: 'factory', vaiTro: ['ke_toan', 'van_hanh', 'admin'] },
+  { path: '/nguoi-dung', label: 'Người dùng', icon: 'user', vaiTro: ['admin'] },
 ];
 
 function docTheme() {
@@ -45,8 +48,10 @@ export default function Layout() {
   }, []);
 
   const menu = NAV_ITEMS.filter((n) => n.vaiTro.includes(user.vai_tro));
-  const trangHienTai = pathname === '/doi-mat-khau' ? 'Đổi mật khẩu'
-    : menu.find((n) => (n.path === '/' ? pathname === '/' : pathname.startsWith(n.path)))?.label ?? '';
+  // Muc dang mo = duong dan khop dai nhat (de "Nhập đơn" /don-hang/tao khong sang chung voi "Đơn hàng").
+  const mucMo = menu.filter((n) => (n.path === '/' ? pathname === '/' : pathname === n.path || pathname.startsWith(`${n.path}/`)))
+    .sort((a, b) => b.path.length - a.path.length)[0];
+  const trangHienTai = pathname === '/doi-mat-khau' ? 'Đổi mật khẩu' : mucMo?.label ?? '';
 
   const thoat = () => {
     logout();
@@ -63,8 +68,8 @@ export default function Layout() {
         </div>
         <nav>
           {menu.map((n) => (
-            <NavLink key={n.path} to={n.path} end={n.path === '/'}>
-              <span aria-hidden="true">{n.icon}</span>
+            <NavLink key={n.path} to={n.path} className={() => (n === mucMo ? 'active' : '')}>
+              <Icon n={n.icon} size={18} />
               <span>{n.label}</span>
             </NavLink>
           ))}
@@ -74,14 +79,14 @@ export default function Layout() {
       <div className="main">
         <header className="topbar">
           <button className="icon-btn erp-hamburger" aria-label="Mở menu"
-            onClick={() => document.body.classList.toggle('sidebar-open')}>☰</button>
+            onClick={() => document.body.classList.toggle('sidebar-open')}><Icon n="menu" size={20} /></button>
           <span className="crumb">ERP NST &nbsp;/&nbsp; <b>{trangHienTai}</b></span>
           <span className="ml-auto" />
           <ThongBao />
           <button className="icon-btn" onClick={() => setDark((d) => !d)}
             aria-label={dark ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
             title={dark ? 'Chế độ sáng' : 'Chế độ tối'}>
-            {dark ? '☀️' : '🌙'}
+            <Icon n={dark ? 'sun' : 'moon'} size={18} />
           </button>
         </header>
         <main className="content">

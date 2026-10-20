@@ -1,11 +1,11 @@
--- Du lieu mau GIA LAP cho demo (khong phai du lieu that). Mat khau = ten tai khoan + 123456 (vd: doanha123456)
+-- Du lieu mau GIA LAP cho demo (khong phai du lieu that). Mat khau = ten tai khoan + 123456 (vd: thilan123456)
 
 INSERT INTO users (ho_ten, username, password_hash, vai_tro) VALUES
   ('Vương Ngọc Sơn', 'ngocson', '$2b$10$J6b9kwPEB8FKSWS2qPLYlOHb8U/Q9rCutYYHdkHV2sMZJ4GUkbL.O', 'admin'),
-  ('Kinh Doanh A', 'doanha', '$2b$10$4JD3NXRWs4/Q0zsrxOacpOzJWDVm8F2wp3Ifqn3GNnPixbC2QMvJO', 'sale'),
-  ('Kinh Doanh B', 'doanhb', '$2b$10$YCc/DURiPY2uEZy.Ch3Q7OrYLSMW03ukVQiCqMnQWeM54CIOzX8Vi', 'sale'),
-  ('Vận Hành A', 'hanha', '$2b$10$c4zY6Gp3oQuGex0DGUwmAOlnuusNlgjQD0UTXY0T5ZY7KkxsytbgW', 'van_hanh'),
-  ('Kế Toán A', 'toana', '$2b$10$.UW175L2pg1o8cZUGQ28ruY9E1vByn7hWiBHqGJvMDpCQGXfFeuMu', 'ke_toan');
+  ('Nguyễn Thị Lan', 'thilan', '$2b$10$z8L/EEo427lHG/FzJGdfD.s.csxIFgrs.MaTuAmGxujD0NV.W.ysi', 'sale'),
+  ('Trần Văn Hùng', 'vanhung', '$2b$10$3wYEP1qT4DIEM7WPWf8Czu0SpaXGVyHUlYgmoB4uSRRp4uCyOyTlm', 'sale'),
+  ('Đỗ Văn Nam', 'vannam', '$2b$10$gz17Zo/eLEzA50CzUikqJelp3jrjzi7LRnle1s9WZ.9n2kShjNFM6', 'van_hanh'),
+  ('Phan Thị Hồng', 'thihong', '$2b$10$DkDLyGQq33dsSbqU97w/C.6RFuOXhUcA55Do5rssEUyGznIrfymbm', 'ke_toan');
 
 INSERT INTO khach_hang (ten, sdt, dia_chi, sale_phu_trach_id, trang_thai_cham_soc, nhom_khach_hang) VALUES
   ('Nguyễn Văn Hùng', '0901000001', 'Căn hộ B2-1205, Quận 7, TP.HCM', 2, 'chot', 'nha_dan'),
@@ -79,7 +79,7 @@ INSERT INTO don_hang (ma_don, khach_hang_id, sale_id, vanhanh_phu_trach_id, tran
      'Hưng Yên', 'Xã Văn Giang', 'Chung cư Ecopark', 0, 0, 0, 0, NULL, 80,
      NULL, NULL, NULL, '2026-10-04 16:10+07');
 
--- Lich su tien do (nguoi: 2 = Kinh Doanh A, 3 = Kinh Doanh B, 4 = Van Hanh A, 5 = Ke Toan A)
+-- Lich su tien do (nguoi: 2 = Nguyễn Thị Lan, 3 = Trần Văn Hùng, 4 = Van Hanh A, 5 = Ke Toan A)
 INSERT INTO don_hang_giai_doan_log (don_hang_id, tu_giai_doan, den_giai_doan, nguoi_id, ghi_chu, created_at) VALUES
   (1, NULL, 'len_phuong_an', 2, 'Chốt đơn', '2026-10-01 09:15+07'),
   (1, 'len_phuong_an', 'boc_khoi_luong', 4, NULL, '2026-10-01 15:00+07'),

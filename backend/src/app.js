@@ -15,6 +15,7 @@ import tongQuanRoutes from './modules/tong_quan/tong_quan.routes.js';
 import congNoRoutes, { telegramRouter } from './modules/cong_no/cong_no.routes.js';
 import thongBaoRoutes from './modules/thong_bao/thong_bao.routes.js';
 import thuTienRoutes from './modules/thu_tien/thu_tien.routes.js';
+import nhapSoRoutes from './modules/nhap_so/nhap_so.routes.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 
 export const app = express();
@@ -40,6 +41,7 @@ app.use('/api/tong-quan', tongQuanRoutes);
 app.use('/api/cong-no', congNoRoutes);
 app.use('/api/thong-bao', thongBaoRoutes);
 app.use('/api/thu-tien', thuTienRoutes);
+app.use('/api/nhap-so', nhapSoRoutes); // /tu-dong xac thuc bang API key, con lai can dang nhap
 app.use('/api/telegram', telegramRouter); // webhook cong khai, xac thuc bang secret header
 app.use('/api/bao-gia', baoGiaRoutes); // cong khai, khong can dang nhap
 

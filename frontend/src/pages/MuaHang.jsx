@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate, useParams, useSearchParams } from 'react-ro
 import { api, loiCua } from '../api/client.js';
 import { useAuthStore } from '../store/authStore.js';
 import { GIAI_DOAN, LOAI_CHI, LOAI_MBS, NGUON_TRACH_NHIEM, TRANG_THAI_CHI, TRANG_THAI_DONG_MUA, ngay, tien } from '../utils.js';
+import Icon from '../components/Icon.jsx';
 
 const so = (n) => Number(n).toLocaleString('vi-VN', { maximumFractionDigits: 2 });
 const TT_MBS = { cho_xu_ly: { nhan: 'Chờ mua', lop: 'p-wip' }, da_mua: { nhan: 'Đã mua', lop: 'p-done' }, huy: { nhan: 'Huỷ', lop: 'p-lost' } };
@@ -10,8 +11,8 @@ const TT_MBS = { cho_xu_ly: { nhan: 'Chờ mua', lop: 'p-wip' }, da_mua: { nhan:
 function TabMua() {
   return (
     <div className="tabs" role="tablist">
-      <NavLink end to="/mua-hang" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}>🔍 Chọn NCC</NavLink>
-      <NavLink to="/mua-hang/bo-sung" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}>➕ Mua bổ sung</NavLink>
+      <NavLink end to="/mua-hang" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}><Icon n="search" /> Chọn NCC</NavLink>
+      <NavLink to="/mua-hang/bo-sung" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}><Icon n="plus" /> Mua bổ sung</NavLink>
     </div>
   );
 }
@@ -35,7 +36,7 @@ export function MuaHangDanhSach() {
       <TabMua />
       <div className="card">
         <div className="chips">
-          {[['', 'Tất cả'], ['san_sang', '🚚 Sẵn sàng giao hàng'], ['dang_chuan_bi', 'Đang chuẩn bị'], ['chua_xu_ly', 'Chưa xử lý']].map(([v, n]) => (
+          {[['', 'Tất cả'], ['san_sang', 'Sẵn sàng giao hàng'], ['dang_chuan_bi', 'Đang chuẩn bị'], ['chua_xu_ly', 'Chưa xử lý']].map(([v, n]) => (
             <button key={v} className={loc === v ? 'chip on' : 'chip'} onClick={() => datLoc('loc', v)}>{n}</button>
           ))}
         </div>
@@ -53,7 +54,7 @@ export function MuaHangDanhSach() {
                     <td>{d.khach_hang}</td><td>{d.tinh_thanh || '—'}</td><td>{d.sale}</td>
                     <td><span className="pill p-wip">{GIAI_DOAN[d.giai_doan].nhan}</span></td>
                     <td className="nowrap">
-                      <div className="tien-do-nho"><span className={`pill ${du ? 'p-done' : 'p-gray'}`}>{du ? '🚚 ' : ''}{d.dong_san_sang}/{d.tong_dong}</span>
+                      <div className="tien-do-nho"><span className={`pill ${du ? 'p-done' : 'p-gray'}`}>{du && <><Icon n="truck" size={13} /> </>}{d.dong_san_sang}/{d.tong_dong}</span>
                         <span className="thanh"><span style={{ width: `${(d.dong_san_sang / d.tong_dong) * 100}%` }} /></span></div>
                     </td>
                     <td className="nowrap">{d.ngay_yc_lap_dat ? ngay(d.ngay_yc_lap_dat) : '—'}</td>
@@ -87,7 +88,7 @@ function DongMua({ d, onLuu, duocSua }) {
         <div className="top-ncc">
           {d.top_ncc.map((g, i) => (
             <button key={g.ncc_id} type="button" disabled={khoa || d.trang_thai === 'huy'} className={String(g.ncc_id) === String(d.ncc_id) ? 'chip on' : 'chip'}
-              title={`Chọn ${g.ncc}`} onClick={() => doiNcc(g.ncc_id)}>{i === 0 ? '★ ' : ''}{g.ncc.replace(' (giả lập)', '')}: {tien(g.don_gia)}</button>
+              title={`Chọn ${g.ncc}`} onClick={() => doiNcc(g.ncc_id)}>{i === 0 && <><Icon n="star" size={13} /> </>}{g.ncc.replace(' (giả lập)', '')}: {tien(g.don_gia)}</button>
           ))}
           {d.top_ncc.length === 0 && <span className="error-text small">Chưa NCC nào báo giá</span>}
         </div>
@@ -110,7 +111,7 @@ function DongMua({ d, onLuu, duocSua }) {
         <span className={`pill ${tt.lop}`}>{tt.nhan}</span>
         {duocSua && !khoa && d.trang_thai !== 'huy' && !(d.dat_hang_ncc_id && ['da_dat_hang', 'cho_coc'].includes(d.trang_thai)) && <button className="link danger small" onClick={() => window.confirm(`Huỷ dòng ${d.vat_tu}? (không mua vật tư này)`) && onLuu({ huy: true })}>Huỷ dòng</button>}
         {duocSua && d.trang_thai === 'huy' && <button className="link small" onClick={() => onLuu({ huy: false })}>Khôi phục</button>}
-        {d.khoa && d.dxc_quyet_toan_id && <div className="muted small">🔒 trong DXC-{d.dxc_quyet_toan_id}</div>}
+        {d.khoa && d.dxc_quyet_toan_id && <div className="muted small"><Icon n="lock" /> trong DXC-{d.dxc_quyet_toan_id}</div>}
       </td>
     </tr>
   );
@@ -203,7 +204,7 @@ export function MuaHangDon() {
       {thongBao && <div className="success">{thongBao}</div>}
       {du && don.giai_doan === 'mua_hang' && (
         <div className="banner">
-          <span>🚚 <b>Sẵn sàng giao hàng</b> — 100% vật tư đã sẵn hàng. Vận hành soát tạm ứng rồi đăng ký giao hàng.</span>
+          <span><Icon n="truck" /> <b>Sẵn sàng giao hàng</b> — 100% vật tư đã sẵn hàng. Vận hành soát tạm ứng rồi đăng ký giao hàng.</span>
           {laVanHanh && <button className="btn" onClick={() => lam(() => api.post(`/don-hang/${don.id}/giai-doan`, { huong: 'tiep' }), 'Đã đăng ký giao hàng — đơn sang bước Giao hàng')}>Đăng ký giao hàng</button>}
         </div>
       )}
@@ -216,7 +217,7 @@ export function MuaHangDon() {
             <tbody>{kq.dong.map((d) => <DongMua key={d.id} d={d} duocSua={duocSua} onLuu={luuDong(d)} />)}</tbody>
           </table>
         </div>
-        <p className="muted small mt">Trạng thái tự cập nhật: chọn NCC → <b>Đã chọn NCC</b>; bấm <b>🛒 Đặt hàng</b> ở bảng NCC bên dưới (một lần cho cả NCC); phản hồi của NCC, cọc đã chi, lấy hàng, giao hàng do hệ thống ghi. Giá chốt = giá NCC hôm nay, chụp lại vào đơn (NCC đổi giá sau không ảnh hưởng). Dòng đã nằm trong đề xuất quyết toán bị khoá NCC/giá/VAT — muốn sửa phải từ chối đề xuất đó.</p>
+        <p className="muted small mt">Trạng thái tự cập nhật: chọn NCC → <b>Đã chọn NCC</b>; bấm <b>Đặt hàng</b> ở bảng NCC bên dưới (một lần cho cả NCC); phản hồi của NCC, cọc đã chi, lấy hàng, giao hàng do hệ thống ghi. Giá chốt = giá NCC hôm nay, chụp lại vào đơn (NCC đổi giá sau không ảnh hưởng). Dòng đã nằm trong đề xuất quyết toán bị khoá NCC/giá/VAT — muốn sửa phải từ chối đề xuất đó.</p>
       </div>
 
       <div className="card">
@@ -237,12 +238,12 @@ export function MuaHangDon() {
                     </Link>
                   ))}{n.de_xuat.length === 0 && <span className="muted">—</span>}</td>
                   <td className="nowrap hanh-dong">
-                    {duocSua && n.dong_cho_dat > 0 && <button className="btn" onClick={() => datHang(n)}>🛒 Đặt hàng ({n.dong_cho_dat})</button>}
+                    {duocSua && n.dong_cho_dat > 0 && <button className="btn" onClick={() => datHang(n)}><Icon n="cart" /> Đặt hàng ({n.dong_cho_dat})</button>}
                     {duocSua && n.dong_san_sang > 0 && ['len_phuong_an', 'boc_khoi_luong', 'mua_hang'].includes(don.giai_doan) && (
-                      <button className="link small" title="Ghi nhầm NCC cho xuất hàng: lùi về chờ NCC phản hồi" onClick={() => luiSanHang(n)}>↩ Lùi sẵn hàng</button>
+                      <button className="link small" title="Ghi nhầm NCC cho xuất hàng: lùi về chờ NCC phản hồi" onClick={() => luiSanHang(n)}><Icon n="undo" /> Lùi sẵn hàng</button>
                     )}
-                    {laKeToan && n.duoc_quyet_toan && <button className="btn" onClick={() => deXuat({ loai_chi: 'quyet_toan', don_hang_id: Number(id), ncc_id: n.ncc_id }, 'quyết toán')}>💸 Đề xuất quyết toán</button>}
-                    {laVanHanh && don.giai_doan === 'giao_hang' && n.dong_san_sang > 0 && <button className="btn sec" onClick={() => lam(() => api.post(`/mua-hang/don/${id}/lay-hang`, { ncc_id: n.ncc_id }), `Đã xác nhận lấy hàng ${n.ncc}`)}>🚚 Đã lấy hàng</button>}
+                    {laKeToan && n.duoc_quyet_toan && <button className="btn" onClick={() => deXuat({ loai_chi: 'quyet_toan', don_hang_id: Number(id), ncc_id: n.ncc_id }, 'quyết toán')}><Icon n="send" /> Đề xuất quyết toán</button>}
+                    {laVanHanh && don.giai_doan === 'giao_hang' && n.dong_san_sang > 0 && <button className="btn sec" onClick={() => lam(() => api.post(`/mua-hang/don/${id}/lay-hang`, { ncc_id: n.ncc_id }), `Đã xác nhận lấy hàng ${n.ncc}`)}><Icon n="truck" /> Đã lấy hàng</button>}
                   </td>
                 </tr>
               ))}
@@ -262,7 +263,7 @@ export function MuaHangDon() {
           </>
         )}
         <p className="muted small mt">
-          Quy trình: chọn NCC → <b>🛒 Đặt hàng</b> (gửi nhóm Telegram NCC hoặc chép gửi Zalo) → NCC trả lời <b>Cho xuất hàng</b> (vật tư "Sẵn hàng", tự lập đề xuất quyết toán)
+          Quy trình: chọn NCC → <b>Đặt hàng</b> (gửi nhóm Telegram NCC hoặc chép gửi Zalo) → NCC trả lời <b>Cho xuất hàng</b> (vật tư "Sẵn hàng", tự lập đề xuất quyết toán)
           hoặc <b>Yêu cầu cọc</b> (tự lập đề xuất cọc → Admin duyệt → Kế toán chi kèm bill → vật tư tự "Sẵn hàng", tự lập quyết toán phần còn lại).
           NCC trả lời qua điện thoại thì bấm nút ghi nhận tương ứng trên đơn đặt hàng.
         </p>
@@ -280,9 +281,9 @@ export function MuaHangDon() {
 }
 
 const TT_DAT_HANG = {
-  cho_phan_hoi: { nhan: '⏳ Chờ NCC phản hồi', lop: 'p-wip' },
-  cho_coc: { nhan: '💰 NCC yêu cầu cọc', lop: 'p-wip' },
-  xuat_hang: { nhan: '✅ NCC cho xuất hàng', lop: 'p-done' },
+  cho_phan_hoi: { nhan: 'Chờ NCC phản hồi', lop: 'p-wip' },
+  cho_coc: { nhan: 'NCC yêu cầu cọc', lop: 'p-wip' },
+  xuat_hang: { nhan: 'NCC cho xuất hàng', lop: 'p-done' },
   huy: { nhan: 'Đã huỷ', lop: 'p-gray' },
 };
 
@@ -293,15 +294,15 @@ function NutChep({ text }) {
     try { await navigator.clipboard.writeText(text); setXong(true); setTimeout(() => setXong(false), 2000); }
     catch { const pre = e.currentTarget.closest('li')?.querySelector('pre'); if (pre) window.getSelection().selectAllChildren(pre); }
   };
-  return <button type="button" className="btn sec" onClick={chep}>{xong ? '✓ Đã chép' : '📋 Chép nội dung'}</button>;
+  return <button type="button" className="btn sec" onClick={chep}>{xong ? <><Icon n="check" /> Đã chép</> : <><Icon n="copy" /> Chép nội dung</>}</button>;
 }
 
 // Cho coc: noi ro dang cho ai (Admin duyet / Ke toan chi / Ke toan sua sau khi bi tu choi).
 const BUOC_COC = {
-  cho_duyet: { nhan: '💰 Cọc chờ Admin duyệt', lop: 'p-wip' },
-  da_duyet: { nhan: '💰 Cọc đã duyệt — chờ Kế toán chi', lop: 'p-new' },
-  tu_choi: { nhan: '💰 Cọc bị từ chối — Kế toán sửa', lop: 'p-lost' },
-  thu_hoi: { nhan: '💰 Cọc bị thu hồi', lop: 'p-lost' },
+  cho_duyet: { nhan: 'Cọc chờ Admin duyệt', lop: 'p-wip' },
+  da_duyet: { nhan: 'Cọc đã duyệt — chờ Kế toán chi', lop: 'p-new' },
+  tu_choi: { nhan: 'Cọc bị từ chối — Kế toán sửa', lop: 'p-lost' },
+  thu_hoi: { nhan: 'Cọc bị thu hồi', lop: 'p-lost' },
 };
 
 function DatHangNcc({ h, n, moSan, duocSua, onPhanHoi, onHuy }) {
@@ -326,8 +327,8 @@ function DatHangNcc({ h, n, moSan, duocSua, onPhanHoi, onHuy }) {
         {h.trang_thai !== 'huy' && <NutChep text={h.noi_dung} />}
         {duocSua && h.trang_thai === 'cho_phan_hoi' && (
           <>
-            <button className="btn" onClick={() => onPhanHoi('xuat')}>✅ NCC cho xuất hàng</button>
-            <button className="btn sec" onClick={() => onPhanHoi('coc')}>💰 NCC yêu cầu cọc</button>
+            <button className="btn" onClick={() => onPhanHoi('xuat')}><Icon n="check" /> NCC cho xuất hàng</button>
+            <button className="btn sec" onClick={() => onPhanHoi('coc')}><Icon n="wallet" /> NCC yêu cầu cọc</button>
           </>
         )}
         {duocSua && (h.trang_thai === 'cho_phan_hoi' || (choCoc && !['da_duyet', 'da_thanh_toan'].includes(h.coc_trang_thai))) && (
@@ -357,7 +358,7 @@ function BangMuaBoSung({ ds, onDaMua, onHuy, onDeXuat }) {
               {onDaMua && (
                 <td className="nowrap hanh-dong">
                   {b.trang_thai === 'cho_xu_ly' && <><button className="btn sec" onClick={() => onDaMua(b)}>Đã mua</button><button className="link danger" onClick={() => onHuy(b)}>Huỷ</button></>}
-                  {b.trang_thai === 'da_mua' && !b.trang_thai_chi && onDeXuat && <button className="btn sec" onClick={() => onDeXuat(b)}>💸 Đề xuất chi</button>}
+                  {b.trang_thai === 'da_mua' && !b.trang_thai_chi && onDeXuat && <button className="btn sec" onClick={() => onDeXuat(b)}><Icon n="send" /> Đề xuất chi</button>}
                 </td>
               )}
             </tr>

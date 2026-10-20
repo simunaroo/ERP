@@ -1,6 +1,7 @@
 import { withTransaction } from '../../config/db.js';
 import { AppError } from '../../utils/AppError.js';
 import * as repo from './khach_hang.repository.js';
+import { lichSuGiao } from '../nhap_so/nhap_so.service.js';
 
 export const TRANG_THAI_CHAM_SOC = ['moi', 'dang_tu_van', 'da_bao_gia', 'chot', 'khong_mua'];
 const NHOM_KHACH = ['nha_dan', 'nha_thau', 'doi_tac', 'khac'];
@@ -28,8 +29,8 @@ export async function danhSach(user, { trang_thai, q, page, limit }) {
 
 export async function chiTiet(user, id) {
   const kh = await layKhachDuocPhep(user, id);
-  const [lichSu, donHang] = await Promise.all([repo.findLichSu(id), repo.findDonHang(id)]);
-  return { ...kh, lich_su: lichSu, don_hang: donHang };
+  const [lichSu, donHang, giaoSo] = await Promise.all([repo.findLichSu(id), repo.findDonHang(id), lichSuGiao(id)]);
+  return { ...kh, lich_su: lichSu, don_hang: donHang, giao_so: giaoSo };
 }
 
 export async function taoKhach(user, { ten, sdt, dia_chi, nhom_khach_hang = 'nha_dan' }) {

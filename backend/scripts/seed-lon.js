@@ -3,7 +3,7 @@
 import pg from 'pg';
 import bcrypt from 'bcryptjs';
 
-// Tai khoan demo: ten dem + ten, bo dau (Kinh Doanh C -> doanhc); mat khau = tai khoan + 123456.
+// Tai khoan demo: ten dem + ten, bo dau (Lê Minh Tuấn -> minhtuan); mat khau = tai khoan + 123456.
 const nguoiDung = (hoTen, username, vaiTro) => [hoTen, username, bcrypt.hashSync(`${username}123456`, 10), vaiTro];
 const SO_DON = 1500;
 const NGAY_BAT_DAU = new Date('2025-10-01T08:00:00+07:00');
@@ -64,11 +64,13 @@ export async function seedLon(conn) {
 
   // ---- Nguoi dung ----
   const nguoiDungMoi = [];
-  // Ten nhan vien theo bo phan + chu cai (Kinh Doanh C) de demo khong dung ten nguoi that.
-  const chu = (i) => String.fromCharCode(64 + i);
-  for (let i = 3; i <= 8; i++) nguoiDungMoi.push(nguoiDung(`Kinh Doanh ${chu(i)}`, `doanh${chu(i).toLowerCase()}`, 'sale'));
-  for (let i = 2; i <= 3; i++) nguoiDungMoi.push(nguoiDung(`Vận Hành ${chu(i)}`, `hanh${chu(i).toLowerCase()}`, 'van_hanh'));
-  nguoiDungMoi.push(nguoiDung('Kế Toán B', 'toanb', 'ke_toan'));
+  // Ten nhan vien gia lap (ten Viet pho bien, khong phai nguoi that); tai khoan = ten dem + ten khong dau.
+  const NHAN_VIEN = [
+    ['Lê Minh Tuấn', 'minhtuan', 'sale'], ['Phạm Thu Hà', 'thuha', 'sale'], ['Hoàng Đức Anh', 'ducanh', 'sale'],
+    ['Vũ Ngọc Mai', 'ngocmai', 'sale'], ['Đặng Quốc Bảo', 'quocbao', 'sale'], ['Bùi Thanh Hương', 'thanhhuong', 'sale'],
+    ['Ngô Thị Thảo', 'thithao', 'van_hanh'], ['Dương Minh Khoa', 'minhkhoa', 'van_hanh'], ['Lý Văn Đức', 'vanduc', 'ke_toan'],
+  ];
+  for (const [ten, tk, vt] of NHAN_VIEN) nguoiDungMoi.push(nguoiDung(ten, tk, vt));
   await insertMany(db, 'users', ['ho_ten', 'username', 'password_hash', 'vai_tro'], nguoiDungMoi);
   const users = (await db.query('SELECT id, vai_tro FROM users')).rows;
   const sales = users.filter((u) => u.vai_tro === 'sale').map((u) => u.id);

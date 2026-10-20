@@ -8,7 +8,7 @@ const dong = (id) => ct.dong.find((x) => x.id === id);
 
 before(async () => {
   ctx = await batDau();
-  [sale, vh, keToan, admin] = await Promise.all([ctx.login('doanha'), ctx.login('hanha'), ctx.login('toana'), ctx.login('ngocson')]);
+  [sale, vh, keToan, admin] = await Promise.all([ctx.login('thilan'), ctx.login('vannam'), ctx.login('thihong'), ctx.login('ngocson')]);
   don = await taoDonChot(ctx, sale);
   await quaLenPhuongAn(ctx, vh, don.id);
   await tai();

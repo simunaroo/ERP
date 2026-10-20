@@ -1,7 +1,8 @@
 import { useEffect, useRef } from 'react';
 import { BUOC_DON, GIAI_DOAN, tinhTienDo } from '../utils.js';
+import Icon from './Icon.jsx';
 
-// Thanh tien do kieu stepper: buoc xong (✓ xanh), buoc dang lam (so, xanh duong), buoc sau (xam), huy (✕ do).
+// Thanh tien do kieu stepper: buoc xong (dau tich xanh), buoc dang lam (so, xanh duong), buoc sau (xam), huy (dau X do).
 export default function TienDo({ don }) {
   const td = tinhTienDo(don);
   const buoc = ['chot', ...BUOC_DON[don.hinh_thuc]];
@@ -20,7 +21,7 @@ export default function TienDo({ don }) {
         const trangThai = i < td.soXong ? 'xong' : i === td.soXong && td.huy ? 'huy' : i === td.soXong ? 'dang' : 'cho';
         return (
           <li key={b} className={`step ${trangThai}`} aria-current={trangThai === 'dang' ? 'step' : undefined}>
-            <span className="step-dot">{trangThai === 'xong' ? '✓' : trangThai === 'huy' ? '✕' : i + 1}</span>
+            <span className="step-dot">{trangThai === 'xong' ? <Icon n="check" size={14} /> : trangThai === 'huy' ? <Icon n="x" size={14} /> : i + 1}</span>
             <span className="step-nhan">{trangThai === 'huy' ? `Huỷ (${GIAI_DOAN[b].nhan})` : GIAI_DOAN[b].nhan}</span>
           </li>
         );

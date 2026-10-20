@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { api, loiCua } from '../api/client.js';
 import { ngay, ngayGio, tien } from '../utils.js';
 import { TabNcc } from './NhaCungCapList.jsx';
+import Icon from '../components/Icon.jsx';
 
 const ymd = (d) => d.toLocaleDateString('sv-SE');
 function kyNhanh(loai) {
@@ -43,7 +44,7 @@ function KhungAi({ tu, den }) {
   return (
     <div className="card ai-card">
       <div className="tien-do-dau">
-        <h3>✨ Trợ lý AI nhận xét</h3>
+        <h3><Icon n="sparkles" /> Trợ lý AI nhận xét</h3>
         {!kq && <button className="btn" disabled={dang} onClick={() => goi(false)}>{dang ? 'AI đang phân tích...' : 'Phân tích bằng AI'}</button>}
         {kq && <button className="btn sec" disabled={dang} onClick={() => goi(true)}>{dang ? 'Đang phân tích lại...' : 'Phân tích lại'}</button>}
       </div>
@@ -52,7 +53,7 @@ function KhungAi({ tu, den }) {
       {kq && (
         <div className="ai-kq">
           {kq.kiem_chung.so_khong_co_trong_du_lieu.length > 0 && (
-            <div className="banner canh-bao-ai">⚠ Các số sau không có trong dữ liệu gốc (AI tự đặt ngưỡng hoặc tự tính), hãy kiểm tra lại: <b>{kq.kiem_chung.so_khong_co_trong_du_lieu.join(', ')}</b></div>
+            <div className="banner canh-bao-ai"><Icon n="alert" /> Các số sau không có trong dữ liệu gốc (AI tự đặt ngưỡng hoặc tự tính), hãy kiểm tra lại: <b>{kq.kiem_chung.so_khong_co_trong_du_lieu.join(', ')}</b></div>
           )}
           {kq.kiem_chung.so_dong_ten_khong_co > 0 && (
             <p className="muted small">Đã bỏ {kq.kiem_chung.so_dong_ten_khong_co} dòng AI nhắc tới vật tư/nhà cung cấp không có trong dữ liệu.</p>

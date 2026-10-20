@@ -3,6 +3,7 @@ import { Link, NavLink, useNavigate, useSearchParams } from 'react-router-dom';
 import { api, loiCua } from '../api/client.js';
 import { useAuthStore } from '../store/authStore.js';
 import { ngay } from '../utils.js';
+import Icon from '../components/Icon.jsx';
 
 export const TRANG_THAI_NCC = {
   active: { nhan: 'Đang hợp tác', lop: 'p-done' },
@@ -16,7 +17,7 @@ export function TabNcc() {
       <NavLink end to="/nha-cung-cap" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}>Danh sách</NavLink>
       <NavLink to="/nha-cung-cap/so-sanh-gia" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}>So sánh giá</NavLink>
       {['ke_toan', 'admin'].includes(vaiTro) && (
-        <NavLink to="/nha-cung-cap/phan-tich" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}>📊 Phân tích & AI</NavLink>
+        <NavLink to="/nha-cung-cap/phan-tich" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}><Icon n="chart" /> Phân tích & AI</NavLink>
       )}
     </div>
   );

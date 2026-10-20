@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
+import Icon from './Icon.jsx';
 
 /**
- * Nut "⛃ Loc (n)" mo bang loc nhieu dieu kien (giong ERP).
+ * Nut "Loc (n)" mo bang loc nhieu dieu kien (giong ERP).
  * - truong: [{ k, nhan, kieu: 'chon' | 'ngay' | 'so', lua_chon?: [[gia_tri, nhan]] }]
  *   kieu 'ngay'/'so' la khoang: dung 2 khoa `${k}_tu` va `${k}_den`.
  * - giaTri: object { khoa: chuoi } dang ap dung; onApDung(objectMoi) khi bam "Ap dung".
@@ -37,7 +38,7 @@ export default function BoLoc({ truong, giaTri, onApDung }) {
   return (
     <div className="bo-loc" ref={hop}>
       <button type="button" className={soDangLoc ? 'btn' : 'btn sec'} aria-expanded={mo} onClick={() => setMo(!mo)}>
-        ⛃ Lọc{soDangLoc ? ` (${soDangLoc})` : ''}
+        <Icon n="filter" /> Lọc{soDangLoc ? ` (${soDangLoc})` : ''}
       </button>
       {mo && (
         <form className="bo-loc-hop" onSubmit={(e) => { e.preventDefault(); apDung(nhap); }}>

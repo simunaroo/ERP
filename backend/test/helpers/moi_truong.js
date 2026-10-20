@@ -18,6 +18,7 @@ process.env.TELEGRAM_CHE_DO = 'webhook'; // khong polling
 process.env.CONG_TY_NGAN_HANG = 'Vietcombank';
 process.env.CONG_TY_STK = '0123456789';
 process.env.CONG_TY_CHU_TK = 'CONG TY NST';
+process.env.NHAP_SO_API_KEY = 'khoa-api-test';
 process.env.THU_MUC_UPLOAD = fs.mkdtempSync(path.join(os.tmpdir(), 'datn-test-uploads-'));
 // Bao ve: chi chay tren DB co duoi _test (khong bao gio xoa nham DB phat trien).
 if (!/_test$/.test(process.env.PG_DATABASE)) throw new Error(`Từ chối chạy test trên DB "${process.env.PG_DATABASE}" (tên phải kết thúc bằng _test)`);
@@ -83,7 +84,7 @@ export async function batDau() {
   const cho = (ms = 200) => new Promise((r) => setTimeout(r, ms));
 
   return {
-    api, login, sql, cho, db,
+    api, login, sql, cho, db, goc,
     async ketThuc() {
       await new Promise((r) => server.close(r));
       await db.pool?.end?.().catch(() => {});
@@ -95,7 +96,7 @@ export async function batDau() {
 // ---------- Tien ich nghiep vu dung chung ----------
 export const homNay = () => new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
 
-// Sale doanha tao + chot don cho khach 1 (khach cua doanha). Vat tu mac dinh: san SPC van go (2 NCC bao gia) + tam op nano (2 NCC).
+// Sale thilan tao + chot don cho khach 1 (khach cua thilan). Vat tu mac dinh: san SPC van go (2 NCC bao gia) + tam op nano (2 NCC).
 export async function taoDonChot(ctx, tokenSale, tuyChon = {}) {
   const body = {
     khach_hang_id: 1, hinh_thuc: tuyChon.hinh_thuc || 'vat_tu', tinh_thanh: 'TP. Hồ Chí Minh', dia_chi_cong_trinh: 'Số 1 Đường Thử',

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
+import Icon from './Icon.jsx';
 
 const CHU_KY = 30000; // hoi so chua doc moi 30 giay (polling) — don gian, du cho vai chuc nguoi dung
 
@@ -65,7 +66,7 @@ export default function ThongBao() {
     <div className="thong-bao" ref={hop}>
       <button className="icon-btn chuong" onClick={() => setMo((m) => !m)} aria-expanded={mo} aria-haspopup="true"
         aria-label={chuaDoc ? `Thông báo, ${chuaDoc} chưa đọc` : 'Thông báo'} title="Thông báo">
-        🔔{chuaDoc > 0 && <span className="so-chua-doc" aria-hidden="true">{chuaDoc > 99 ? '99+' : chuaDoc}</span>}
+        <Icon n="bell" size={18} />{chuaDoc > 0 && <span className="so-chua-doc" aria-hidden="true">{chuaDoc > 99 ? '99+' : chuaDoc}</span>}
       </button>
       {mo && (
         <div className="hop-thong-bao" role="dialog" aria-label="Thông báo">
