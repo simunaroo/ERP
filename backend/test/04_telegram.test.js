@@ -12,7 +12,7 @@ const traLoiNut = () => tinCuoi('answerCallbackQuery').body.text;
 before(async () => {
   ctx = await batDau();
   ({ xuLyUpdate } = await import('../src/integrations/telegram.router.js'));
-  [sale, vh, admin] = await Promise.all([ctx.login('doanha'), ctx.login('hanha'), ctx.login('ngocson')]);
+  [sale, vh, admin] = await Promise.all([ctx.login('thilan'), ctx.login('vannam'), ctx.login('ngocson')]);
   don = await taoDonChot(ctx, sale);
   await quaLenPhuongAn(ctx, vh, don.id);
   const ct = (await ctx.api(vh, 'GET', `/mua-hang/don/${don.id}`)).d;
@@ -103,7 +103,7 @@ describe('Telegram: nhóm NCC và nhóm duyệt chi', () => {
 
   it('TC-TG-07: Telegram không tải được ảnh QR → tự gửi dạng chữ kèm link QR', async () => {
     telegram.loiGuiAnh = true;
-    const keToan = await ctx.login('toana');
+    const keToan = await ctx.login('thihong');
     const r = await ctx.api(keToan, 'POST', '/cong-no/de-xuat-chi', { loai_chi: 'coc', don_hang_id: 1, ncc_id: 2, so_tien: 1000 });
     telegram.loiGuiAnh = false;
     assert.equal(r.s, 201);

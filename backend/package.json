@@ -10,6 +10,7 @@
     "db:reset": "node scripts/db-reset.js",
     "db:reset:lon": "node scripts/db-reset.js --lon",
     "db:migrate": "node scripts/migrate.js",
+    "db:seed:bo-sung": "node scripts/seed-bo-sung.js",
     "test": "node --test --test-concurrency=1 \"test/**/*.test.js\"",
     "test:bao-cao": "node --test --test-concurrency=1 --test-reporter=spec --test-reporter-destination=stdout --test-reporter=./test/bao-cao-md.mjs --test-reporter-destination=test/KET_QUA_KIEM_THU.md \"test/**/*.test.js\""
   },

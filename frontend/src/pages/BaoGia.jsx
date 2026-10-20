@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { HINH_THUC, LOAI_THI_CONG, NGHIEM_THU, kichThuoc, ngay, tien } from '../utils.js';
+import Icon from '../components/Icon.jsx';
 
 // Trang CONG KHAI cho khach: khong dung Layout, khong can dang nhap.
 // Goi fetch truc tiep (khong qua api client) de khong gui kem token noi bo neu may dang dang nhap.
@@ -91,7 +92,7 @@ export default function BaoGia() {
       </section>
 
       <div className="actions no-print">
-        <button className="btn" onClick={() => window.print()}>🖨 In / Lưu PDF</button>
+        <button className="btn" onClick={() => window.print()}><Icon n="printer" /> In / Lưu PDF</button>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { api, loiCua } from '../api/client.js';
 import { useAuthStore } from '../store/authStore.js';
 import { GIAI_DOAN, BUOC_DON, tien } from '../utils.js';
+import Icon from '../components/Icon.jsx';
 
 const tienGon = (n) => (Math.abs(n) >= 1e9 ? `${(n / 1e9).toLocaleString('vi-VN', { maximumFractionDigits: 2 })} tỷ` : Math.abs(n) >= 1e6 ? `${(n / 1e6).toLocaleString('vi-VN', { maximumFractionDigits: 1 })} tr` : tien(n));
 const pct = (moi, cu) => (cu > 0 ? Math.round(((moi - cu) / cu) * 100) : null);
@@ -59,7 +60,7 @@ export default function TongQuan() {
           <h2 id="tieu-de-viec">Việc cần làm</h2>
           {viec.length > 0 && <span className="viec-tong">{tongViec} việc{soGap > 0 && <> · <b className="chu-gap">{soGap} gấp</b></>}</span>}
         </div>
-        {viec.length === 0 ? <p className="muted">🎉 Không có việc tồn đọng — bạn đã xử lý hết.</p> : (
+        {viec.length === 0 ? <p className="muted"><Icon n="check-circle" /> Không có việc tồn đọng — bạn đã xử lý hết.</p> : (
           <ul className="o-viec">
             {viec.map((v) => (
               <li key={v.nhan}>

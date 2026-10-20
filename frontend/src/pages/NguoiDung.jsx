@@ -41,7 +41,7 @@ export function NguoiDung() {
       {mk && <HopMatKhau tk={mk} onDong={() => setMk(null)} />}
       <form className="card toolbar" onSubmit={them}>
         <input aria-label="Họ tên" placeholder="Họ tên *" value={f.ho_ten} onChange={(e) => setF({ ...f, ho_ten: e.target.value })} required />
-        <input aria-label="Tên đăng nhập" placeholder="Tên đăng nhập (vd: doanhc)" value={f.username} onChange={(e) => setF({ ...f, username: e.target.value.toLowerCase() })} required pattern="[a-z0-9_.]{3,30}" title="3–30 ký tự: chữ thường không dấu, số, _ hoặc ." />
+        <input aria-label="Tên đăng nhập" placeholder="Tên đăng nhập (vd: minhtuan)" value={f.username} onChange={(e) => setF({ ...f, username: e.target.value.toLowerCase() })} required pattern="[a-z0-9_.]{3,30}" title="3–30 ký tự: chữ thường không dấu, số, _ hoặc ." />
         <select aria-label="Vai trò" value={f.vai_tro} onChange={(e) => setF({ ...f, vai_tro: e.target.value })}>
           {Object.entries(VAI_TRO).map(([v, n]) => <option key={v} value={v}>{n}</option>)}
         </select>

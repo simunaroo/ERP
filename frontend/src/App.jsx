@@ -19,6 +19,7 @@ import { CongNoKhach } from './pages/ThuTien.jsx';
 import TongQuan from './pages/TongQuan.jsx';
 import { DoiMatKhau, NguoiDung } from './pages/NguoiDung.jsx';
 import DanhMucVatTu from './pages/DanhMucVatTu.jsx';
+import { NhapSo, QuanLyChiaSo } from './pages/NhapSo.jsx';
 
 function CanDangNhap({ children }) {
   const token = useAuthStore((s) => s.token);
@@ -40,6 +41,8 @@ export default function App() {
         <Route path="/don-hang/tao" element={<DonHangForm />} />
         <Route path="/don-hang/:id/sua" element={<DonHangForm />} />
         <Route path="/don-hang/:id" element={<DonHangChiTiet />} />
+        <Route path="/nhap-so" element={<NhapSo />} />
+        <Route path="/nhap-so/chia" element={<QuanLyChiaSo />} />
         <Route path="/khach-hang" element={<KhachHangList />} />
         <Route path="/khach-hang/:id" element={<KhachHangChiTiet />} />
         <Route path="/nha-cung-cap" element={<NhaCungCapList />} />

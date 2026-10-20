@@ -66,6 +66,12 @@ async function congNoNcc() {
 // Moi viec: [nhan, duong dan toi man xu ly, SQL dem, muc do]. muc 'gap' = tre han / dang chan nguoi khac -> to mau do.
 const VIEC = {
   sale: [
+    ['Số mới được chia, quá 2 giờ chưa liên hệ', '/khach-hang?trang_thai=moi',
+      `SELECT count(*) FROM khach_hang k WHERE k.sale_phu_trach_id = $1 AND k.trang_thai_cham_soc = 'moi' AND k.chia_luc < now() - interval '2 hours'
+         AND NOT EXISTS (SELECT 1 FROM khach_hang_cham_soc c WHERE c.khach_hang_id = k.id)`, 'gap'],
+    ['Số mới chưa liên hệ', '/khach-hang?trang_thai=moi',
+      `SELECT count(*) FROM khach_hang k WHERE k.sale_phu_trach_id = $1 AND k.trang_thai_cham_soc = 'moi' AND k.chia_luc IS NOT NULL
+         AND NOT EXISTS (SELECT 1 FROM khach_hang_cham_soc c WHERE c.khach_hang_id = k.id)`],
     ['Đơn nháp chưa chốt', '/don-hang?trang_thai=nhap',
       `SELECT count(*) FROM don_hang WHERE trang_thai = 'nhap' AND sale_id = $1`],
     ['Khách đang tư vấn/báo giá, quá 7 ngày chưa liên hệ', '/khach-hang?trang_thai=dang_tu_van',

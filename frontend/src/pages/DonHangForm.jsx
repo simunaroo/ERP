@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api, loiCua } from '../api/client.js';
 import { HINH_THUC, LOAI_THI_CONG, NGHIEM_THU, NHOM_KHACH, TINH_THANH, dieuKhoanThanhToan, thuNhoAnh, tien, tinhTien } from '../utils.js';
+import Icon from '../components/Icon.jsx';
 
 const SO_ANH_TOI_DA = 3;
 const dongTrong = () => ({ vat_tu_id: '', so_luong_can: '', don_gia: '', ghi_chu: '', loai_thi_cong: '', dai_mm: '', rong_mm: '', mo_ta_goc: '' });
@@ -85,7 +86,7 @@ function KhungAI({ khachHangId, onKetQua, onLoi }) {
         value={ghiChu} onChange={(e) => setGhiChu(e.target.value)} />
       <div className="actions">
         <button type="button" className="btn" disabled={dangDoc || (!anh.length && !ghiChu.trim())} onClick={phanTich}>
-          {dangDoc ? 'AI đang đọc...' : '✨ Phân tích & điền đơn'}
+          {dangDoc ? 'AI đang đọc...' : <><Icon n="sparkles" /> Phân tích & điền đơn</>}
         </button>
       </div>
     </div>
@@ -217,7 +218,7 @@ export default function DonHangForm() {
     <form onSubmit={(e) => { e.preventDefault(); gui(false); }}>
       <h1>{id ? `Sửa đơn nháp ${maDon}` : 'Tạo đơn hàng'}</h1>
       <div className="tabs" role="tablist">
-        <button type="button" role="tab" aria-selected={cheDo === 'ai'} className={cheDo === 'ai' ? 'tab on' : 'tab'} onClick={() => setCheDo('ai')}>✨ Lên đơn nhanh bằng AI</button>
+        <button type="button" role="tab" aria-selected={cheDo === 'ai'} className={cheDo === 'ai' ? 'tab on' : 'tab'} onClick={() => setCheDo('ai')}><Icon n="sparkles" /> Lên đơn nhanh bằng AI</button>
         <button type="button" role="tab" aria-selected={cheDo === 'tay'} className={cheDo === 'tay' ? 'tab on' : 'tab'} onClick={() => setCheDo('tay')}>Nhập thủ công</button>
       </div>
 
@@ -226,7 +227,7 @@ export default function DonHangForm() {
       {ketQuaAI && (
         ketQuaAI.canh_bao.length === 0
           ? <div className="success">AI đã điền đơn hàng. Vui lòng kiểm tra lại trước khi lưu.</div>
-          : <ul className="ai-warn">{ketQuaAI.canh_bao.map((c, i) => <li key={i}>⚠ {c}</li>)}</ul>
+          : <ul className="ai-warn">{ketQuaAI.canh_bao.map((c, i) => <li key={i}><Icon n="alert" /> {c}</li>)}</ul>
       )}
 
       <div className="form-layout">

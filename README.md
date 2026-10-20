@@ -39,13 +39,13 @@ Duyệt chi qua Telegram (không bắt buộc): tạo bot bằng @BotFather lấ
 
 Trợ lý AI: tạo API key miễn phí tại Google AI Studio, thêm `GEMINI_API_KEY=...` vào `backend/.env`; `GEMINI_MODEL` (mặc định `gemini-3.8-flash`) và `GEMINI_MODEL_DU_PHONG` dùng khi model chính quá tải. Không có key thì phần còn lại vẫn chạy bình thường, chỉ các nút AI báo chưa cấu hình.
 
-Tài khoản demo — mật khẩu là tên tài khoản + `123456` (ví dụ `doanha123456`):
+Tài khoản demo — mật khẩu là tên tài khoản + `123456` (ví dụ `thilan123456`):
 
 | Vai trò | Tài khoản |
 |---|---|
-| Kinh doanh (Sale) | `doanha`, `doanhb` (dữ liệu lớn: đến `doanhh`) |
-| Vận hành | `hanha` (dữ liệu lớn: `hanhb`, `hanhc`) |
-| Kế toán | `toana` (dữ liệu lớn: `toanb`) |
+| Kinh doanh (Sale) | `thilan`, `vanhung` (dữ liệu lớn thêm: `minhtuan`, `thuha`, `ducanh`, `ngocmai`, `quocbao`, `thanhhuong`) |
+| Vận hành | `vannam` (dữ liệu lớn: `thithao`, `minhkhoa`) |
+| Kế toán | `thihong` (dữ liệu lớn: `vanduc`) |
 | Admin | `ngocson` |
 
 ## Tiến độ

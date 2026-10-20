@@ -60,7 +60,11 @@ CREATE TABLE khach_hang (
     sale_phu_trach_id   INTEGER NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     nhom_khach_hang     nhom_khach_hang_enum NOT NULL DEFAULT 'nha_dan',
     trang_thai_cham_soc trang_thai_cham_soc_enum NOT NULL DEFAULT 'moi',
-    created_at          TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+    nguon               VARCHAR(30),
+    nhu_cau             TEXT,
+    nguoi_nhap_id       INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    chia_luc            TIMESTAMPTZ
 );
 
 CREATE TABLE khach_hang_cham_soc (
@@ -527,3 +531,32 @@ ALTER TABLE mua_hang_dong ADD COLUMN dat_hang_ncc_id INTEGER REFERENCES dat_hang
 ALTER TABLE users ADD COLUMN telegram_username TEXT;
 CREATE UNIQUE INDEX ux_users_telegram ON users (lower(telegram_username)) WHERE telegram_username IS NOT NULL;
 ALTER TABLE de_xuat_chi ADD COLUMN tg_hoi_bill_message_id TEXT;
+
+-- ---------- Nhap so va chia so cho Sale (migration 022) ----------
+-- Chong trung so khi nhap (kiem tra trong service, duoi advisory lock).
+CREATE INDEX idx_kh_sdt ON khach_hang(sdt);
+
+-- Ty le (%) chia so cho tung Sale. Bang rong = chia deu cho moi Sale dang hoat dong.
+CREATE TABLE ty_le_chia_so (
+    sale_id           INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    ty_le             SMALLINT NOT NULL CHECK (ty_le BETWEEN 0 AND 100),
+    nguoi_cap_nhat_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    cap_nhat_luc      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Nhat ky nhap/chia so: dem so da chia trong thang de giu dung ty le, va thong ke hieu qua theo Sale/nguon.
+CREATE TABLE chia_so_log (
+    id             SERIAL PRIMARY KEY,
+    khach_hang_id  INTEGER NOT NULL REFERENCES khach_hang(id) ON DELETE CASCADE,
+    sale_id        INTEGER NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    kieu           VARCHAR(20) NOT NULL CHECK (kieu IN ('tu_dong', 'sale_tu_nhap', 'admin_chon', 'chuyen')),
+    kenh           VARCHAR(10) NOT NULL CHECK (kenh IN ('form', 'api')),
+    nguoi_nhap_id  INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    tu_sale_id     INTEGER REFERENCES users(id) ON DELETE RESTRICT,   -- kieu 'chuyen': Sale cu (migration 023)
+    ly_do          TEXT,
+    CONSTRAINT chia_so_log_chuyen_check CHECK (kieu <> 'chuyen' OR (tu_sale_id IS NOT NULL AND ly_do IS NOT NULL))
+);
+CREATE INDEX idx_chia_so_log_khach ON chia_so_log(khach_hang_id);
+CREATE INDEX idx_chia_so_log_thoi_gian ON chia_so_log(created_at);
+CREATE INDEX idx_chia_so_log_sale ON chia_so_log(sale_id, created_at);

@@ -470,3 +470,15 @@ a.pill { text-decoration: none; margin: 0 4px 4px 0; }
 .dong-den-han td { background: var(--error-bg); }
 .kpi-link { text-decoration: none; color: inherit; }
 .kpi-link:hover { border-color: var(--link); }
+
+/* ---------- Icon net vien (components/Icon.jsx) ---------- */
+.ico { display: inline-block; vertical-align: -0.18em; flex-shrink: 0; }
+.icon-btn { color: var(--text-strong); }
+.icon-btn .ico { vertical-align: middle; }
+.erp-sidebar nav a .ico { opacity: .85; }
+.step-dot .ico { vertical-align: middle; }
+
+/* ---------- Nhap so ---------- */
+pre { background: var(--surface-2, rgba(127, 127, 127, .08)); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; overflow: auto; white-space: pre; }
+.chuyen-sale { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chuyen-sale input { min-width: 160px; }

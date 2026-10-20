@@ -6,6 +6,7 @@ import TienDo from '../components/TienDo.jsx';
 import { ThiCongCuaDon } from './ThiCong.jsx';
 import { ThuTienCuaDon } from './ThuTien.jsx';
 import { BUOC_DON, GIAI_DOAN, HUY_DUOC, tinhTienDo, vaiTroPhuTrach, HINH_THUC, LOAI_THI_CONG, NGHIEM_THU, NHOM_KHACH, TRANG_THAI_DON, kichThuoc, ngay, ngayGio, tien } from '../utils.js';
+import Icon from '../components/Icon.jsx';
 
 const BUOC_DON_CUA = (don) => BUOC_DON[don.hinh_thuc];
 // Mot dong lich su la "lui" neu buoc dich dung truoc buoc nguon trong quy trinh.
@@ -123,7 +124,7 @@ export default function DonHangChiTiet() {
       {don.giai_doan === 'mua_hang' && don.mua_hang.tong_dong > 0 && (
         don.mua_hang.dong_san_sang === don.mua_hang.tong_dong ? (
           <div className="banner">
-            <span>🚚 <b>Sẵn sàng giao hàng</b> — 100% vật tư đã sẵn hàng ({don.mua_hang.tong_dong}/{don.mua_hang.tong_dong}).{' '}
+            <span><Icon n="truck" /> <b>Sẵn sàng giao hàng</b> — 100% vật tư đã sẵn hàng ({don.mua_hang.tong_dong}/{don.mua_hang.tong_dong}).{' '}
               {don.thanh_toan.du_tam_ung
                 ? <>Khách đã thanh toán đủ tạm ứng ({tien(don.thanh_toan.da_thu)}).</>
                 : <b>Khách mới thanh toán {tien(don.thanh_toan.da_thu)} / cần tạm ứng {tien(don.thanh_toan.can_tam_ung)}{don.thanh_toan.cho_xac_nhan > 0 && ` (${tien(don.thanh_toan.cho_xac_nhan)} chờ Kế toán xác nhận)`}.</b>}
@@ -134,7 +135,7 @@ export default function DonHangChiTiet() {
           </div>
         ) : (
           <div className="banner banner-nhe">
-            <span>🛒 Đang mua hàng: <b>{don.mua_hang.dong_san_sang}/{don.mua_hang.tong_dong}</b> dòng vật tư đã sẵn hàng.</span>
+            <span><Icon n="cart" /> Đang mua hàng: <b>{don.mua_hang.dong_san_sang}/{don.mua_hang.tong_dong}</b> dòng vật tư đã sẵn hàng.</span>
             {['van_hanh', 'ke_toan', 'admin'].includes(vaiTro) && <Link className="btn sec" to={`/mua-hang/don/${don.id}`}>Xem mua hàng →</Link>}
           </div>
         )
@@ -157,7 +158,7 @@ export default function DonHangChiTiet() {
                 placeholder="Ghi chú (bắt buộc khi lùi bước hoặc huỷ đơn)" aria-label="Ghi chú chuyển bước" />
               <button className="btn" onClick={() => chuyenBuoc('tiep')} disabled={chuaDuHang}
                 title={!chuaDuHang ? undefined : don.giai_doan === 'boc_khoi_luong' ? 'Bấm "Xác nhận khối lượng" trước' : `Còn ${don.mua_hang.tong_dong - don.mua_hang.dong_san_sang} dòng vật tư chưa sẵn hàng`}>
-                {don.giai_doan === 'mua_hang' ? '🚚 Đăng ký giao hàng' : <>✓ Xong «{GIAI_DOAN[don.giai_doan].nhan}» → {GIAI_DOAN[td.buocTiep].nhan}</>}
+                {don.giai_doan === 'mua_hang' ? <><Icon n="truck" /> Đăng ký giao hàng</> : <><Icon n="check" /> Xong «{GIAI_DOAN[don.giai_doan].nhan}» → {GIAI_DOAN[td.buocTiep].nhan}</>}
               </button>
               {buocTruoc && <button className="btn sec" onClick={() => chuyenBuoc('lui')}>← Lùi về «{GIAI_DOAN[buocTruoc].nhan}»</button>}
               {duocHuy && <button className="link danger" onClick={huyDon}>Huỷ đơn</button>}
@@ -261,7 +262,7 @@ export default function DonHangChiTiet() {
 
       {vaiTro === 'sale' && don.sale_id === toiId && (
         <div className="card">
-          <h3>📄 Báo giá gửi khách</h3>
+          <h3><Icon n="file" /> Báo giá gửi khách</h3>
           {linkBaoGia ? (
             <>
               <div className="toolbar">
@@ -309,7 +310,7 @@ export default function DonHangChiTiet() {
               </tbody>
             </table>
           </div>
-          {duocChuyen && <div className="actions"><button className="btn" onClick={xacNhanKhoiLuong}>✓ Xác nhận khối lượng</button></div>}
+          {duocChuyen && <div className="actions"><button className="btn" onClick={xacNhanKhoiLuong}><Icon n="check" /> Xác nhận khối lượng</button></div>}
         </div>
       )}
 

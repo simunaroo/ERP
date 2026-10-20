@@ -4,12 +4,13 @@ import { api, loiCua } from '../api/client.js';
 import { useAuthStore } from '../store/authStore.js';
 import { GIAI_DOAN, ngay, thuNhoAnh, tien } from '../utils.js';
 import { AnhBill, TabTc } from './CongNo.jsx';
+import Icon from '../components/Icon.jsx';
 
 export const LOAI_THU = { tam_ung: 'Tạm ứng', quyet_toan: 'Quyết toán', khac: 'Khác' };
 const TT_THU = {
-  cho_xac_nhan: { nhan: '⏳ Chờ Kế toán xác nhận', lop: 'p-wip' },
-  da_xac_nhan: { nhan: '✅ Đã nhận tiền', lop: 'p-done' },
-  tu_choi: { nhan: '❌ Chưa thấy tiền về', lop: 'p-lost' },
+  cho_xac_nhan: { nhan: 'Chờ Kế toán xác nhận', lop: 'p-wip' },
+  da_xac_nhan: { nhan: 'Đã nhận tiền', lop: 'p-done' },
+  tu_choi: { nhan: 'Chưa thấy tiền về', lop: 'p-lost' },
 };
 const homNay = () => new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
 
@@ -18,7 +19,7 @@ function NutChepNho({ text, nhan = 'Chép' }) {
   const [xong, setXong] = useState(false);
   return (
     <button type="button" className="link small" onClick={async () => { try { await navigator.clipboard.writeText(text); setXong(true); setTimeout(() => setXong(false), 1500); } catch { /* trinh duyet chan */ } }}>
-      {xong ? '✓ Đã chép' : nhan}
+      {xong ? <><Icon n="check" /> Đã chép</> : nhan}
     </button>
   );
 }
@@ -48,7 +49,7 @@ function FormThu({ donId, goiY, keToan, onXong }) {
         <input aria-label="Ngày thu" type="date" max={homNay()} value={f.ngay_thu} onChange={dat('ngay_thu')} />
       </div>
       <div className="toolbar">
-        <label className="btn sec">📎 {anh ? 'Đổi ảnh bill' : 'Ảnh bill'}
+        <label className="btn sec"><Icon n="paperclip" /> {anh ? 'Đổi ảnh bill' : 'Ảnh bill'}
           <input type="file" accept="image/*" hidden onChange={async (e) => { const x = e.target.files[0]; if (x) { try { setAnh(await thuNhoAnh(x)); } catch { setLoi('Không đọc được ảnh'); } } }} />
         </label>
         {anh && <img src={anh.xemTruoc} alt="Ảnh bill vừa chọn" className="anh-bill-nho" />}
@@ -200,7 +201,7 @@ export function CongNoKhach() {
           {no && <span className="small">Đến hạn: <b className="error-text">{tien(no.tong.den_han)}</b> · Tổng còn phải thu: <b>{tien(no.tong.tat_ca)}</b></span>}
         </div>
         <div className="chips">
-          {[['', 'Tất cả đơn còn nợ'], ['den_han', '⚠️ Đến hạn (đã quyết toán / hoàn tất)']].map(([v, n]) => <button key={v} className={loc === v ? 'chip on' : 'chip'} onClick={() => datLoc('loc', v)}>{n}</button>)}
+          {[['', 'Tất cả đơn còn nợ'], ['den_han', 'Đến hạn (đã quyết toán / hoàn tất)']].map(([v, n]) => <button key={v} className={loc === v ? 'chip on' : 'chip'} onClick={() => datLoc('loc', v)}>{n}</button>)}
         </div>
         <div className="toolbar"><input className="search" placeholder="Tìm mã đơn, khách hàng... (Enter)" defaultValue={q} onKeyDown={(e) => e.key === 'Enter' && datLoc('q', e.target.value.trim())} /></div>
         <div className="table-wrap">
