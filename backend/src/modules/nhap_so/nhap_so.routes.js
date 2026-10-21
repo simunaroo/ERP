@@ -1,7 +1,8 @@
 import crypto from 'node:crypto';
 import { Router } from 'express';
-import { xacThuc, phanQuyen } from '../../middlewares/auth.js';
+import { xacThuc, coQuyen } from '../../middlewares/auth.js';
 import { AppError } from '../../utils/AppError.js';
+import { voiNguoiDung } from '../../config/db.js';
 import * as s from './nhap_so.service.js';
 
 const router = Router();
@@ -16,13 +17,13 @@ function khoaApi(req, res, next) {
   if (gui.length !== dung.length || !crypto.timingSafeEqual(gui, dung)) throw new AppError(401, 'API key không hợp lệ');
   next();
 }
-router.post('/tu-dong', khoaApi, async (req, res) => res.status(201).json(await s.nhap(null, req.body, 'api')));
+router.post('/tu-dong', khoaApi, async (req, res) => res.status(201).json(await voiNguoiDung({ kenh: 'api' }, () => s.nhap(null, req.body, 'api'))));
 
 router.use(xacThuc);
-router.post('/', phanQuyen('sale', 'admin'), async (req, res) => res.status(201).json(await s.nhap(req.user, req.body, 'form')));
-router.get('/gan-day', phanQuyen('sale', 'admin'), async (req, res) => res.json(await s.ganDay(req.user, req.query)));
-router.get('/ty-le', phanQuyen('admin'), async (req, res) => res.json(await s.tyLe()));
-router.put('/ty-le', phanQuyen('admin'), async (req, res) => res.json(await s.luuTyLe(req.user, req.body || {})));
-router.put('/khach/:id/chuyen-sale', phanQuyen('admin'), async (req, res) => res.json(await s.chuyenSale(req.user, Number(req.params.id), req.body || {})));
+router.post('/', coQuyen('nhap_so.nhap'), async (req, res) => res.status(201).json(await s.nhap(req.user, req.body, 'form')));
+router.get('/gan-day', coQuyen('nhap_so.nhap', 'nhap_so.quan_ly'), async (req, res) => res.json(await s.ganDay(req.user, req.query)));
+router.get('/ty-le', coQuyen('nhap_so.quan_ly'), async (req, res) => res.json(await s.tyLe()));
+router.put('/ty-le', coQuyen('nhap_so.quan_ly'), async (req, res) => res.json(await s.luuTyLe(req.user, req.body || {})));
+router.put('/khach/:id/chuyen-sale', coQuyen('nhap_so.quan_ly'), async (req, res) => res.json(await s.chuyenSale(req.user, Number(req.params.id), req.body || {})));
 
 export default router;

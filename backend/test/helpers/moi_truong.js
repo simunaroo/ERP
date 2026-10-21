@@ -19,6 +19,7 @@ process.env.CONG_TY_NGAN_HANG = 'Vietcombank';
 process.env.CONG_TY_STK = '0123456789';
 process.env.CONG_TY_CHU_TK = 'CONG TY NST';
 process.env.NHAP_SO_API_KEY = 'khoa-api-test';
+process.env.NGAN_HANG_WEBHOOK_KEY = 'khoa-ngan-hang-test';
 process.env.THU_MUC_UPLOAD = fs.mkdtempSync(path.join(os.tmpdir(), 'datn-test-uploads-'));
 // Bao ve: chi chay tren DB co duoi _test (khong bao gio xoa nham DB phat trien).
 if (!/_test$/.test(process.env.PG_DATABASE)) throw new Error(`Từ chối chạy test trên DB "${process.env.PG_DATABASE}" (tên phải kết thúc bằng _test)`);

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { api, loiCua } from '../api/client.js';
+import { api, loiCua, taiFile } from '../api/client.js';
 import { useAuthStore } from '../store/authStore.js';
 import { GIAI_DOAN, ngay, thuNhoAnh, tien } from '../utils.js';
 import { AnhBill, TabTc } from './CongNo.jsx';
@@ -203,7 +203,9 @@ export function CongNoKhach() {
         <div className="chips">
           {[['', 'Tất cả đơn còn nợ'], ['den_han', 'Đến hạn (đã quyết toán / hoàn tất)']].map(([v, n]) => <button key={v} className={loc === v ? 'chip on' : 'chip'} onClick={() => datLoc('loc', v)}>{n}</button>)}
         </div>
-        <div className="toolbar"><input className="search" placeholder="Tìm mã đơn, khách hàng... (Enter)" defaultValue={q} onKeyDown={(e) => e.key === 'Enter' && datLoc('q', e.target.value.trim())} /></div>
+        <div className="toolbar"><input className="search" placeholder="Tìm mã đơn, khách hàng... (Enter)" defaultValue={q} onKeyDown={(e) => e.key === 'Enter' && datLoc('q', e.target.value.trim())} />
+          <span className="grow" />
+          <button className="btn sec" onClick={() => taiFile('/thu-tien/cong-no/excel', { loc: loc || undefined, q: q || undefined }).catch((e) => setLoi(loiCua(e)))}><Icon n="file" /> Excel</button></div>
         <div className="table-wrap">
           <table>
             <thead><tr><th>Đơn</th><th>Khách hàng</th><th>Sale</th><th>Tiến độ</th><th className="num">Tổng đơn</th><th className="num">Đã thu</th><th className="num">Còn phải thu</th></tr></thead>

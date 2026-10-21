@@ -16,6 +16,11 @@ import congNoRoutes, { telegramRouter } from './modules/cong_no/cong_no.routes.j
 import thongBaoRoutes from './modules/thong_bao/thong_bao.routes.js';
 import thuTienRoutes from './modules/thu_tien/thu_tien.routes.js';
 import nhapSoRoutes from './modules/nhap_so/nhap_so.routes.js';
+import baoCaoRoutes from './modules/bao_cao/bao_cao.routes.js';
+import cauHinhRoutes from './modules/cau_hinh/cau_hinh.routes.js';
+import nhatKyRoutes from './modules/nhat_ky/nhat_ky.routes.js';
+import phanQuyenRoutes from './modules/phan_quyen/phan_quyen.routes.js';
+import nganHangRoutes from './modules/ngan_hang/ngan_hang.routes.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 
 export const app = express();
@@ -41,6 +46,11 @@ app.use('/api/tong-quan', tongQuanRoutes);
 app.use('/api/cong-no', congNoRoutes);
 app.use('/api/thong-bao', thongBaoRoutes);
 app.use('/api/thu-tien', thuTienRoutes);
+app.use('/api/bao-cao', baoCaoRoutes);
+app.use('/api/cau-hinh', cauHinhRoutes);
+app.use('/api/nhat-ky', nhatKyRoutes);
+app.use('/api/phan-quyen', phanQuyenRoutes);
+app.use('/api/ngan-hang', nganHangRoutes); // /webhook xac thuc bang API key (SePay), con lai can dang nhap
 app.use('/api/nhap-so', nhapSoRoutes); // /tu-dong xac thuc bang API key, con lai can dang nhap
 app.use('/api/telegram', telegramRouter); // webhook cong khai, xac thuc bang secret header
 app.use('/api/bao-gia', baoGiaRoutes); // cong khai, khong can dang nhap

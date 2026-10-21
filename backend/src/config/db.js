@@ -1,4 +1,5 @@
 import pg from 'pg';
+import { AsyncLocalStorage } from 'node:async_hooks';
 
 // Cot DATE (ngay chot, ngay coc...) la ngay theo lich, khong co gio/mui gio. Mac dinh pg doi thanh Date
 // luc 00:00 gio may chu roi JSON xuat ra UTC -> o Viet Nam bi lui 1 ngay. Giu nguyen chuoi 'YYYY-MM-DD'.
@@ -17,12 +18,25 @@ export const pool = new pg.Pool({
 // khong bat thi Node se crash ca server. Pool tu tao ket noi moi o lan query sau.
 pool.on('error', (err) => console.error('Kết nối DB bị ngắt:', err.message));
 
-export const query = (text, params) => pool.query(text, params);
+// Ngu canh "ai dang thao tac" theo tung request (web / telegram / api). Trigger nhat ky doc qua bien phien app.user_id, app.kenh.
+const ngCanh = new AsyncLocalStorage();
+export const voiNguoiDung = (ctx, fn) => ngCanh.run(ctx, fn);
+
+async function ganBienPhien(client) {
+  const c = ngCanh.getStore();
+  if (c) await client.query(`SELECT set_config('app.user_id', $1, true), set_config('app.kenh', $2, true)`, [String(c.userId ?? ''), c.kenh || '']);
+}
+
+// Cau lenh ghi le (ngoai transaction) cung chay trong transaction ngan de bien phien co hieu luc.
+export const query = (text, params) => (ngCanh.getStore() && /^\s*(INSERT|UPDATE|DELETE|WITH)\b/i.test(text)
+  ? withTransaction((client) => client.query(text, params))
+  : pool.query(text, params));
 
 export async function withTransaction(fn) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    await ganBienPhien(client);
     const result = await fn(client);
     await client.query('COMMIT');
     return result;

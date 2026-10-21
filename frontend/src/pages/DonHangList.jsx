@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { api, loiCua } from '../api/client.js';
+import { api, loiCua, taiFile } from '../api/client.js';
+import Icon from '../components/Icon.jsx';
 import { useAuthStore } from '../store/authStore.js';
 import BoLoc, { khoaCua } from '../components/BoLoc.jsx';
 import { GIAI_DOAN, tinhTienDo, HINH_THUC, NGHIEM_THU, NHOM_KHACH, TINH_THANH, TRANG_THAI_DON, ngay, tien } from '../utils.js';
@@ -119,6 +120,7 @@ export default function DonHangList() {
           </select>
           <BoLoc truong={truong} giaTri={giaTriLoc} onApDung={capNhat} />
           <span className="grow" />
+          <button className="btn sec" title="Xuất danh sách theo bộ lọc đang chọn" onClick={() => taiFile('/don-hang/excel', { trang_thai: trangThai || undefined, q: q || undefined, sap_xep: sapXep, ...Object.fromEntries(Object.entries(giaTriLoc).filter(([, v]) => v)) }).catch((e) => setLoi(loiCua(e)))}><Icon n="file" /> Excel</button>
           {vaiTro === 'sale' && <Link className="btn" to="/don-hang/tao">+ Tạo đơn hàng</Link>}
         </div>
         {truong.some((t) => khoaCua(t).some((k) => giaTriLoc[k])) && (

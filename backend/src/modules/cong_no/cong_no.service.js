@@ -43,6 +43,26 @@ export async function dsDeXuatChi(q) {
   return { ...kq, items: kq.items.map(chuanSo), page: trang, soTrang: Math.max(1, Math.ceil(kq.tong / 30)) };
 }
 
+const TEN_LOAI_CHI = { coc: 'Cọc', quyet_toan: 'Quyết toán', chi_bo_sung: 'Chi bổ sung', tra_cong: 'Trả công', ung_cong: 'Ứng công' };
+const TEN_TT_CHI = { cho_duyet: 'Chờ duyệt', da_duyet: 'Đã duyệt', tu_choi: 'Từ chối', da_thanh_toan: 'Đã chi', thu_hoi: 'Thu hồi' };
+export async function excelDeXuatChi(q) {
+  if (q.trang_thai && !TRANG_THAI.includes(q.trang_thai)) throw new AppError(400, 'Trạng thái không hợp lệ');
+  if (q.loai_chi && !LOAI.includes(q.loai_chi)) throw new AppError(400, 'Loại chi không hợp lệ');
+  const { items } = await repo.dsDeXuatChi({ trangThai: q.trang_thai, loaiChi: q.loai_chi, doiTuong: q.doi_tuong, tuKhoa: q.q?.trim() || null, limit: 10000, offset: 0 });
+  const ds = items.map(chuanSo);
+  return {
+    tenFile: `de-xuat-chi_${new Date().toISOString().slice(0, 10)}.xlsx`, tieuDe: 'DANH SÁCH ĐỀ XUẤT CHI', moTa: `${ds.length} đề xuất theo bộ lọc đang chọn`,
+    cot: [
+      { key: 'ma', nhan: 'Mã', rong: 11 }, { key: 'created_at', nhan: 'Ngày lập', kieu: 'ngay', rong: 12 }, { key: 'ma_don', nhan: 'Đơn', rong: 14 },
+      { key: 'nguoi_nhan', nhan: 'Nhận tiền', rong: 30 }, { key: 'loai', nhan: 'Loại', rong: 12 }, { key: 'so_tien', nhan: 'Số tiền', kieu: 'tien' },
+      { key: 'tt', nhan: 'Trạng thái', rong: 12 }, { key: 'nguoi_tao', nhan: 'Người lập', rong: 18 }, { key: 'nguoi_duyet', nhan: 'Người duyệt', rong: 18 },
+      { key: 'noi_dung_ck', nhan: 'Nội dung CK', rong: 22 },
+    ],
+    dong: ds.map((x) => ({ ...x, ma: `DXC-${x.id}`, nguoi_nhan: x.ncc || x.doi_tho, loai: TEN_LOAI_CHI[x.loai_chi], tt: TEN_TT_CHI[x.trang_thai] })),
+    tong: { ma: 'Tổng', so_tien: ds.reduce((a, x) => a + x.so_tien, 0) },
+  };
+}
+
 export async function chiTiet(id) {
   const dxc = await repo.findDxc(id);
   if (!dxc) throw new AppError(404, 'Không tìm thấy đề xuất chi');
@@ -266,8 +286,9 @@ export async function thuHoi(user, id, { ly_do }) {
 }
 
 // "Da chi": bat buoc anh bill/UNC. Chi cho tho -> ghi so tho (da_tra / tam_ung).
-export async function daChi(user, id, { bill }, kenh = 'web') {
-  const ten = await luuAnhBase64(bill, 'bill');
+// Xac nhan da chi: kem anh bill (web/Telegram) HOAC giao dich ngan hang da doi soat (user = null, kenh 'ngan_hang').
+export async function daChi(user, id, { bill, giaoDichId }, kenh = 'web') {
+  const ten = giaoDichId ? null : await luuAnhBase64(bill, 'bill');
   let sauCoc = null;
   try {
     await withTransaction(async (client) => {
@@ -276,11 +297,11 @@ export async function daChi(user, id, { bill }, kenh = 'web') {
       if (c.trang_thai !== 'da_duyet') throw new AppError(409, 'Chỉ xác nhận đã chi cho đề xuất đã duyệt');
       const stk = await repo.stkNguoiNhan(client, c);
       await repo.taoPhieu(client, {
-        id, maQr: stk ? linkVietQr(stk, Number(c.so_tien), c.noi_dung_ck) : null, soTien: c.so_tien, nguoiId: user.id, noiDung: c.noi_dung_ck, bill: ten,
+        id, maQr: stk ? linkVietQr(stk, Number(c.so_tien), c.noi_dung_ck) : null, soTien: c.so_tien, nguoiId: user?.id ?? null, noiDung: c.noi_dung_ck, bill: ten,
       });
       await repo.doiTrangThai(client, id, 'da_duyet', 'da_thanh_toan');
-      await thongBao.deXuatChi(client, id, 'da_chi', { nguoiGayId: user.id });
-      if (c.loai_chi === 'coc') sauCoc = await sauKhiChiCoc(client, c, user.id);
+      await thongBao.deXuatChi(client, id, 'da_chi', { nguoiGayId: user?.id ?? null });
+      if (c.loai_chi === 'coc') sauCoc = await sauKhiChiCoc(client, c, user?.id ?? null);
       if (c.doi_tho_id) {
         await repo.ghiGiaoDichTho(client, {
           thoId: c.doi_tho_id, donHangId: c.don_hang_id, loai: c.loai_chi === 'tra_cong' ? 'da_tra' : 'tam_ung',
@@ -289,11 +310,11 @@ export async function daChi(user, id, { bill }, kenh = 'web') {
       }
     });
   } catch (e) {
-    await fs.unlink(duongDanAnh(ten).file).catch(() => {}); // giao dich loi -> xoa anh vua luu
+    if (ten) await fs.unlink(duongDanAnh(ten).file).catch(() => {}); // giao dich loi -> xoa anh vua luu
     throw e;
   }
   const dxc = await chiTiet(id);
-  suaTinDuyet(dxc, `💸 <b>Đã chi</b> bởi ${tg.esc(user.ho_ten)}${kenh === 'telegram' ? ' (qua Telegram)' : ''}`);
+  suaTinDuyet(dxc, user ? `💸 <b>Đã chi</b> bởi ${tg.esc(user.ho_ten)}${kenh === 'telegram' ? ' (qua Telegram)' : ''}` : '💸 <b>Đã chi</b> (đối soát sao kê ngân hàng tự động)');
   if (sauCoc) {
     await guiTelegramSauCommit(sauCoc.qtId); // quyet toan phan con lai -> nhom duyet chi
     if (sauCoc.dh.tg_message_id && tg.daCauHinhNcc()) {

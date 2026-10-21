@@ -1,9 +1,14 @@
 import { xuLyUpdateTelegram as xuLyDuyetChi, xuLyAnhBill } from '../modules/cong_no/cong_no.service.js';
 import { xuLyTelegramNcc } from '../modules/mua_hang/mua_hang.service.js';
+import { voiNguoiDung } from '../config/db.js';
 
 // Mot bot, hai nhom: nhom duyet chi (nut dxc:*, anh bill tra loi bot) va nhom NCC (nut dh:*, tin tra loi so tien coc).
 // Polling va webhook deu goi ham nay.
-export async function xuLyUpdate(update) {
+export function xuLyUpdate(update) {
+  return voiNguoiDung({ kenh: 'telegram' }, () => xuLy(update));
+}
+
+async function xuLy(update) {
   const cb = update?.callback_query;
   if (cb) return cb.data?.startsWith('dh:') ? xuLyTelegramNcc(update) : xuLyDuyetChi(update);
   if (!update?.message?.reply_to_message) return;

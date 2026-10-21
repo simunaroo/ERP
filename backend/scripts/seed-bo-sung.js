@@ -162,6 +162,7 @@ export async function seedBoSung(conn) {
   const db = new pg.Client(conn);
   await db.connect();
   try {
+    await db.query(`SET app.bo_qua_nhat_ky = '1'`); // du lieu gia lap: khong ghi nhat ky thay doi
     await db.query('BEGIN');
     const homNay = new Date();
     const keToan = (await db.query(`SELECT id FROM users WHERE vai_tro = 'ke_toan'`)).rows.map((r) => r.id);

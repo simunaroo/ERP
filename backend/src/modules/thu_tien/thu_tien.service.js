@@ -58,7 +58,7 @@ function qrThuTien(d) {
 }
 
 const COT = `k.id, k.don_hang_id, k.loai, k.so_tien, k.hinh_thuc, k.ngay_thu, k.bill_anh IS NOT NULL AS co_bill, k.ghi_chu, k.trang_thai,
-             k.ly_do_tu_choi, k.xac_nhan_luc, k.created_at, u.ho_ten AS nguoi_tao, x.ho_ten AS nguoi_xac_nhan`;
+             k.ly_do_tu_choi, k.xac_nhan_luc, k.created_at, u.ho_ten AS nguoi_tao, COALESCE(x.ho_ten, CASE WHEN k.giao_dich_id IS NOT NULL THEN 'Ngân hàng (tự động)' END) AS nguoi_xac_nhan, k.giao_dich_id`;
 const TU = `FROM thanh_toan_khach k JOIN users u ON u.id = k.nguoi_tao_id LEFT JOIN users x ON x.id = k.nguoi_xac_nhan_id`;
 const chuanPhieu = (r) => ({ ...r, so_tien: so(r.so_tien) });
 
@@ -155,7 +155,7 @@ export async function choXacNhan() {
 }
 
 // Danh sach don con no. loc = 'den_han' (da quyet toan / hoan tat ma con no) | '' (moi don dang no).
-export async function congNo({ loc, q }) {
+export async function congNo({ loc, q }, { toiDa = 100 } = {}) {
   const { rows } = await query(
     `SELECT dh.id, dh.ma_don, dh.giai_doan, dh.hinh_thuc, dh.ngay_chot, dh.quyet_toan_luc, kh.ten AS khach_hang, kh.sdt AS khach_hang_sdt, s.ho_ten AS sale,
             t.tong_don, t.con_phai_thu, dh.tien_coc + t.da_thu_khach + t.tho_thu_ho AS da_thu,
@@ -166,8 +166,8 @@ export async function congNo({ loc, q }) {
       WHERE dh.trang_thai <> 'nhap' AND dh.giai_doan <> 'huy' AND t.con_phai_thu > 0
         AND ($2::text IS NULL OR dh.giai_doan = ANY($1))
         AND ($3::text IS NULL OR dh.ma_don ILIKE $3 OR kh.ten ILIKE $3)
-      ORDER BY (dh.giai_doan = ANY($1)) DESC, t.con_phai_thu DESC LIMIT 100`,
-    [DEN_HAN, loc === 'den_han' ? 'x' : null, chu(q) ? `%${chu(q)}%` : null],
+      ORDER BY (dh.giai_doan = ANY($1)) DESC, t.con_phai_thu DESC LIMIT $4`,
+    [DEN_HAN, loc === 'den_han' ? 'x' : null, chu(q) ? `%${chu(q)}%` : null, toiDa],
   );
   const tong = await query(
     `SELECT COALESCE(sum(t.con_phai_thu) FILTER (WHERE dh.giai_doan = ANY($1)), 0) AS den_han, COALESCE(sum(t.con_phai_thu), 0) AS tat_ca, count(*) AS so_don
@@ -178,5 +178,20 @@ export async function congNo({ loc, q }) {
   return {
     items: rows.map((r) => ({ ...r, tong_don: so(r.tong_don), con_phai_thu: so(r.con_phai_thu), da_thu: so(r.da_thu), cho_xac_nhan: so(r.cho_xac_nhan) })),
     tong: { den_han: so(tong.rows[0].den_han), tat_ca: so(tong.rows[0].tat_ca), so_don: Number(tong.rows[0].so_don) },
+  };
+}
+
+export async function excelCongNo(q) {
+  const { items } = await congNo(q, { toiDa: 10000 });
+  return {
+    tenFile: `cong-no-khach_${new Date().toISOString().slice(0, 10)}.xlsx`, tieuDe: 'CÔNG NỢ PHẢI THU KHÁCH HÀNG',
+    moTa: `${items.length} đơn còn nợ${q.loc === 'den_han' ? ' (chỉ đơn đến hạn)' : ''}. Đến hạn = đơn đã quyết toán / hoàn tất.`,
+    cot: [
+      { key: 'ma_don', nhan: 'Mã đơn', rong: 14 }, { key: 'khach_hang', nhan: 'Khách hàng', rong: 24 }, { key: 'khach_hang_sdt', nhan: 'SĐT', rong: 13 },
+      { key: 'sale', nhan: 'Sale', rong: 18 }, { key: 'han', nhan: 'Đến hạn', rong: 10 }, { key: 'tong_don', nhan: 'Tổng đơn', kieu: 'tien' },
+      { key: 'da_thu', nhan: 'Đã thu', kieu: 'tien' }, { key: 'cho_xac_nhan', nhan: 'Chờ xác nhận', kieu: 'tien' }, { key: 'con_phai_thu', nhan: 'Còn phải thu', kieu: 'tien' },
+    ],
+    dong: items.map((x) => ({ ...x, han: x.den_han ? 'Có' : '' })),
+    tong: { ma_don: 'Tổng', ...Object.fromEntries(['tong_don', 'da_thu', 'cho_xac_nhan', 'con_phai_thu'].map((k) => [k, items.reduce((a, x) => a + x[k], 0)])) },
   };
 }

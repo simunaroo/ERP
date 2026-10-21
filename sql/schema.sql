@@ -433,8 +433,6 @@ CREATE TABLE thanh_toan_khach (
     xac_nhan_luc        TIMESTAMPTZ,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
     -- Chuyen khoan bat buoc co anh bill; da xac nhan thi phai biet ai xac nhan; tu choi phai co ly do.
-    CONSTRAINT ck_ttk_bill CHECK (hinh_thuc <> 'chuyen_khoan' OR bill_anh IS NOT NULL),
-    CONSTRAINT ck_ttk_xac_nhan CHECK (trang_thai <> 'da_xac_nhan' OR (nguoi_xac_nhan_id IS NOT NULL AND xac_nhan_luc IS NOT NULL)),
     CONSTRAINT ck_ttk_tu_choi CHECK (trang_thai <> 'tu_choi' OR ly_do_tu_choi IS NOT NULL)
 );
 CREATE INDEX idx_ttk_don ON thanh_toan_khach (don_hang_id);
@@ -560,3 +558,168 @@ CREATE TABLE chia_so_log (
 CREATE INDEX idx_chia_so_log_khach ON chia_so_log(khach_hang_id);
 CREATE INDEX idx_chia_so_log_thoi_gian ON chia_so_log(created_at);
 CREATE INDEX idx_chia_so_log_sale ON chia_so_log(sale_id, created_at);
+
+-- ---------- Cau hinh tham so nghiep vu (migration 024) ----------
+CREATE TABLE cau_hinh (
+    khoa              VARCHAR(50) PRIMARY KEY,
+    gia_tri           NUMERIC(14,2) NOT NULL,
+    mo_ta             TEXT NOT NULL,
+    don_vi            VARCHAR(20),
+    toi_thieu         NUMERIC(14,2),
+    toi_da            NUMERIC(14,2),
+    nguoi_cap_nhat_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    cap_nhat_luc      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CHECK (toi_thieu IS NULL OR gia_tri >= toi_thieu),
+    CHECK (toi_da IS NULL OR gia_tri <= toi_da)
+);
+
+-- ---------- Nhat ky thay doi (audit log, migration 025) ----------
+CREATE TABLE nhat_ky_thay_doi (
+    id          BIGSERIAL PRIMARY KEY,
+    bang        VARCHAR(40) NOT NULL,
+    ban_ghi     TEXT,                     -- khoa chinh cua dong (id / sale_id / khoa)
+    hanh_dong   VARCHAR(6) NOT NULL CHECK (hanh_dong IN ('INSERT', 'UPDATE', 'DELETE')),
+    du_lieu_cu  JSONB,
+    du_lieu_moi JSONB,
+    nguoi_id    INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    kenh        VARCHAR(20),              -- web / telegram / api; NULL = he thong / script
+    thoi_gian   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_nhat_ky_ban_ghi ON nhat_ky_thay_doi(bang, ban_ghi, thoi_gian DESC);
+CREATE INDEX idx_nhat_ky_thoi_gian ON nhat_ky_thay_doi(thoi_gian DESC);
+CREATE INDEX idx_nhat_ky_nguoi ON nhat_ky_thay_doi(nguoi_id, thoi_gian DESC);
+
+CREATE FUNCTION fn_ghi_nhat_ky() RETURNS trigger AS $$
+DECLARE
+  cu  jsonb;
+  moi jsonb;
+  dong jsonb;
+BEGIN
+  IF current_setting('app.bo_qua_nhat_ky', true) = '1' THEN RETURN NULL; END IF;
+  IF TG_OP = 'INSERT' THEN
+    moi := to_jsonb(NEW);
+  ELSIF TG_OP = 'DELETE' THEN
+    cu := to_jsonb(OLD);
+  ELSE
+    SELECT jsonb_object_agg(o.key, o.value) INTO cu
+      FROM jsonb_each(to_jsonb(OLD)) o WHERE o.value IS DISTINCT FROM to_jsonb(NEW) -> o.key;
+    SELECT jsonb_object_agg(n.key, n.value) INTO moi
+      FROM jsonb_each(to_jsonb(NEW)) n WHERE n.value IS DISTINCT FROM to_jsonb(OLD) -> n.key;
+    IF moi IS NULL THEN RETURN NULL; END IF;
+  END IF;
+  -- Che mat khau: chi ghi nhan "co doi", khong luu hash.
+  IF cu ? 'password_hash' THEN cu := jsonb_set(cu, '{password_hash}', '"***"'); END IF;
+  IF moi ? 'password_hash' THEN moi := jsonb_set(moi, '{password_hash}', '"***"'); END IF;
+  dong := COALESCE(to_jsonb(NEW), to_jsonb(OLD));
+  INSERT INTO nhat_ky_thay_doi (bang, ban_ghi, hanh_dong, du_lieu_cu, du_lieu_moi, nguoi_id, kenh)
+  VALUES (TG_TABLE_NAME, COALESCE(dong ->> 'id', dong ->> 'sale_id', dong ->> 'khoa'), TG_OP, cu, moi,
+          NULLIF(current_setting('app.user_id', true), '')::int, NULLIF(current_setting('app.kenh', true), ''));
+  RETURN NULL;
+END $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER tg_nhat_ky AFTER INSERT OR UPDATE OR DELETE ON don_hang FOR EACH ROW EXECUTE FUNCTION fn_ghi_nhat_ky();
+CREATE TRIGGER tg_nhat_ky AFTER INSERT OR UPDATE OR DELETE ON don_hang_vat_tu FOR EACH ROW EXECUTE FUNCTION fn_ghi_nhat_ky();
+CREATE TRIGGER tg_nhat_ky AFTER INSERT OR UPDATE OR DELETE ON khach_hang FOR EACH ROW EXECUTE FUNCTION fn_ghi_nhat_ky();
+CREATE TRIGGER tg_nhat_ky AFTER INSERT OR UPDATE OR DELETE ON mua_hang_dong FOR EACH ROW EXECUTE FUNCTION fn_ghi_nhat_ky();
+CREATE TRIGGER tg_nhat_ky AFTER INSERT OR UPDATE OR DELETE ON de_xuat_chi FOR EACH ROW EXECUTE FUNCTION fn_ghi_nhat_ky();
+CREATE TRIGGER tg_nhat_ky AFTER INSERT OR UPDATE OR DELETE ON thanh_toan_khach FOR EACH ROW EXECUTE FUNCTION fn_ghi_nhat_ky();
+CREATE TRIGGER tg_nhat_ky AFTER INSERT OR UPDATE OR DELETE ON thi_cong FOR EACH ROW EXECUTE FUNCTION fn_ghi_nhat_ky();
+CREATE TRIGGER tg_nhat_ky AFTER INSERT OR UPDATE OR DELETE ON phat_sinh_thi_cong FOR EACH ROW EXECUTE FUNCTION fn_ghi_nhat_ky();
+CREATE TRIGGER tg_nhat_ky AFTER INSERT OR UPDATE OR DELETE ON ncc_bang_gia FOR EACH ROW EXECUTE FUNCTION fn_ghi_nhat_ky();
+CREATE TRIGGER tg_nhat_ky AFTER INSERT OR UPDATE OR DELETE ON vat_tu FOR EACH ROW EXECUTE FUNCTION fn_ghi_nhat_ky();
+CREATE TRIGGER tg_nhat_ky AFTER INSERT OR UPDATE OR DELETE ON nha_cung_cap FOR EACH ROW EXECUTE FUNCTION fn_ghi_nhat_ky();
+CREATE TRIGGER tg_nhat_ky AFTER INSERT OR UPDATE OR DELETE ON users FOR EACH ROW EXECUTE FUNCTION fn_ghi_nhat_ky();
+CREATE TRIGGER tg_nhat_ky AFTER INSERT OR UPDATE OR DELETE ON cau_hinh FOR EACH ROW EXECUTE FUNCTION fn_ghi_nhat_ky();
+CREATE TRIGGER tg_nhat_ky AFTER INSERT OR UPDATE OR DELETE ON ty_le_chia_so FOR EACH ROW EXECUTE FUNCTION fn_ghi_nhat_ky();
+
+-- ---------- Phan quyen theo chuc nang (migration 026) ----------
+CREATE TABLE quyen (
+    ma        VARCHAR(40) PRIMARY KEY,
+    ten       TEXT NOT NULL,
+    nhom      VARCHAR(40) NOT NULL,
+    thu_tu    SMALLINT NOT NULL,
+    chi_admin BOOLEAN NOT NULL DEFAULT false   -- quyen quan tri he thong: khong gan cho vai tro khac
+);
+
+CREATE TABLE vai_tro_quyen (
+    vai_tro  vai_tro_enum NOT NULL,
+    ma_quyen VARCHAR(40) NOT NULL REFERENCES quyen(ma) ON DELETE CASCADE,
+    PRIMARY KEY (vai_tro, ma_quyen)
+);
+
+-- Khong cho gan quyen chi_admin cho vai tro khac (CHECK khong tham chieu duoc bang khac -> trigger).
+CREATE FUNCTION fn_chan_quyen_chi_admin() RETURNS trigger AS $$
+BEGIN
+  IF NEW.vai_tro <> 'admin' AND (SELECT chi_admin FROM quyen WHERE ma = NEW.ma_quyen) THEN
+    RAISE EXCEPTION 'Quyen % chi danh cho Admin', NEW.ma_quyen USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN NEW;
+END $$ LANGUAGE plpgsql;
+CREATE TRIGGER tg_chan_quyen_chi_admin BEFORE INSERT OR UPDATE ON vai_tro_quyen
+  FOR EACH ROW EXECUTE FUNCTION fn_chan_quyen_chi_admin();
+
+-- Nhat ky: dong phan quyen co khoa ghep (vai_tro, ma_quyen).
+CREATE OR REPLACE FUNCTION fn_ghi_nhat_ky() RETURNS trigger AS $$
+DECLARE
+  cu  jsonb;
+  moi jsonb;
+  dong jsonb;
+BEGIN
+  IF current_setting('app.bo_qua_nhat_ky', true) = '1' THEN RETURN NULL; END IF;
+  IF TG_OP = 'INSERT' THEN
+    moi := to_jsonb(NEW);
+  ELSIF TG_OP = 'DELETE' THEN
+    cu := to_jsonb(OLD);
+  ELSE
+    SELECT jsonb_object_agg(o.key, o.value) INTO cu
+      FROM jsonb_each(to_jsonb(OLD)) o WHERE o.value IS DISTINCT FROM to_jsonb(NEW) -> o.key;
+    SELECT jsonb_object_agg(n.key, n.value) INTO moi
+      FROM jsonb_each(to_jsonb(NEW)) n WHERE n.value IS DISTINCT FROM to_jsonb(OLD) -> n.key;
+    IF moi IS NULL THEN RETURN NULL; END IF;
+  END IF;
+  IF cu ? 'password_hash' THEN cu := jsonb_set(cu, '{password_hash}', '"***"'); END IF;
+  IF moi ? 'password_hash' THEN moi := jsonb_set(moi, '{password_hash}', '"***"'); END IF;
+  dong := COALESCE(to_jsonb(NEW), to_jsonb(OLD));
+  INSERT INTO nhat_ky_thay_doi (bang, ban_ghi, hanh_dong, du_lieu_cu, du_lieu_moi, nguoi_id, kenh)
+  VALUES (TG_TABLE_NAME,
+          COALESCE(dong ->> 'id', dong ->> 'sale_id', dong ->> 'khoa', (dong ->> 'vai_tro') || ':' || (dong ->> 'ma_quyen')),
+          TG_OP, cu, moi,
+          NULLIF(current_setting('app.user_id', true), '')::int, NULLIF(current_setting('app.kenh', true), ''));
+  RETURN NULL;
+END $$ LANGUAGE plpgsql;
+CREATE TRIGGER tg_nhat_ky AFTER INSERT OR UPDATE OR DELETE ON vai_tro_quyen FOR EACH ROW EXECUTE FUNCTION fn_ghi_nhat_ky();
+
+-- ---------- Doi soat ngan hang (migration 027) ----------
+CREATE TABLE giao_dich_ngan_hang (
+    id                  SERIAL PRIMARY KEY,
+    nguon               VARCHAR(10) NOT NULL CHECK (nguon IN ('sepay', 'gia_lap')),
+    ma_gd_ngoai         VARCHAR(60) NOT NULL,
+    ngan_hang           VARCHAR(40),
+    so_tk               VARCHAR(30),
+    loai                VARCHAR(3) NOT NULL CHECK (loai IN ('vao', 'ra')),
+    so_tien             NUMERIC(14,2) NOT NULL CHECK (so_tien > 0),
+    noi_dung            TEXT,
+    ma_tham_chieu       VARCHAR(60),
+    thoi_gian_gd        TIMESTAMPTZ NOT NULL,
+    trang_thai          VARCHAR(12) NOT NULL DEFAULT 'chua_khop' CHECK (trang_thai IN ('da_khop', 'chua_khop', 'bo_qua')),
+    cach_khop           VARCHAR(20) CHECK (cach_khop IN ('xac_nhan_phieu', 'tao_phieu', 'da_chi', 'thu_cong')),
+    don_hang_id         INTEGER REFERENCES don_hang(id) ON DELETE SET NULL,
+    thanh_toan_khach_id INTEGER REFERENCES thanh_toan_khach(id) ON DELETE SET NULL,
+    de_xuat_chi_id      INTEGER REFERENCES de_xuat_chi(id) ON DELETE SET NULL,
+    ghi_chu             TEXT,
+    nguoi_xu_ly_id      INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    du_lieu_goc         JSONB NOT NULL,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE (nguon, ma_gd_ngoai),
+    CONSTRAINT ck_gd_da_khop CHECK (trang_thai <> 'da_khop' OR cach_khop IS NOT NULL),
+    CONSTRAINT ck_gd_bo_qua CHECK (trang_thai <> 'bo_qua' OR ghi_chu IS NOT NULL)
+);
+CREATE INDEX idx_gd_ngan_hang_trang_thai ON giao_dich_ngan_hang(trang_thai, thoi_gian_gd DESC);
+
+-- Phieu thu tao/xac nhan tu sao ke ngan hang: giao dich ngan hang thay cho anh bill va nguoi xac nhan.
+ALTER TABLE thanh_toan_khach ADD COLUMN giao_dich_id INTEGER REFERENCES giao_dich_ngan_hang(id) ON DELETE SET NULL;
+ALTER TABLE thanh_toan_khach ADD CONSTRAINT ck_ttk_bill CHECK (hinh_thuc <> 'chuyen_khoan' OR bill_anh IS NOT NULL OR giao_dich_id IS NOT NULL);
+ALTER TABLE thanh_toan_khach ADD CONSTRAINT ck_ttk_xac_nhan CHECK (trang_thai <> 'da_xac_nhan'
+    OR (xac_nhan_luc IS NOT NULL AND (nguoi_xac_nhan_id IS NOT NULL OR giao_dich_id IS NOT NULL)));
+
+CREATE TRIGGER tg_nhat_ky AFTER INSERT OR UPDATE OR DELETE ON giao_dich_ngan_hang FOR EACH ROW EXECUTE FUNCTION fn_ghi_nhat_ky();

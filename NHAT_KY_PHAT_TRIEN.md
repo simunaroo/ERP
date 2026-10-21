@@ -480,6 +480,24 @@ Kế toán trả lời bằng ảnh ─► bot tải ảnh (getFile) ─► daCh
 
 ---
 
+## Vòng 3.15 — Nhập số & chia số cho Sale; icon nét viền (20/10/2026, migration 022–023)
+
+- Form **Nhập số** (Admin/Sale) + dán nhiều số từ Excel + **API `POST /api/nhap-so/tu-dong`** (API key) cho form website/Facebook Lead Ads. Một số = một khách trạng thái "Mới" (không tách bảng lead → không có bước chuyển đổi).
+- **Chia theo tỷ lệ** Admin đặt (%): mỗi số giao cho Sale đang thiếu nhiều nhất so với tỷ lệ trong tháng (min (đã chia + 1) / tỷ lệ — kiểu D'Hondt), `pg_advisory_xact_lock` để nhập đồng thời không lệch tỷ lệ, chống trùng số (chuẩn hoá +84/dấu cách). Admin có thể chọn Sale khi nhập, **chuyển số** sang Sale khác (bắt buộc lý do, có lịch sử giao số).
+- Toàn bộ emoji đổi sang bộ icon SVG nét viền dùng chung (`components/Icon.jsx`).
+
+## Vòng 3.16 — Báo cáo lãi/lỗ, xuất Excel, nhật ký thay đổi, phân quyền, đối soát ngân hàng (21/10/2026, migration 024–027)
+
+Khắc phục các điểm yếu so với ERP doanh nghiệp (trong phạm vi đề tài):
+- **Báo cáo lãi/lỗ gộp theo đơn** (Admin/Kế toán): doanh thu − chi NCC (SL × giá chốt × VAT) − mua bổ sung công ty chịu − công thợ; đơn chưa quyết toán là **tạm tính** (dòng chưa chọn NCC ước theo giá NCC rẻ nhất hiện tại); giá vốn cửa tự sản xuất ước theo % trong bảng **`cau_hinh`** (tham số Admin tự sửa). Tổng hợp theo Sale / hình thức, lọc đơn lỗ.
+- **Xuất Excel** (exceljs): lãi/lỗ, danh sách đơn (giữ phạm vi dữ liệu: Sale chỉ xuất đơn của mình), đề xuất chi, công nợ khách.
+- **Nhật ký thay đổi bằng trigger** `fn_ghi_nhat_ky` trên 16 bảng: lưu cột thay đổi (cũ → mới, JSONB), người + kênh (web/telegram/api/ngân hàng). Backend truyền "ai đang thao tác" qua `AsyncLocalStorage` → `set_config('app.user_id', …, true)` trong transaction; thao tác lỗi rollback thì nhật ký cũng mất; mật khẩu chỉ ghi "***"; script sinh dữ liệu đặt `app.bo_qua_nhat_ky`.
+- **Phân quyền RBAC**: bảng `quyen` (27 chức năng) + `vai_tro_quyen`, middleware `coQuyen('chi.duyet')` thay `phanQuyen('admin')`, màn ma trận cho Admin tick; quyền mặc định giữ đúng hành vi cũ; quyền quản trị luôn thuộc Admin (code + trigger chặn gán cho vai trò khác); menu hiện theo quyền. Phạm vi dữ liệu vẫn theo vai trò trong service.
+- **Đối soát ngân hàng**: webhook định dạng SePay (`POST /api/ngan-hang/webhook`, Apikey, chống xử lý lặp theo mã giao dịch). Tiền vào có mã đơn → tự xác nhận phiếu thu chờ đúng số tiền hoặc tự tạo phiếu đã xác nhận (không vượt số còn phải thu); tiền ra khớp nội dung CK đề xuất chi đã duyệt → tự ghi "đã chi" (đi qua đúng luồng: cọc → vật tư sẵn hàng, sổ thợ…). Không khớp → Kế toán khớp tay / bỏ qua. Chưa có tài khoản thật → màn **giả lập giao dịch** gửi đúng payload SePay.
+- Kiểm thử: **104 ca** (thêm báo cáo 6, nhật ký 6, phân quyền 5, ngân hàng 6, nhập số 12).
+
+---
+
 ## Vòng 3 — (dự kiến) Giai đoạn đơn hàng + NCC & bảng giá
 
 **Đề xuất đang cân nhắc**
