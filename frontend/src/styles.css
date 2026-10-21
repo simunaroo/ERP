@@ -482,3 +482,17 @@ a.pill { text-decoration: none; margin: 0 4px 4px 0; }
 pre { background: var(--surface-2, rgba(127, 127, 127, .08)); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; overflow: auto; white-space: pre; }
 .chuyen-sale { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .chuyen-sale input { min-width: 160px; }
+
+/* ---------- Nhat ky thay doi ---------- */
+.thay-doi { list-style: none; margin: 0; padding: 0; font-size: 12px; display: flex; flex-direction: column; gap: 2px; }
+.thay-doi code { color: var(--text-muted); }
+.thay-doi .cu { text-decoration: line-through; color: var(--text-muted); }
+
+/* ---------- Phan quyen ---------- */
+.ma-tran td.giua, .ma-tran th.giua { text-align: center; width: 110px; }
+.ma-tran tr.nhom td { background: var(--surface-2, rgba(127, 127, 127, .06)); }
+.ma-tran input[type='checkbox'] { width: 16px; height: 16px; }
+
+/* ---------- Doi soat ngan hang ---------- */
+.tien-vao { color: var(--ok-text, #15803d); }
+.tien-ra { color: var(--danger, #dc2626); }

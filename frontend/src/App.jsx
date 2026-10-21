@@ -20,6 +20,10 @@ import TongQuan from './pages/TongQuan.jsx';
 import { DoiMatKhau, NguoiDung } from './pages/NguoiDung.jsx';
 import DanhMucVatTu from './pages/DanhMucVatTu.jsx';
 import { NhapSo, QuanLyChiaSo } from './pages/NhapSo.jsx';
+import BaoCao from './pages/BaoCao.jsx';
+import NhatKy from './pages/NhatKy.jsx';
+import PhanQuyen from './pages/PhanQuyen.jsx';
+import NganHang from './pages/NganHang.jsx';
 
 function CanDangNhap({ children }) {
   const token = useAuthStore((s) => s.token);
@@ -41,6 +45,9 @@ export default function App() {
         <Route path="/don-hang/tao" element={<DonHangForm />} />
         <Route path="/don-hang/:id/sua" element={<DonHangForm />} />
         <Route path="/don-hang/:id" element={<DonHangChiTiet />} />
+        <Route path="/bao-cao" element={<BaoCao />} />
+        <Route path="/nhat-ky" element={<NhatKy />} />
+        <Route path="/phan-quyen" element={<PhanQuyen />} />
         <Route path="/nhap-so" element={<NhapSo />} />
         <Route path="/nhap-so/chia" element={<QuanLyChiaSo />} />
         <Route path="/khach-hang" element={<KhachHangList />} />
@@ -62,6 +69,7 @@ export default function App() {
         <Route path="/cong-no/ncc" element={<CongNoNcc />} />
         <Route path="/cong-no/tho" element={<CongNoTho />} />
         <Route path="/cong-no/khach" element={<CongNoKhach />} />
+        <Route path="/cong-no/ngan-hang" element={<NganHang />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -109,7 +109,7 @@ const soOrNull = (v, ten) => {
   return n;
 };
 
-export async function danhSach(user, query) {
+export async function danhSach(user, query, { toiDa } = {}) {
   const { trang_thai, hinh_thuc, q, page, limit } = query;
   if (trang_thai && !TRANG_THAI_DON.includes(trang_thai)) throw new AppError(400, 'Trạng thái không hợp lệ');
   if (hinh_thuc && !HINH_THUC.includes(hinh_thuc)) throw new AppError(400, 'Hình thức không hợp lệ');
@@ -121,7 +121,7 @@ export async function danhSach(user, query) {
     if (!Number.isInteger(saleLoc) || saleLoc <= 0) throw new AppError(400, 'Sale không hợp lệ');
   }
   const trang = Math.max(1, parseInt(page, 10) || 1);
-  const soDong = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+  const soDong = toiDa || Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
   const laSale = user.vai_tro === 'sale';
   // Sale thay don cua minh (ke ca nhap); vai tro khac khong thay don nhap.
   const { items, tong } = await repo.findAll({
@@ -141,6 +141,25 @@ export async function danhSach(user, query) {
     limit: soDong, offset: (trang - 1) * soDong,
   });
   return { items, tong, page: trang, limit: soDong, soTrang: Math.max(1, Math.ceil(tong / soDong)) };
+}
+
+// Xuat Excel danh sach don theo dung bo loc dang xem (pham vi du lieu giong danhSach: Sale/VH chi thay don cua minh).
+const TEN_GIAI_DOAN = { len_phuong_an: 'Lên phương án', boc_khoi_luong: 'Bóc khối lượng', mua_hang: 'Mua hàng', giao_hang: 'Giao hàng', thi_cong: 'Thi công', nghiem_thu: 'Nghiệm thu', quyet_toan: 'Quyết toán', hoan_tat: 'Hoàn tất', huy: 'Huỷ' };
+export async function excelDanhSach(user, query) {
+  const { items } = await danhSach(user, { ...query, page: 1 }, { toiDa: 5000 });
+  return {
+    tenFile: `don-hang_${new Date().toISOString().slice(0, 10)}.xlsx`, tieuDe: 'DANH SÁCH ĐƠN HÀNG', moTa: `${items.length} đơn theo bộ lọc đang chọn`,
+    cot: [
+      { key: 'ma_don', nhan: 'Mã đơn', rong: 14 }, { key: 'ngay_chot', nhan: 'Ngày chốt', kieu: 'ngay', rong: 12 },
+      { key: 'khach_hang', nhan: 'Khách hàng', rong: 24 }, { key: 'dia_chi_cong_trinh', nhan: 'Công trình', rong: 34 },
+      { key: 'hinh_thuc_ten', nhan: 'Hình thức', rong: 12 }, { key: 'giai_doan_ten', nhan: 'Tiến độ', rong: 15 },
+      { key: 'sale', nhan: 'Sale', rong: 18 }, { key: 'van_hanh', nhan: 'Vận hành', rong: 18 },
+      { key: 'ngay_yc_lap_dat', nhan: 'YC lắp đặt', kieu: 'ngay', rong: 12 },
+      { key: 'tong_don', nhan: 'Tổng đơn', kieu: 'tien' }, { key: 'con_phai_thu', nhan: 'Còn phải thu', kieu: 'tien' },
+    ],
+    dong: items.map((x) => ({ ...x, hinh_thuc_ten: x.hinh_thuc === 'hoan_thien' ? 'Hoàn thiện' : 'Vật tư', giai_doan_ten: x.trang_thai === 'nhap' ? 'Nháp' : TEN_GIAI_DOAN[x.giai_doan] })),
+    tong: { ma_don: 'Tổng', tong_don: items.reduce((a, x) => a + Number(x.tong_don), 0), con_phai_thu: items.reduce((a, x) => a + Math.max(0, Number(x.con_phai_thu)), 0) },
+  };
 }
 
 export async function chiTiet(user, id) {

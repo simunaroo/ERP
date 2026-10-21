@@ -60,6 +60,7 @@ async function insertMany(client, table, cols, rows) {
 export async function seedLon(conn) {
   const db = new pg.Client(conn);
   await db.connect();
+  await db.query(`SET app.bo_qua_nhat_ky = '1'`); // du lieu gia lap: khong ghi nhat ky thay doi
   await db.query('BEGIN');
 
   // ---- Nguoi dung ----
@@ -137,17 +138,61 @@ export async function seedLon(conn) {
       String(int(1e9, 9e9)), pick(['Vietcombank', 'Techcombank', 'BIDV', 'MB Bank', 'ACB']), `DOI THO GIA LAP ${i + 4}`]));
   const doiTho = (await db.query('SELECT id FROM doi_tho')).rows.map((r) => r.id);
 
+  const kq = await sinhDon(db, { sales, vanHanh, keToan, khachHang, vatTu, giaGoc, giaTai, doiTho },
+    { tu: NGAY_BAT_DAU, homNay: HOM_NAY, soDon: SO_DON, themVao: false });
+  await db.query('COMMIT');
+  await db.end();
+  return { ...kq, khachHang: khRows.length + kq.lead };
+}
+
+// Nap danh muc tu DB da co du lieu (che do "them vao"): Sale/VH/KT, khach, vat tu, bang gia NCC, doi tho.
+export async function napNguCanh(db) {
+  const users = (await db.query(`SELECT id, vai_tro FROM users WHERE trang_thai = 'active'`)).rows;
+  const vatTu = (await db.query(
+    `SELECT vt.id, vt.ten, vt.don_vi_tinh, lvt.ten AS loai, lvt.nguon_goc FROM vat_tu vt JOIN loai_vat_tu lvt ON lvt.id = vt.loai_vat_tu_id
+      WHERE vt.trang_thai = 'active'`)).rows;
+  const bangGia = (await db.query(
+    `SELECT ncc_id AS ncc, vat_tu_id AS vt, don_gia::float AS gia, to_char(ngay_hieu_luc, 'YYYY-MM-DD') AS tu, to_char(ngay_het_hieu_luc, 'YYYY-MM-DD') AS den
+       FROM ncc_bang_gia b JOIN nha_cung_cap n ON n.id = b.ncc_id WHERE n.trang_thai = 'active'`)).rows;
+  // Gia goc = gia NCC thap nhat tung co (gia ban = gia goc x 1,3-1,5 nhu luc sinh du lieu lon).
+  const giaGoc = {};
+  for (const g of bangGia) giaGoc[g.vt] = Math.min(giaGoc[g.vt] ?? Infinity, g.gia);
+  return {
+    sales: users.filter((u) => u.vai_tro === 'sale').map((u) => u.id),
+    vanHanh: users.filter((u) => u.vai_tro === 'van_hanh').map((u) => u.id),
+    keToan: users.filter((u) => u.vai_tro === 'ke_toan').map((u) => u.id),
+    khachHang: (await db.query('SELECT id, dia_chi, sale_phu_trach_id FROM khach_hang')).rows,
+    vatTu: vatTu.filter((v) => v.nguon_goc === 'tu_san_xuat' || giaGoc[v.id]),
+    giaGoc,
+    giaTai: (vtId, ngay) => { const d = isoDate(ngay); return bangGia.filter((g) => g.vt === vtId && g.tu <= d && (!g.den || g.den >= d)); },
+    doiTho: (await db.query(`SELECT id FROM doi_tho WHERE trang_thai = 'active'`)).rows.map((r) => r.id),
+  };
+}
+
+// Sinh don hang + toan bo du lieu theo don (vat tu, mua hang, thi cong, nghiem thu, de xuat chi, tho, phieu thu, cham soc)
+// cho cac don chot trong [tu, homNay]. themVao = true: DB da co du lieu -> uu tien khach da chot/da bao gia chua co don,
+// ma don noi tiep, cac cau UPDATE chi dong vao don vua sinh.
+export async function sinhDon(db, { sales, vanHanh, keToan, khachHang, vatTu, giaGoc, giaTai, doiTho }, { tu, homNay, soDon, themVao }) {
   // ---- Don hang ----
-  const tongNgay = (HOM_NAY - NGAY_BAT_DAU) / NGAY_MS;
-  const donSpec = Array.from({ length: SO_DON }, () => {
-    const ngay = addDays(NGAY_BAT_DAU, Math.pow(rand(), 0.8) * tongNgay); // nhieu don hon ve cuoi ky (tang truong)
+  const tongNgay = (homNay - tu) / NGAY_MS;
+  // Che do them vao: ~60% don tu khach da chot / da bao gia ma chua co don (khach moi chuyen doi), con lai khach cu mua lai.
+  const khachMoi = themVao ? (await db.query(
+    `SELECT k.id FROM khach_hang k WHERE k.trang_thai_cham_soc IN ('chot', 'da_bao_gia') AND NOT EXISTS (SELECT 1 FROM don_hang d WHERE d.khach_hang_id = k.id)
+      ORDER BY (k.trang_thai_cham_soc = 'chot') DESC, k.id`)).rows.map((r) => r.id) : [];
+  const khTheoId = new Map(khachHang.map((k) => [k.id, k]));
+  const chonKhach = () => (khachMoi.length && chance(0.6) ? khTheoId.get(khachMoi.shift()) : pick(khachHang));
+  const donSpec = Array.from({ length: soDon }, () => {
+    const ngay = addDays(tu, Math.pow(rand(), 0.8) * tongNgay); // nhieu don hon ve cuoi ky (tang truong)
     ngay.setHours(int(8, 18), int(0, 59));
-    return { ngay, kh: pick(khachHang) };
+    return { ngay, kh: chonKhach() };
   }).sort((a, b) => a.ngay - b.ngay);
 
-  const demThang = {};
+  // Ma don noi tiep so lon nhat dang co trong thang (DH-YYMM-xxx bat dau tu 101).
+  const demThang = Object.fromEntries((await db.query(
+    `SELECT substring(ma_don, 4, 4) AS th, max(substring(ma_don, 9)::int) AS so FROM don_hang WHERE ma_don ~ '^DH-[0-9]{4}-[0-9]+$' GROUP BY 1`)).rows
+    .map((r) => [r.th, Math.max(100, r.so)]));
   const donRows = donSpec.map((d) => {
-    const tuoi = (HOM_NAY - d.ngay) / NGAY_MS;
+    const tuoi = (homNay - d.ngay) / NGAY_MS;
     d.trangThai = tuoi > 45 ? (chance(0.95) ? 'hoan_tat' : 'dang_xu_ly')
       : tuoi > 12 ? (chance(0.35) ? 'hoan_tat' : 'dang_xu_ly')
         : (chance(0.55) ? 'moi' : 'dang_xu_ly');
@@ -157,7 +202,8 @@ export async function seedLon(conn) {
     d.maDon = `DH-${thang}-${String(demThang[thang]).padStart(3, '0')}`;
     d.vanHanh = pick(vanHanh); // moi don da chot deu co Van hanh phu trach (phan luc chot)
     d.hinhThuc = chance(0.35) ? 'vat_tu' : 'hoan_thien'; // gan ti le that: 384 hoan thien / 221 vat tu
-    const diaChiCt = chance(0.85) ? d.kh.dia_chi : diaChi();
+    // Khach tu nhap so co the chi ghi khu vuc (khong so nha) -> sinh dia chi cong trinh day du.
+    const diaChiCt = chance(0.85) && /\d/.test(d.kh.dia_chi || '') ? d.kh.dia_chi : diaChi();
     const tinh = /TP\.HCM|Thủ Đức|Bình Dương/.test(diaChiCt) ? 'TP. Hồ Chí Minh' : diaChiCt.split(', ').pop();
     return [
       // giai_doan tam (CHECK bat buoc co khi da chot); tinh lai chinh xac sau khi co mua hang + thi cong.
@@ -213,11 +259,11 @@ export async function seedLon(conn) {
   };
   const LY_DO_HUY = ['Khách đổi ý, hoàn cọc theo thoả thuận.', 'Khách chọn đơn vị khác.', 'Công trình tạm dừng vô thời hạn.'];
   // Buoc sau: cong them vai ngay nhung khong vuot qua 'hom nay', va luon sau buoc truoc it nhat 1 phut.
-  const sau = (t, ngay) => new Date(Math.max(t.getTime() + 60000, Math.min(addDays(t, ngay).getTime(), HOM_NAY.getTime())));
+  const sau = (t, ngay) => new Date(Math.max(t.getTime() + 60000, Math.min(addDays(t, ngay).getTime(), homNay.getTime())));
   const gdLog = [];
   for (const d of donSpec) {
     const buoc = BUOC[d.hinhThuc];
-    const tuoi = (HOM_NAY - d.ngay) / NGAY_MS;
+    const tuoi = (homNay - d.ngay) / NGAY_MS;
     if (d.trangThai === 'moi') d.giaiDoan = 'len_phuong_an';
     else if (d.trangThai === 'hoan_tat' || d.trangThai === 'huy') d.giaiDoan = d.trangThai;
     else d.giaiDoan = buoc[Math.max(1, Math.min(buoc.length - 1, Math.floor(tuoi / (d.hinhThuc === 'vat_tu' ? 8 : 5)) + int(0, 1)))];
@@ -371,7 +417,7 @@ export async function seedLon(conn) {
   const LY_DO_TU_CHOI = ['Sai đơn giá so với báo giá NCC, kiểm tra lại.', 'Thiếu hoá đơn NCC.', 'Số lượng chưa khớp phiếu giao.'];
   const dxc = []; // {loai, ncc, tho, d, mbs, giaTriHang, cocTru, soTien, trangThai, t, dong:[mhd], lyDo}
   const trangThaiTheoTuoi = (t) => {
-    const tuoi = (HOM_NAY - t) / NGAY_MS;
+    const tuoi = (homNay - t) / NGAY_MS;
     if (chance(0.02)) return 'tu_choi';
     return tuoi > 12 ? 'da_thanh_toan' : tuoi > 4 ? pick(['da_duyet', 'da_thanh_toan']) : pick(['cho_duyet', 'cho_duyet', 'da_duyet']);
   };
@@ -394,7 +440,7 @@ export async function seedLon(conn) {
     }
     if (ds.every((x) => SAU_SAN_HANG.includes(x.trangThai)) && (d.giaiDoan === 'hoan_tat' || chance(0.85))) {
       const t = addDays(d.tBuoc.giao_hang || ds[0].ngay, -0.5 + rand());
-      const q = { loai: 'quyet_toan', ncc: ds[0].ncc, d, giaTriHang: giaTri, cocTru: coc, soTien: Math.max(0, giaTri - coc), t: t > HOM_NAY ? HOM_NAY : t, dong: ds };
+      const q = { loai: 'quyet_toan', ncc: ds[0].ncc, d, giaTriHang: giaTri, cocTru: coc, soTien: Math.max(0, giaTri - coc), t: t > homNay ? homNay : t, dong: ds };
       q.trangThai = d.giaiDoan === 'hoan_tat' ? 'da_thanh_toan' : trangThaiTheoTuoi(q.t);
       if (q.soTien === 0 && q.trangThai !== 'tu_choi') q.trangThai = 'da_thanh_toan';
       dxc.push(q);
@@ -427,7 +473,7 @@ export async function seedLon(conn) {
     const [tho, donId] = key.split('|').map(Number);
     const d = donSpec.find((x) => x.id === donId);
     const t = addDays(d.tBuoc.hoan_tat, 0.5 + rand() * 2);
-    dxc.push({ loai: 'tra_cong', tho, d, giaTriHang: 0, cocTru: 0, soTien: con, t: t > HOM_NAY ? HOM_NAY : t, trangThai: trangThaiTheoTuoi(t > HOM_NAY ? HOM_NAY : t), dong: [] });
+    dxc.push({ loai: 'tra_cong', tho, d, giaTriHang: 0, cocTru: 0, soTien: con, t: t > homNay ? homNay : t, trangThai: trangThaiTheoTuoi(t > homNay ? homNay : t), dong: [] });
   }
 
   const dxcIds = await insertMany(db, 'de_xuat_chi',
@@ -438,21 +484,22 @@ export async function seedLon(conn) {
     }));
   dxc.forEach((c, i) => { c.id = dxcIds[i]; });
   // Noi dung CK do he thong sinh: NCC "<ma don>-11-<id>", tho "<sdt tho> <ma don>".
+  const idsDon = donSpec.map((d) => d.id);
   await db.query(`UPDATE de_xuat_chi c SET noi_dung_ck = CASE WHEN c.doi_tho_id IS NULL THEN dh.ma_don || '-11-' || c.id
                     ELSE COALESCE(dt.sdt, 'THO' || dt.id) || ' ' || dh.ma_don END
                     FROM don_hang dh LEFT JOIN doi_tho dt ON true
-                   WHERE dh.id = c.don_hang_id AND (c.doi_tho_id IS NULL OR dt.id = c.doi_tho_id)`);
+                   WHERE dh.id = c.don_hang_id AND (c.doi_tho_id IS NULL OR dt.id = c.doi_tho_id) AND c.don_hang_id = ANY($1::int[])`, [idsDon]);
   await insertMany(db, 'de_xuat_chi_dong', ['de_xuat_chi_id', 'mua_hang_dong_id', 'so_luong', 'don_gia', 'vat_pct', 'thanh_tien'],
     dxc.flatMap((c) => c.dong.map((x) => [c.id, x.id, x.it.sl, x.gia, x.vat, Math.round(x.it.sl * x.gia * (1 + x.vat / 100))])));
   const NGUOI_DUYET = ['@duyet_demo_1', '@duyet_demo_2', 'web:Vương Ngọc Sơn'];
   await insertMany(db, 'de_xuat_chi_duyet_log', ['de_xuat_chi_id', 'telegram_user', 'hanh_dong', 'ghi_chu', 'thoi_gian'],
     dxc.filter((c) => c.trangThai !== 'cho_duyet').map((c) => [c.id, pick(NGUOI_DUYET), c.trangThai === 'tu_choi' ? 'tu_choi' : 'duyet', c.lyDo, addDays(c.t, rand() * 0.5)]));
   const daChi = dxc.filter((c) => c.trangThai === 'da_thanh_toan' && c.soTien > 0);
-  const ngayChi = (c) => { const t = addDays(c.t, 1 + rand() * 2); return isoDate(t > HOM_NAY ? HOM_NAY : t); };
+  const ngayChi = (c) => { const t = addDays(c.t, 1 + rand() * 2); return isoDate(t > homNay ? homNay : t); };
   daChi.forEach((c) => { c.ngayChi = ngayChi(c); });
   await insertMany(db, 'phieu_thanh_toan', ['de_xuat_chi_id', 'so_tien', 'ngay_thanh_toan', 'nguoi_tao_id', 'bill_anh'],
     daChi.map((c) => [c.id, c.soTien, c.ngayChi, pick(keToan), 'du-lieu-cu']));
-  await db.query(`UPDATE phieu_thanh_toan p SET noi_dung_ck = c.noi_dung_ck FROM de_xuat_chi c WHERE c.id = p.de_xuat_chi_id`);
+  await db.query(`UPDATE phieu_thanh_toan p SET noi_dung_ck = c.noi_dung_ck FROM de_xuat_chi c WHERE c.id = p.de_xuat_chi_id AND c.don_hang_id = ANY($1::int[])`, [idsDon]);
   // So tho: tien da chi cho tho (tra cong -> da_tra, ung cong -> tam_ung).
   for (const c of daChi.filter((x) => x.tho)) {
     gdTho.push([c.tho, c.d.id, c.tc?.id ?? null, c.loai === 'tra_cong' ? 'da_tra' : 'tam_ung', c.soTien, c.id, null,
@@ -463,13 +510,16 @@ export async function seedLon(conn) {
   // ---- Thu tien khach (phieu thu) + boc khoi luong da xac nhan ----
   // Don da qua Boc khoi luong: coi nhu da xac nhan khoi luong.
   await db.query(`UPDATE don_hang SET boc_khoi_luong_luc = COALESCE(ngay_chot::timestamptz, created_at)
-                   WHERE hinh_thuc = 'hoan_thien' AND giai_doan IN ('mua_hang', 'giao_hang', 'thi_cong', 'nghiem_thu', 'quyet_toan', 'hoan_tat')`);
+                   WHERE hinh_thuc = 'hoan_thien' AND giai_doan IN ('mua_hang', 'giao_hang', 'thi_cong', 'nghiem_thu', 'quyet_toan', 'hoan_tat')
+                     AND ($1::int[] IS NULL OR id = ANY($1::int[]))`, [themVao ? idsDon : null]);
   // Coc gan luc tao don (chua biet tong) -> gioi han toi da 50% tong don (lam tron trieu) cho hop ly.
   await db.query(`UPDATE don_hang dh SET tien_coc = GREATEST(0, floor(t.tong_don * 0.5 / 1000000) * 1000000)
-                    FROM v_don_hang_tien t WHERE t.don_hang_id = dh.id AND dh.tien_coc > t.tong_don * 0.5`);
+                    FROM v_don_hang_tien t WHERE t.don_hang_id = dh.id AND dh.tien_coc > t.tong_don * 0.5
+                     AND ($1::int[] IS NULL OR dh.id = ANY($1::int[]))`, [themVao ? idsDon : null]);
   const { rows: tienDon } = await db.query(
     `SELECT dh.id, dh.giai_doan, dh.ty_le_tam_ung, dh.tien_coc, dh.sale_id, t.tong_don, t.tho_thu_ho
-       FROM don_hang dh JOIN v_don_hang_tien t ON t.don_hang_id = dh.id WHERE dh.trang_thai <> 'nhap' AND dh.giai_doan <> 'huy'`,
+       FROM don_hang dh JOIN v_don_hang_tien t ON t.don_hang_id = dh.id WHERE dh.trang_thai <> 'nhap' AND dh.giai_doan <> 'huy'
+        AND ($1::int[] IS NULL OR dh.id = ANY($1::int[]))`, [themVao ? idsDon : null],
   );
   const specTheoId = new Map(donSpec.map((d) => [d.id, d]));
   const thuRows = [];
@@ -484,22 +534,22 @@ export async function seedLon(conn) {
     const coc = Number(dh.tien_coc);
     // Tam ung phan con thieu theo %, khong de tong da thu (coc + tho thu ho + tam ung) vuot tong don.
     const tamUng = Math.max(0, Math.min(Math.round((tong * dh.ty_le_tam_ung) / 100) - coc, tong - coc - Number(dh.tho_thu_ho)));
-    const ngayTu = addDays(sp?.tBuoc?.giao_hang || sp?.ngay || HOM_NAY, -1);
+    const ngayTu = addDays(sp?.tBuoc?.giao_hang || sp?.ngay || homNay, -1);
     const daGiao = ['giao_hang', 'thi_cong', 'nghiem_thu', 'quyet_toan', 'hoan_tat'].includes(dh.giai_doan);
     let daThu = coc + Number(dh.tho_thu_ho);
     if (daGiao && tamUng > 0 && chance(0.93)) { phieu(dh, 'tam_ung', tamUng, ngayTu, true); daThu += tamUng; }
     if (dh.giai_doan === 'mua_hang' && tamUng > 0) {
-      if (chance(0.45)) phieu(dh, 'tam_ung', tamUng, addDays(HOM_NAY, -int(1, 5)), true);
-      else if (chance(0.3)) phieu(dh, 'tam_ung', tamUng, addDays(HOM_NAY, -int(0, 2)), false); // cho Ke toan xac nhan
+      if (chance(0.45)) phieu(dh, 'tam_ung', tamUng, addDays(homNay, -int(1, 5)), true);
+      else if (chance(0.3)) phieu(dh, 'tam_ung', tamUng, addDays(homNay, -int(0, 2)), false); // cho Ke toan xac nhan
     }
     const conLai = tong - daThu;
-    const ngayQt = addDays(sp?.tBuoc?.hoan_tat || sp?.tBuoc?.quyet_toan || HOM_NAY, int(0, 6));
+    const ngayQt = addDays(sp?.tBuoc?.hoan_tat || sp?.tBuoc?.quyet_toan || homNay, int(0, 6));
     if (conLai > 0 && dh.giai_doan === 'hoan_tat') {
       const r = rand();
-      if (r < 0.75) phieu(dh, 'quyet_toan', conLai, ngayQt > HOM_NAY ? HOM_NAY : ngayQt, true);
-      else if (r < 0.9) phieu(dh, 'quyet_toan', conLai * 0.5, ngayQt > HOM_NAY ? HOM_NAY : ngayQt, true); // tra mot phan -> con no
+      if (r < 0.75) phieu(dh, 'quyet_toan', conLai, ngayQt > homNay ? homNay : ngayQt, true);
+      else if (r < 0.9) phieu(dh, 'quyet_toan', conLai * 0.5, ngayQt > homNay ? homNay : ngayQt, true); // tra mot phan -> con no
     }
-    if (conLai > 0 && dh.giai_doan === 'quyet_toan' && chance(0.3)) phieu(dh, 'quyet_toan', conLai, HOM_NAY, chance(0.6));
+    if (conLai > 0 && dh.giai_doan === 'quyet_toan' && chance(0.3)) phieu(dh, 'quyet_toan', conLai, homNay, chance(0.6));
   }
   await insertMany(db, 'thanh_toan_khach', ['don_hang_id', 'loai', 'so_tien', 'hinh_thuc', 'ngay_thu', 'bill_anh', 'trang_thai', 'nguoi_tao_id',
     'nguoi_xac_nhan_id', 'xac_nhan_luc', 'created_at'], thuRows);
@@ -515,8 +565,14 @@ export async function seedLon(conn) {
     khong_mua: ['Khách chọn bên khác vì giá.', 'Khách hoãn sửa nhà sang năm sau.', 'Không liên lạc được sau 3 lần gọi.'],
   };
   const logRows = [];
-  await db.query(`UPDATE khach_hang SET trang_thai_cham_soc = 'chot' WHERE id = ANY($1)`, [Object.keys(donDauTien).map(Number)]);
-  for (const [khId, ngayDon] of Object.entries(donDauTien)) {
+  if (themVao) {
+    // DB da co lich su cham soc: chi chot them khach chua o trang thai 'chot' (1 dong nhat ky truoc ngay don).
+    const { rows: chuaChot } = await db.query(
+      `UPDATE khach_hang SET trang_thai_cham_soc = 'chot' WHERE id = ANY($1) AND trang_thai_cham_soc <> 'chot' RETURNING id, sale_phu_trach_id`,
+      [Object.keys(donDauTien).map(Number)]);
+    for (const k of chuaChot) logRows.push([k.id, k.sale_phu_trach_id, 'chot', pick(NOI_DUNG_CS.chot), addDays(donDauTien[k.id], -rand() * 0.8)]);
+  } else await db.query(`UPDATE khach_hang SET trang_thai_cham_soc = 'chot' WHERE id = ANY($1)`, [Object.keys(donDauTien).map(Number)]);
+  for (const [khId, ngayDon] of Object.entries(themVao ? {} : donDauTien)) {
     const kh = khachHang.find((k) => k.id === Number(khId));
     let t = addDays(ngayDon, -int(5, 20));
     for (const tt of ['dang_tu_van', 'da_bao_gia', 'chot']) {
@@ -528,14 +584,14 @@ export async function seedLon(conn) {
   }
 
   // Khach tiem nang chua chot (dang o cac giai doan cham soc).
-  const leads = Array.from({ length: 150 }, () => {
+  const leads = Array.from({ length: themVao ? 0 : 150 }, () => {
     const tt = pick(['moi', 'moi', 'dang_tu_van', 'dang_tu_van', 'dang_tu_van', 'da_bao_gia', 'da_bao_gia', 'khong_mua']);
     return { row: [hoTen(), sdt(), diaChi(), pick(sales), tt], tt };
   });
-  const leadIds = await insertMany(db, 'khach_hang', ['ten', 'sdt', 'dia_chi', 'sale_phu_trach_id', 'trang_thai_cham_soc'], leads.map((l) => l.row));
+  const leadIds = leads.length === 0 ? [] : await insertMany(db, 'khach_hang', ['ten', 'sdt', 'dia_chi', 'sale_phu_trach_id', 'trang_thai_cham_soc'], leads.map((l) => l.row));
   leads.forEach((l, i) => {
     if (l.tt === 'moi') return;
-    let t = addDays(HOM_NAY, -int(3, 60));
+    let t = addDays(homNay, -int(3, 60));
     const chuoi = l.tt === 'dang_tu_van' ? ['dang_tu_van'] : l.tt === 'da_bao_gia' ? ['dang_tu_van', 'da_bao_gia'] : ['dang_tu_van', 'khong_mua'];
     for (const tt of chuoi) {
       logRows.push([leadIds[i], l.row[3], tt, pick(NOI_DUNG_CS[tt]), t]);
@@ -544,10 +600,8 @@ export async function seedLon(conn) {
   });
   await insertMany(db, 'khach_hang_cham_soc', ['khach_hang_id', 'sale_id', 'trang_thai', 'noi_dung', 'created_at'], logRows);
 
-  await db.query('COMMIT');
-  await db.end();
   return {
-    don: SO_DON, khachHang: khRows.length + leads.length, dongMuaHang: mhd.length, muaBoSung: mbs.length, giaiDoanThiCong: tc.length,
+    don: soDon, lead: leads.length, dongMuaHang: mhd.length, muaBoSung: mbs.length, giaiDoanThiCong: tc.length,
     phatSinh: ps.length, deXuatChi: dxc.length, soTho: gdTho.length, phieuThu: thuRows.length, nhatKyChamSoc: logRows.length, lichSuTienDo: gdLog.length,
   };
 }

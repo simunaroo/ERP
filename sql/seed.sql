@@ -1,3 +1,6 @@
+-- Du lieu mau: khong ghi nhat ky thay doi (trigger fn_ghi_nhat_ky bo qua khi bien phien nay = '1').
+SET app.bo_qua_nhat_ky = '1';
+
 -- Du lieu mau GIA LAP cho demo (khong phai du lieu that). Mat khau = ten tai khoan + 123456 (vd: thilan123456)
 
 INSERT INTO users (ho_ten, username, password_hash, vai_tro) VALUES
@@ -157,3 +160,51 @@ INSERT INTO phieu_thanh_toan (de_xuat_chi_id, so_tien, ngay_thanh_toan, nguoi_ta
 INSERT INTO giao_dich_tho (doi_tho_id, don_hang_id, thi_cong_id, loai, so_tien, de_xuat_chi_id, ghi_chu, created_at) VALUES
   (1, 3, 1, 'phai_tra', 3270000, NULL, 'Công Lát sàn: 54,5 m² × 60.000 đ', '2026-08-25 16:00+07'),
   (1, 3, 1, 'da_tra',   3270000, 4,    'Trả công theo DXC-4', '2026-08-27 10:00+07');
+
+-- Tham so nghiep vu mac dinh (cau_hinh, migration 024)
+INSERT INTO cau_hinh (khoa, gia_tri, mo_ta, don_vi, toi_thieu, toi_da) VALUES
+  ('ty_le_gia_von_tu_sx', 60, 'Giá vốn ước tính của hàng tự sản xuất (cửa), tính trên giá bán — dùng cho báo cáo lãi/lỗ', '%', 0, 100);
+
+-- Quyen va phan quyen mac dinh (migration 026)
+INSERT INTO quyen (ma, ten, nhom, thu_tu, chi_admin) VALUES
+  ('khach_hang.xem',      'Xem khách hàng',                                   'Bán hàng', 10, false),
+  ('khach_hang.sua',      'Thêm khách, ghi chăm sóc',                         'Bán hàng', 11, false),
+  ('nhap_so.nhap',        'Nhập số (khách tiềm năng)',                        'Bán hàng', 12, false),
+  ('nhap_so.quan_ly',     'Quản lý tỷ lệ chia số, chuyển số giữa Sale',       'Bán hàng', 13, false),
+  ('don_hang.lap',        'Lập / sửa đơn nháp, gửi báo giá, yêu cầu sửa đơn', 'Bán hàng', 14, false),
+  ('tro_ly.ai',           'Lên đơn nhanh bằng AI',                            'Bán hàng', 15, false),
+  ('don_hang.dieu_phoi',  'Lên phương án, xử lý yêu cầu sửa đơn',             'Điều phối', 20, false),
+  ('don_hang.chuyen_buoc','Chuyển bước tiến độ đơn',                          'Điều phối', 21, false),
+  ('don_hang.boc_kl',     'Xác nhận bóc khối lượng',                          'Điều phối', 22, false),
+  ('don_hang.huy',        'Huỷ đơn',                                          'Điều phối', 23, false),
+  ('don_hang.phu_trach',  'Đổi Vận hành phụ trách đơn',                       'Điều phối', 24, false),
+  ('mua_hang.xem',        'Xem mua hàng, đặt hàng NCC',                       'Điều phối', 25, false),
+  ('mua_hang.lay_hang',   'Xác nhận lấy hàng, lập mua bổ sung',               'Điều phối', 26, false),
+  ('thi_cong.xem',        'Xem thi công, nghiệm thu, quyết toán',             'Điều phối', 27, false),
+  ('thi_cong.thao_tac',   'Phân thợ, nghiệm thu, chốt quyết toán',            'Điều phối', 28, false),
+  ('chi.xem',             'Xem đề xuất chi và công nợ NCC / thợ',             'Tiền', 30, false),
+  ('chi.lap',             'Lập / sửa / xoá đề xuất chi',                      'Tiền', 31, false),
+  ('chi.duyet',           'Duyệt / thu hồi đề xuất chi',                      'Tiền', 32, false),
+  ('chi.da_chi',          'Xác nhận đã chi (kèm bill)',                       'Tiền', 33, false),
+  ('mua_hang.da_mua',     'Xác nhận đã mua hàng bổ sung',                     'Tiền', 34, false),
+  ('thu.ghi_nhan',        'Ghi nhận phiếu thu khách',                         'Tiền', 35, false),
+  ('thu.xac_nhan',        'Xác nhận tiền về, xem công nợ khách',              'Tiền', 36, false),
+  ('ncc.xem',             'Xem nhà cung cấp, bảng giá',                       'Danh mục & báo cáo', 40, false),
+  ('ncc.sua',             'Sửa nhà cung cấp, bảng giá',                       'Danh mục & báo cáo', 41, false),
+  ('vat_tu.sua',          'Sửa danh mục vật tư',                              'Danh mục & báo cáo', 42, false),
+  ('bao_cao.xem',         'Xem báo cáo lãi/lỗ, phân tích NCC',                'Danh mục & báo cáo', 43, false),
+  ('he_thong.quan_tri',   'Quản trị người dùng, phân quyền, cấu hình, nhật ký','Hệ thống', 90, true);
+
+INSERT INTO vai_tro_quyen (vai_tro, ma_quyen) VALUES
+  ('sale', 'khach_hang.xem'), ('sale', 'khach_hang.sua'), ('sale', 'nhap_so.nhap'), ('sale', 'don_hang.lap'), ('sale', 'tro_ly.ai'),
+  ('sale', 'thu.ghi_nhan'),
+  ('van_hanh', 'don_hang.dieu_phoi'), ('van_hanh', 'don_hang.chuyen_buoc'), ('van_hanh', 'don_hang.boc_kl'), ('van_hanh', 'don_hang.huy'),
+  ('van_hanh', 'mua_hang.xem'), ('van_hanh', 'mua_hang.lay_hang'), ('van_hanh', 'thi_cong.xem'), ('van_hanh', 'thi_cong.thao_tac'),
+  ('van_hanh', 'thu.ghi_nhan'), ('van_hanh', 'ncc.xem'),
+  ('ke_toan', 'don_hang.chuyen_buoc'), ('ke_toan', 'mua_hang.xem'), ('ke_toan', 'thi_cong.xem'), ('ke_toan', 'chi.xem'), ('ke_toan', 'chi.lap'),
+  ('ke_toan', 'chi.da_chi'), ('ke_toan', 'mua_hang.da_mua'), ('ke_toan', 'thu.ghi_nhan'), ('ke_toan', 'thu.xac_nhan'), ('ke_toan', 'ncc.xem'),
+  ('ke_toan', 'ncc.sua'), ('ke_toan', 'vat_tu.sua'), ('ke_toan', 'bao_cao.xem'),
+  ('admin', 'khach_hang.xem'), ('admin', 'nhap_so.nhap'), ('admin', 'nhap_so.quan_ly'), ('admin', 'don_hang.chuyen_buoc'), ('admin', 'don_hang.boc_kl'),
+  ('admin', 'don_hang.huy'), ('admin', 'don_hang.phu_trach'), ('admin', 'mua_hang.xem'), ('admin', 'mua_hang.lay_hang'), ('admin', 'thi_cong.xem'),
+  ('admin', 'thi_cong.thao_tac'), ('admin', 'chi.xem'), ('admin', 'chi.duyet'), ('admin', 'mua_hang.da_mua'), ('admin', 'thu.ghi_nhan'),
+  ('admin', 'thu.xac_nhan'), ('admin', 'ncc.xem'), ('admin', 'ncc.sua'), ('admin', 'vat_tu.sua'), ('admin', 'bao_cao.xem'), ('admin', 'he_thong.quan_tri');

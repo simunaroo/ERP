@@ -1,13 +1,13 @@
 import { Router } from 'express';
-import { xacThuc, phanQuyen } from '../../middlewares/auth.js';
+import { xacThuc, coQuyen } from '../../middlewares/auth.js';
 import * as c from './khach_hang.controller.js';
 
 const router = Router();
 router.use(xacThuc);
 
-router.get('/', phanQuyen('sale', 'admin'), c.list);
-router.get('/:id', phanQuyen('sale', 'admin'), c.detail);
-router.post('/', phanQuyen('sale'), c.create);
-router.post('/:id/cham-soc', phanQuyen('sale'), c.chamSoc);
+router.get('/', coQuyen('khach_hang.xem'), c.list);
+router.get('/:id', coQuyen('khach_hang.xem'), c.detail);
+router.post('/', coQuyen('khach_hang.sua'), c.create);
+router.post('/:id/cham-soc', coQuyen('khach_hang.sua'), c.chamSoc);
 
 export default router;

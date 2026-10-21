@@ -106,7 +106,7 @@ export default function DonHangChiTiet() {
 
   return (
     <>
-      <p><Link to="/don-hang">← Danh sách đơn hàng</Link></p>
+      <p><Link to="/don-hang">← Danh sách đơn hàng</Link>{vaiTro === 'admin' && <> · <Link to={`/nhat-ky?don_hang_id=${don.id}`}>Lịch sử thay đổi</Link></>}</p>
       <h1>
         Đơn hàng {don.ma_don} <span className={`pill ${tt.lop}`}>{tt.nhan}</span>
         <span className="pill p-gray">{HINH_THUC[don.hinh_thuc].nhan}</span>

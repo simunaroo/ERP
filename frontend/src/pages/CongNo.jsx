@@ -1,6 +1,6 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { Link, NavLink, useSearchParams } from 'react-router-dom';
-import { api, loiCua } from '../api/client.js';
+import { api, loiCua, taiFile } from '../api/client.js';
 import { useAuthStore } from '../store/authStore.js';
 import { LOAI_CHI, TRANG_THAI_CHI, ngay, ngayGio, thuNhoAnh, tien } from '../utils.js';
 import Icon from '../components/Icon.jsx';
@@ -19,6 +19,7 @@ export function TabTc() {
       <NavLink to="/cong-no/ncc" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}><Icon n="factory" /> Công nợ NCC</NavLink>
       <NavLink to="/cong-no/tho" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}><Icon n="users" /> Công nợ thợ</NavLink>
       <NavLink to="/cong-no/khach" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}><Icon n="banknote" /> Công nợ khách</NavLink>
+      <NavLink to="/cong-no/ngan-hang" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}><Icon n="refresh" /> Ngân hàng</NavLink>
     </div>
   );
 }
@@ -127,6 +128,8 @@ export function DeXuatChi() {
             <option value="">Mọi loại chi</option>
             {Object.entries(LOAI_CHI).map(([v, n]) => <option key={v} value={v}>{n}</option>)}
           </select>
+          <span className="grow" />
+          <button className="btn sec" onClick={() => taiFile('/cong-no/de-xuat-chi/excel', { trang_thai: tt || undefined, loai_chi: loai || undefined, q: q || undefined }).catch((e) => setLoi(loiCua(e)))}><Icon n="file" /> Excel</button>
         </div>
         <div className="table-wrap">
           <table>

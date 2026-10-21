@@ -3,21 +3,25 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore.js';
 import { VAI_TRO } from '../utils.js';
 import ThongBao from './ThongBao.jsx';
+import { api } from '../api/client.js';
 import Icon from './Icon.jsx';
 
 // Chi liet ke module da lam; them dong khi hoan thanh module moi.
 const NAV_ITEMS = [
   { path: '/', label: 'Tổng quan', icon: 'home', vaiTro: ['sale', 'van_hanh', 'ke_toan', 'admin'] },
-  { path: '/khach-hang', label: 'Khách hàng', icon: 'contact', vaiTro: ['sale', 'admin'] },
-  { path: '/nhap-so', label: 'Nhập số', icon: 'phone', vaiTro: ['sale', 'admin'] },
-  { path: '/don-hang/tao', label: 'Nhập đơn', icon: 'plus', vaiTro: ['sale'] },
+  { path: '/khach-hang', label: 'Khách hàng', icon: 'contact', quyen: ['khach_hang.xem'], vaiTro: ['sale', 'admin'] },
+  { path: '/nhap-so', label: 'Nhập số', icon: 'phone', quyen: ['nhap_so.nhap', 'nhap_so.quan_ly'], vaiTro: ['sale', 'admin'] },
+  { path: '/don-hang/tao', label: 'Nhập đơn', icon: 'plus', quyen: ['don_hang.lap'], vaiTro: ['sale'] },
   { path: '/don-hang', label: 'Đơn hàng', icon: 'clipboard', vaiTro: ['sale', 'van_hanh', 'ke_toan', 'admin'] },
-  { path: '/mua-hang', label: 'Mua hàng', icon: 'cart', vaiTro: ['van_hanh', 'ke_toan', 'admin'] },
-  { path: '/thi-cong', label: 'Thi công', icon: 'wrench', vaiTro: ['van_hanh', 'ke_toan', 'admin'] },
-  { path: '/cong-no', label: 'Chi & công nợ', icon: 'wallet', vaiTro: ['ke_toan', 'admin'] },
-  { path: '/vat-tu', label: 'Danh mục vật tư', icon: 'package', vaiTro: ['van_hanh', 'ke_toan', 'admin'] },
-  { path: '/nha-cung-cap', label: 'Nhà cung cấp', icon: 'factory', vaiTro: ['ke_toan', 'van_hanh', 'admin'] },
-  { path: '/nguoi-dung', label: 'Người dùng', icon: 'user', vaiTro: ['admin'] },
+  { path: '/mua-hang', label: 'Mua hàng', icon: 'cart', quyen: ['mua_hang.xem'], vaiTro: ['van_hanh', 'ke_toan', 'admin'] },
+  { path: '/thi-cong', label: 'Thi công', icon: 'wrench', quyen: ['thi_cong.xem'], vaiTro: ['van_hanh', 'ke_toan', 'admin'] },
+  { path: '/cong-no', label: 'Chi & công nợ', icon: 'wallet', quyen: ['chi.xem', 'thu.xac_nhan'], vaiTro: ['ke_toan', 'admin'] },
+  { path: '/bao-cao', label: 'Báo cáo lãi/lỗ', icon: 'chart', quyen: ['bao_cao.xem'], vaiTro: ['ke_toan', 'admin'] },
+  { path: '/vat-tu', label: 'Danh mục vật tư', icon: 'package', quyen: ['mua_hang.xem', 'vat_tu.sua'], vaiTro: ['van_hanh', 'ke_toan', 'admin'] },
+  { path: '/nha-cung-cap', label: 'Nhà cung cấp', icon: 'factory', quyen: ['ncc.xem'], vaiTro: ['ke_toan', 'van_hanh', 'admin'] },
+  { path: '/nguoi-dung', label: 'Người dùng', icon: 'user', quyen: ['he_thong.quan_tri'], vaiTro: ['admin'] },
+  { path: '/phan-quyen', label: 'Phân quyền', icon: 'lock', quyen: ['he_thong.quan_tri'], vaiTro: ['admin'] },
+  { path: '/nhat-ky', label: 'Nhật ký thay đổi', icon: 'clipboard', quyen: ['he_thong.quan_tri'], vaiTro: ['admin'] },
 ];
 
 function docTheme() {
@@ -25,7 +29,7 @@ function docTheme() {
 }
 
 export default function Layout() {
-  const { user, logout } = useAuthStore();
+  const { user, logout, capNhatUser } = useAuthStore();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [dark, setDark] = useState(docTheme);
@@ -37,6 +41,9 @@ export default function Layout() {
 
   useEffect(() => { document.body.classList.remove('sidebar-open'); }, [pathname]);
 
+  // Lay lai thong tin + quyen moi nhat moi lan mo ung dung (Admin co the vua doi quyen).
+  useEffect(() => { api.get('/auth/me').then((r) => capNhatUser(r.data)).catch(() => {}); }, []);
+
   useEffect(() => {
     const dongKhiBamNgoai = (e) => {
       if (document.body.classList.contains('sidebar-open') && !e.target.closest('.erp-sidebar, .erp-hamburger')) {
@@ -47,7 +54,8 @@ export default function Layout() {
     return () => document.removeEventListener('click', dongKhiBamNgoai);
   }, []);
 
-  const menu = NAV_ITEMS.filter((n) => n.vaiTro.includes(user.vai_tro));
+  // Menu theo quyen chuc nang (RBAC); phien dang nhap cu chua co danh sach quyen thi theo vai tro.
+  const menu = NAV_ITEMS.filter((n) => (user.quyen && n.quyen ? n.quyen.some((q) => user.quyen.includes(q)) : n.vaiTro.includes(user.vai_tro)));
   // Muc dang mo = duong dan khop dai nhat (de "Nhập đơn" /don-hang/tao khong sang chung voi "Đơn hàng").
   const mucMo = menu.filter((n) => (n.path === '/' ? pathname === '/' : pathname === n.path || pathname.startsWith(`${n.path}/`)))
     .sort((a, b) => b.path.length - a.path.length)[0];

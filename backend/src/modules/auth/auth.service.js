@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { AppError } from '../../utils/AppError.js';
 import * as authRepo from './auth.repository.js';
+import { quyenCua } from '../phan_quyen/phan_quyen.service.js';
 
 export const kyToken = (user) => jwt.sign(
   { id: user.id, vai_tro: user.vai_tro, ho_ten: user.ho_ten, pv: user.phien_ban_token ?? 0 },
@@ -40,13 +41,13 @@ export async function dangNhap(username, matKhau, ip = '') {
   lanSai.delete(khoa);
   if (user.trang_thai !== 'active') throw new AppError(403, 'Tài khoản đã bị khoá');
   const { password_hash, phien_ban_token, ...userAnToan } = user;
-  return { token: kyToken(user), user: userAnToan };
+  return { token: kyToken(user), user: { ...userAnToan, quyen: await quyenCua(user.vai_tro) } };
 }
 
 export async function layThongTinToi(id) {
   const user = await authRepo.findById(id);
   if (!user) throw new AppError(404, 'Không tìm thấy người dùng');
-  return user;
+  return { ...user, quyen: await quyenCua(user.vai_tro) };
 }
 
 export function kiemTraMatKhauManh(mk) {
