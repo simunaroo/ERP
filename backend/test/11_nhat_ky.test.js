@@ -13,7 +13,8 @@ const nhatKy = async (q) => (await ctx.api(tk.ngocson, 'GET', `/nhat-ky?${new UR
 
 describe('Nhật ký thay đổi (trigger)', () => {
   it('TC-NK-01: Dữ liệu mẫu (seed) không sinh nhật ký', async () => {
-    const [{ n }] = await ctx.sql('SELECT count(*)::int AS n FROM nhat_ky_thay_doi');
+    // (Bo qua dong bat 2FA cua Admin/Ke toan luc dang nhap trong before())
+    const [{ n }] = await ctx.sql(`SELECT count(*)::int AS n FROM nhat_ky_thay_doi WHERE NOT (bang = 'users' AND du_lieu_moi ? 'totp_khoa')`);
     assert.equal(n, 0);
   });
 

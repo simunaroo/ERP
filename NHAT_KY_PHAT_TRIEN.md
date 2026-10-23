@@ -498,6 +498,15 @@ Khắc phục các điểm yếu so với ERP doanh nghiệp (trong phạm vi đ
 
 ---
 
+## Vòng 3.17 — Xác thực 2 lớp, sao lưu tự động, giao diện điện thoại + PWA (23/10/2026, migration 028) — CHỐT PHẠM VI
+
+- **2FA (TOTP, RFC 6238)** bắt buộc cho Admin và Kế toán: tự cài đặt thuật toán (HMAC-SHA1, bước 30 giây, chấp nhận lệch ±1 bước, kiểm bằng vector chuẩn RFC). Đăng nhập 2 bước: mật khẩu đúng chỉ nhận "mã tạm" 10 phút ký bằng khoá riêng (không dùng làm token được) → lần đầu quét QR (sinh ở backend, không gửi khoá ra dịch vụ ngoài) → nhập mã 6 số. Khoá TOTP lưu **mã hoá AES-256-GCM**; chống dùng lại mã (lưu bước thời gian đã dùng, cập nhật có điều kiện); 8 mã dự phòng (hash bcrypt, dùng 1 lần); sai 5 lần khoá 15 phút; Admin đặt lại khi nhân viên mất điện thoại. Nhật ký thay đổi che khoá/mã dự phòng. Dev có thể tắt bằng `BAT_BUOC_2FA=false`.
+- **Sao lưu tự động**: `pg_dump -Fc` + nén thư mục ảnh bill, hằng ngày sau 2:00, giữ 7 bản (cấu hình `.env`); màn Admin "Sao lưu ngay", tải bản sao lưu (chặn tên file lạ); `npm run db:sao-luu` cho cron; `npm run db:khoi-phuc` **khôi phục vào database mới**, từ chối ghi đè database đang dùng.
+- **Điện thoại + PWA**: rà 20 trang ở khổ 390px (không trang nào tràn ngang); tab vuốt ngang, KPI 2 cột, cột đầu ma trận dính, ô nhập 16px (iPhone không tự phóng to). PWA: manifest, icon (thường + maskable + Apple), service worker (lưu đệm vỏ ứng dụng, **không bao giờ lưu đệm /api**).
+- Kiểm thử: **112 ca**. Phạm vi tính năng chốt tại đây; tiếp theo cập nhật báo cáo Chương 2.
+
+---
+
 ## Vòng 3 — (dự kiến) Giai đoạn đơn hàng + NCC & bảng giá
 
 **Đề xuất đang cân nhắc**

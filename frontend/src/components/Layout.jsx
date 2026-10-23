@@ -21,6 +21,7 @@ const NAV_ITEMS = [
   { path: '/nha-cung-cap', label: 'Nhà cung cấp', icon: 'factory', quyen: ['ncc.xem'], vaiTro: ['ke_toan', 'van_hanh', 'admin'] },
   { path: '/nguoi-dung', label: 'Người dùng', icon: 'user', quyen: ['he_thong.quan_tri'], vaiTro: ['admin'] },
   { path: '/phan-quyen', label: 'Phân quyền', icon: 'lock', quyen: ['he_thong.quan_tri'], vaiTro: ['admin'] },
+  { path: '/sao-luu', label: 'Sao lưu dữ liệu', icon: 'package', quyen: ['he_thong.quan_tri'], vaiTro: ['admin'] },
   { path: '/nhat-ky', label: 'Nhật ký thay đổi', icon: 'clipboard', quyen: ['he_thong.quan_tri'], vaiTro: ['admin'] },
 ];
 

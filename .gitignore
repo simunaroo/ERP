@@ -20,3 +20,10 @@ _hinh/plantuml.jar
 
 # File nguoi dung tai len (anh bill chuyen khoan...)
 backend/uploads/
+
+# Ban sao luu CSDL + anh (chua du lieu that)
+backend/sao-luu/
+
+# Cong cu sinh bao cao: anh chup va schema sinh lai duoc
+_cong_cu_bao_cao/anh/
+_cong_cu_bao_cao/schema.json

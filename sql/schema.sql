@@ -44,7 +44,12 @@ CREATE TABLE users (
     trang_thai      trang_thai_hoat_dong_enum NOT NULL DEFAULT 'active',
     phien_ban_token INTEGER NOT NULL DEFAULT 0,  -- tang khi khoa/doi vai tro/doi mat khau -> token cu het hieu luc
     doi_mat_khau_luc TIMESTAMPTZ,
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    totp_khoa        TEXT,          -- xac thuc 2 lop (migration 028): khoa TOTP da ma hoa
+    totp_bat_luc     TIMESTAMPTZ,
+    totp_buoc_cuoi   BIGINT,
+    totp_ma_du_phong TEXT[],
+    CONSTRAINT ck_users_totp CHECK ((totp_khoa IS NULL) = (totp_bat_luc IS NULL))
 );
 
 CREATE EXTENSION IF NOT EXISTS btree_gist; -- cho rang buoc EXCLUDE cua ncc_bang_gia
@@ -723,3 +728,36 @@ ALTER TABLE thanh_toan_khach ADD CONSTRAINT ck_ttk_xac_nhan CHECK (trang_thai <>
     OR (xac_nhan_luc IS NOT NULL AND (nguoi_xac_nhan_id IS NOT NULL OR giao_dich_id IS NOT NULL)));
 
 CREATE TRIGGER tg_nhat_ky AFTER INSERT OR UPDATE OR DELETE ON giao_dich_ngan_hang FOR EACH ROW EXECUTE FUNCTION fn_ghi_nhat_ky();
+
+-- ---------- Xac thuc 2 lop: ham nhat ky che khoa TOTP (migration 028) ----------
+CREATE OR REPLACE FUNCTION fn_ghi_nhat_ky() RETURNS trigger AS $$
+DECLARE
+  cu  jsonb;
+  moi jsonb;
+  dong jsonb;
+  k   text;
+BEGIN
+  IF current_setting('app.bo_qua_nhat_ky', true) = '1' THEN RETURN NULL; END IF;
+  IF TG_OP = 'INSERT' THEN
+    moi := to_jsonb(NEW);
+  ELSIF TG_OP = 'DELETE' THEN
+    cu := to_jsonb(OLD);
+  ELSE
+    SELECT jsonb_object_agg(o.key, o.value) INTO cu
+      FROM jsonb_each(to_jsonb(OLD)) o WHERE o.value IS DISTINCT FROM to_jsonb(NEW) -> o.key AND o.key <> 'totp_buoc_cuoi';
+    SELECT jsonb_object_agg(n.key, n.value) INTO moi
+      FROM jsonb_each(to_jsonb(NEW)) n WHERE n.value IS DISTINCT FROM to_jsonb(OLD) -> n.key AND n.key <> 'totp_buoc_cuoi';
+    IF moi IS NULL THEN RETURN NULL; END IF;
+  END IF;
+  FOREACH k IN ARRAY ARRAY['password_hash', 'totp_khoa', 'totp_ma_du_phong', 'totp_buoc_cuoi'] LOOP
+    IF cu ? k AND cu -> k <> 'null'::jsonb THEN cu := jsonb_set(cu, ARRAY[k], '"***"'); END IF;
+    IF moi ? k AND moi -> k <> 'null'::jsonb THEN moi := jsonb_set(moi, ARRAY[k], '"***"'); END IF;
+  END LOOP;
+  dong := COALESCE(to_jsonb(NEW), to_jsonb(OLD));
+  INSERT INTO nhat_ky_thay_doi (bang, ban_ghi, hanh_dong, du_lieu_cu, du_lieu_moi, nguoi_id, kenh)
+  VALUES (TG_TABLE_NAME,
+          COALESCE(dong ->> 'id', dong ->> 'sale_id', dong ->> 'khoa', (dong ->> 'vai_tro') || ':' || (dong ->> 'ma_quyen')),
+          TG_OP, cu, moi,
+          NULLIF(current_setting('app.user_id', true), '')::int, NULLIF(current_setting('app.kenh', true), ''));
+  RETURN NULL;
+END $$ LANGUAGE plpgsql;

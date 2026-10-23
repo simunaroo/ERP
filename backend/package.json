@@ -12,6 +12,8 @@
     "db:migrate": "node scripts/migrate.js",
     "db:seed:bo-sung": "node scripts/seed-bo-sung.js",
     "db:seed:don-moi": "node scripts/seed-don-moi.js",
+    "db:sao-luu": "node scripts/sao-luu.js",
+    "db:khoi-phuc": "node scripts/khoi-phuc.js",
     "test": "node --test --test-concurrency=1 \"test/**/*.test.js\"",
     "test:bao-cao": "node --test --test-concurrency=1 --test-reporter=spec --test-reporter-destination=stdout --test-reporter=./test/bao-cao-md.mjs --test-reporter-destination=test/KET_QUA_KIEM_THU.md \"test/**/*.test.js\""
   },
@@ -22,6 +24,7 @@
     "exceljs": "^4.4.0",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
-    "pg": "^8.23.1"
+    "pg": "^8.23.1",
+    "qrcode": "^1.5.4"
   }
 }

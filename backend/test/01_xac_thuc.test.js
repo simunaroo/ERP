@@ -7,11 +7,11 @@ before(async () => { ctx = await batDau(); });
 after(async () => { await ctx.ketThuc(); });
 
 describe('Xác thực & phân quyền phiên', () => {
-  it('TC-AUTH-01: Đăng nhập đúng trả token và vai trò', async () => {
-    const r = await ctx.api(null, 'POST', '/auth/login', { username: 'ngocson', password: 'ngocson123456' });
+  it('TC-AUTH-01: Đăng nhập đúng trả token và vai trò (vai trò không bắt buộc 2FA: một bước)', async () => {
+    const r = await ctx.api(null, 'POST', '/auth/login', { username: 'thilan', password: 'thilan123456' });
     assert.equal(r.s, 200);
     assert.ok(r.d.token);
-    assert.equal(r.d.user.vai_tro, 'admin');
+    assert.equal(r.d.user.vai_tro, 'sale');
   });
 
   it('TC-AUTH-02: Sai mật khẩu bị từ chối (401), không lộ tài khoản có tồn tại hay không', async () => {

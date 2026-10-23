@@ -496,3 +496,41 @@ pre { background: var(--surface-2, rgba(127, 127, 127, .08)); border: 1px solid 
 /* ---------- Doi soat ngan hang ---------- */
 .tien-vao { color: var(--ok-text, #15803d); }
 .tien-ra { color: var(--danger, #dc2626); }
+
+/* ---------- Xac thuc 2 lop ---------- */
+.buoc-2fa { margin: 0 0 8px 18px; padding: 0; display: flex; flex-direction: column; gap: 3px; color: var(--text-soft); }
+.qr-2fa { display: block; margin: 6px auto 4px; width: 200px; height: 200px; border-radius: 8px; background: #fff; padding: 6px; }
+.khoa-2fa { word-break: break-all; user-select: all; }
+.ma-du-phong { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin: 4px 0 10px; }
+.ma-du-phong code { text-align: center; padding: 6px; border: 1px dashed var(--border-input); border-radius: 6px; font-size: 14px; letter-spacing: 1px; }
+.login-box .link { background: none; border: none; margin-top: 8px; cursor: pointer; color: var(--link); }
+
+/* ---------- Dien thoai (≤ 640px) ---------- */
+@media (max-width: 640px) {
+  /* iPhone tu phong to khi o nhap < 16px -> dat 16px */
+  input, select, textarea { font-size: 16px; }
+  /* Tab: 1 dong, vuot rong thi vuot ngang thay vi be chu */
+  .tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab, a.tab { white-space: nowrap; flex: 0 0 auto; padding: 8px 10px; }
+  /* KPI 2 cot cho gon */
+  .kpi-row { grid-template-columns: 1fr 1fr; gap: 8px; }
+  .kpi { padding: 10px 12px; }
+  .kpi-so { font-size: 20px; }
+  /* Bang: cot dau dinh lai khi vuot ngang (ma tran phan quyen, bao cao...) */
+  .ma-tran td:first-child, .ma-tran th:first-child { position: sticky; left: 0; background: var(--surface); z-index: 1; min-width: 170px; }
+  .ma-tran tr.nhom td { position: static; }
+  .card { padding: 12px; }
+  .content { padding: 12px; }
+  h1 { font-size: 20px; }
+  .toolbar > .grow { display: none; }
+  .pager { justify-content: center; }
+}
+/* PWA cai len man hinh chinh (iPhone tai tho): chua khoang tren cho thanh trang thai */
+@media (display-mode: standalone) {
+  .topbar { padding-top: max(12px, env(safe-area-inset-top)); }
+  .erp-sidebar { padding-top: env(safe-area-inset-top); }
+}
+/* O chon co lua chon dai (ten doi tho + nang luc) khong duoc day vo khung */
+.toolbar > select, .toolbar > input { max-width: 100%; min-width: 0; }
+@media (max-width: 640px) { .ma-tran td:first-child .muted { display: none; } .ma-tran td.giua, .ma-tran th.giua { width: 72px; } }
