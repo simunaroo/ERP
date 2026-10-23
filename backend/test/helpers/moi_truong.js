@@ -75,9 +75,26 @@ export async function batDau() {
     return { s: r.status, d };
   };
   const tokens = {};
+  // Dang nhap; tai khoan Admin/Ke toan tu di qua xac thuc 2 lop (cai lan dau / nhap ma) bang ung dung Authenticator gia lap.
+  const { maTai, buocHienTai } = await import('../../src/utils/totp.js');
+  const khoa2fa = {}; const buocDaDung = {};
+  const ma2fa = async (username) => {
+    for (;;) {
+      const b = Math.max(buocHienTai(), (buocDaDung[username] ?? -1) + 1);
+      if (b <= buocHienTai() + 1) { buocDaDung[username] = b; return maTai(khoa2fa[username], b); }
+      await new Promise((r) => setTimeout(r, 1000)); // da dung het ma trong cua so cho phep -> doi buoc moi
+    }
+  };
   const login = async (username, password = `${username}123456`) => {
-    const r = await api(null, 'POST', '/auth/login', { username, password });
-    if (r.s !== 200) throw new Error(`Đăng nhập ${username} lỗi: ${r.s} ${r.d?.message}`);
+    let r = await api(null, 'POST', '/auth/login', { username, password });
+    if (r.s === 200 && r.d.buoc === 'cai_2fa') {
+      const k = await api(null, 'POST', '/auth/2fa/khoi-tao', { ma_tam: r.d.ma_tam });
+      khoa2fa[username] = k.d.khoa;
+      r = await api(null, 'POST', '/auth/2fa/kich-hoat', { ma_tam: k.d.ma_tam, ma: await ma2fa(username) });
+    } else if (r.s === 200 && r.d.buoc === 'nhap_ma_2fa') {
+      r = await api(null, 'POST', '/auth/2fa/xac-minh', { ma_tam: r.d.ma_tam, ma: await ma2fa(username) });
+    }
+    if (r.s !== 200 || !r.d.token) throw new Error(`Đăng nhập ${username} lỗi: ${r.s} ${r.d?.message}`);
     tokens[username] = r.d.token;
     return r.d.token;
   };
@@ -85,7 +102,7 @@ export async function batDau() {
   const cho = (ms = 200) => new Promise((r) => setTimeout(r, ms));
 
   return {
-    api, login, sql, cho, db, goc,
+    api, login, sql, cho, db, goc, khoa2fa, ma2fa,
     async ketThuc() {
       await new Promise((r) => server.close(r));
       await db.pool?.end?.().catch(() => {});

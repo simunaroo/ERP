@@ -1,6 +1,6 @@
 import { query } from '../../config/db.js';
 
-const COT = 'id, ho_ten, username, vai_tro, trang_thai, doi_mat_khau_luc, telegram_username, created_at';
+const COT = 'id, ho_ten, username, vai_tro, trang_thai, doi_mat_khau_luc, telegram_username, created_at, totp_bat_luc';
 
 export async function findAll() {
   const { rows } = await query(

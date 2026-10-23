@@ -51,7 +51,7 @@ export function NguoiDung() {
       <div className="card">
         <div className="table-wrap">
           <table>
-            <thead><tr><th>Họ tên</th><th>Tên đăng nhập</th><th>Vai trò</th><th>Trạng thái</th><th>Telegram</th><th>Đổi mật khẩu</th><th className="num">Khách / đơn</th><th /></tr></thead>
+            <thead><tr><th>Họ tên</th><th>Tên đăng nhập</th><th>Vai trò</th><th>Trạng thái</th><th>Telegram</th><th>Xác thực 2 lớp</th><th>Đổi mật khẩu</th><th className="num">Khách / đơn</th><th /></tr></thead>
             <tbody>
               {(ds || []).map((u) => (
                 <tr key={u.id} className={u.trang_thai !== 'active' ? 'dong-mo' : ''}>
@@ -70,6 +70,13 @@ export function NguoiDung() {
                       const v = window.prompt(`Username Telegram của ${u.ho_ten} (để trống = bỏ gắn).\nKế toán gắn Telegram mới bấm "Đã chi" trong nhóm duyệt chi được.`, u.telegram_username || '');
                       if (v !== null) lam(() => api.put(`/nguoi-dung/${u.id}`, { telegram_username: v }), v.trim() ? `Đã gắn Telegram cho ${u.username}` : `Đã bỏ gắn Telegram của ${u.username}`);
                     }}>{u.telegram_username ? 'Sửa' : 'Gắn'}</button>
+                  </td>
+                  <td className="small">
+                    {u.totp_bat_luc ? <><span className="pill p-done">Đã bật</span>{' '}
+                      <button className="link small" onClick={() => {
+                        if (window.confirm(`Đặt lại xác thực 2 lớp của ${u.ho_ten}? (dùng khi nhân viên mất điện thoại — lần đăng nhập sau phải quét QR cài lại)`)) lam(() => api.post(`/nguoi-dung/${u.id}/dat-lai-2fa`), `Đã đặt lại 2FA của ${u.username}`);
+                      }}>Đặt lại</button></>
+                      : ['admin', 'ke_toan'].includes(u.vai_tro) ? <span className="muted">bắt buộc — cài ở lần đăng nhập tới</span> : <span className="muted">không bắt buộc</span>}
                   </td>
                   <td className="small">{u.doi_mat_khau_luc ? ngay(u.doi_mat_khau_luc) : <span className="muted">chưa đổi</span>}</td>
                   <td className="num small">{u.so_khach} / {u.so_don_sale}</td>

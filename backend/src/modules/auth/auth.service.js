@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { AppError } from '../../utils/AppError.js';
 import * as authRepo from './auth.repository.js';
 import { quyenCua } from '../phan_quyen/phan_quyen.service.js';
+import * as haiLop from './hai_lop.service.js';
 
 export const kyToken = (user) => jwt.sign(
   { id: user.id, vai_tro: user.vai_tro, ho_ten: user.ho_ten, pv: user.phien_ban_token ?? 0 },
@@ -40,9 +41,21 @@ export async function dangNhap(username, matKhau, ip = '') {
   }
   lanSai.delete(khoa);
   if (user.trang_thai !== 'active') throw new AppError(403, 'Tài khoản đã bị khoá');
-  const { password_hash, phien_ban_token, ...userAnToan } = user;
+  // Da bat 2FA, hoac vai tro bat buoc (Admin/Ke toan): chua cap token, chuyen sang buoc 2.
+  if (user.co_2fa) return { buoc: 'nhap_ma_2fa', ma_tam: haiLop.kyMaTam(user, 'xac_minh') };
+  if (haiLop.batBuoc(user)) return { buoc: 'cai_2fa', ma_tam: haiLop.kyMaTam(user, 'cai_dat') };
+  return phienDangNhap(user);
+}
+
+// Token + thong tin an toan + quyen (dung chung cho dang nhap 1 buoc va sau buoc 2FA).
+export async function phienDangNhap(user) {
+  const { password_hash, phien_ban_token, totp_khoa, totp_buoc_cuoi, totp_ma_du_phong, co_2fa, ...userAnToan } = user;
   return { token: kyToken(user), user: { ...userAnToan, quyen: await quyenCua(user.vai_tro) } };
 }
+
+export const khoiTao2fa = (body) => haiLop.khoiTao(body);
+export const kichHoat2fa = (body) => haiLop.kichHoat(body, phienDangNhap);
+export const xacMinh2fa = (body) => haiLop.xacMinh(body, phienDangNhap);
 
 export async function layThongTinToi(id) {
   const user = await authRepo.findById(id);
