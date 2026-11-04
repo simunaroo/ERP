@@ -130,4 +130,23 @@ describe('Admin chọn Sale khi nhập và chuyển số', () => {
   it('TC-NS-12: Sale không chuyển được khách', async () => {
     assert.equal((await ctx.api(tk.thilan, 'PUT', '/nhap-so/khach/1/chuyen-sale', { sale_id: 3, ly_do: 'x' })).s, 403);
   });
+
+  it('TC-NS-13: Danh sách khách mặc định xếp theo thời gian số đẩy về (mới nhất lên đầu), không theo lần chăm sóc', async () => {
+    const r = await ctx.api(tk.ngocson, 'POST', '/nhap-so', { sale_id: 2, ds: [{ sdt: soMoi(), ten: 'Số Về Trước' }, { sdt: soMoi(), ten: 'Số Về Sau' }] });
+    const [truoc, sau] = r.d.ket_qua.map((k) => k.khach_hang_id);
+    await ctx.sql(`UPDATE khach_hang SET chia_luc = now() - interval '1 hour' WHERE id = $1`, [truoc]);
+    // Khach ve truoc vua duoc cham soc -> van khong vuot len tren so moi ve sau
+    await ctx.api(tk.thilan, 'POST', `/khach-hang/${truoc}/cham-soc`, { trang_thai: 'quan_tam', noi_dung: 'Hỏi giá' });
+    const ds = (await ctx.api(tk.thilan, 'GET', '/khach-hang?limit=50')).d.items;
+    assert.equal(ds[0].id, sau);
+    assert.ok(ds.findIndex((k) => k.id === truoc) > 0);
+    // Danh sach kem ghi chu lan goi gan nhat de Sale thay da tu van gi
+    await ctx.api(tk.thilan, 'POST', `/khach-hang/${truoc}/cham-soc`, { trang_thai: 'quan_tam', noi_dung: 'Đã gửi báo giá sàn gỗ 12mm, khách hẹn xem mẫu' });
+    const k1 = (await ctx.api(tk.thilan, 'GET', '/khach-hang?limit=50')).d.items.find((k) => k.id === truoc);
+    assert.equal(k1.ghi_chu_cuoi, 'Đã gửi báo giá sàn gỗ 12mm, khách hẹn xem mẫu');
+    assert.equal(k1.so_lan_cham_soc, 2);
+    assert.equal(ds.find((k) => k.id === sau).ghi_chu_cuoi, null);
+    const t = ds.map((k) => new Date(k.nhan_so_luc).getTime());
+    assert.ok(t.every((x, i) => i === 0 || t[i - 1] >= x), 'giảm dần theo thời điểm nhận số');
+  });
 });

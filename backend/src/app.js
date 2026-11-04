@@ -16,6 +16,7 @@ import congNoRoutes, { telegramRouter } from './modules/cong_no/cong_no.routes.j
 import thongBaoRoutes from './modules/thong_bao/thong_bao.routes.js';
 import thuTienRoutes from './modules/thu_tien/thu_tien.routes.js';
 import nhapSoRoutes from './modules/nhap_so/nhap_so.routes.js';
+import chamSocRoutes from './modules/cham_soc/cham_soc.routes.js';
 import baoCaoRoutes from './modules/bao_cao/bao_cao.routes.js';
 import cauHinhRoutes from './modules/cau_hinh/cau_hinh.routes.js';
 import nhatKyRoutes from './modules/nhat_ky/nhat_ky.routes.js';
@@ -30,6 +31,7 @@ app.use(cors({ origin: 'http://localhost:5173' }));
 app.use('/api/tro-ly', express.json({ limit: '15mb' }));
 app.use('/api/cong-no/de-xuat-chi', express.json({ limit: '8mb' })); // anh bill "da chi"
 app.use('/api/thu-tien', express.json({ limit: '8mb' })); // anh bill khach chuyen khoan
+app.use('/api/nhap-so/doc-file', express.json({ limit: '4mb' })); // file danh sach so (base64, toi da 2 MB)
 app.use(express.json());
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
@@ -53,6 +55,7 @@ app.use('/api/nhat-ky', nhatKyRoutes);
 app.use('/api/phan-quyen', phanQuyenRoutes);
 app.use('/api/sao-luu', saoLuuRoutes);
 app.use('/api/ngan-hang', nganHangRoutes); // /webhook xac thuc bang API key (SePay), con lai can dang nhap
+app.use('/api/cham-soc', chamSocRoutes);
 app.use('/api/nhap-so', nhapSoRoutes); // /tu-dong xac thuc bang API key, con lai can dang nhap
 app.use('/api/telegram', telegramRouter); // webhook cong khai, xac thuc bang secret header
 app.use('/api/bao-gia', baoGiaRoutes); // cong khai, khong can dang nhap

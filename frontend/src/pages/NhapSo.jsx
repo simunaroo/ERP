@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, NavLink, useSearchParams } from 'react-router-dom';
-import { api, loiCua } from '../api/client.js';
+import { api, loiCua, taiFile } from '../api/client.js';
 import { useAuthStore } from '../store/authStore.js';
 import Icon from '../components/Icon.jsx';
 import { TRANG_THAI_CHAM_SOC, ngayGio } from '../utils.js';
@@ -22,12 +22,24 @@ function TabNhapSo() {
   );
 }
 
-// Tach dong dan tu Excel/Google Sheet: "SĐT | Tên | Địa chỉ | Nhu cầu" (cach nhau bang Tab, | hoac ;).
+// Tach dong dan tu Excel/Google Sheet: "SĐT | Tên | Địa chỉ | Nhu cầu | Nguồn" (cach nhau bang Tab, | hoac ;).
+// Cot Nguon (tuy chon, vd tu file) ghi de nguon chung.
+const NGUON_THEO_TEN = Object.fromEntries(Object.entries({ facebook: 'Facebook', zalo: 'Zalo', google: 'Google', website: 'Website', tiktok: 'TikTok', gioi_thieu: 'Giới thiệu', sale_tu_tim: 'Sale tự tìm', khac: 'Khác' })
+  .flatMap(([k, ten]) => [[k, k], [ten.toLowerCase(), k]]));
 function tachDong(text, nguon) {
   return text.split(/\r?\n/).map((d) => d.trim()).filter(Boolean).map((d) => {
-    const [sdt, ten, dia_chi, nhu_cau] = d.split(/\t|\||;/).map((x) => x.trim());
-    return { sdt, ten, dia_chi, nhu_cau, nguon };
+    const [sdt, ten, dia_chi, nhu_cau, nguonCot] = d.split(/\t|\||;/).map((x) => x.trim());
+    return { sdt, ten, dia_chi, nhu_cau, nguon: NGUON_THEO_TEN[(nguonCot || '').toLowerCase()] || nguon };
   });
+}
+const LO = 200; // API nhan toi da 200 so moi lan -> chia lo
+
+// Doc file (Excel .xlsx / CSV / TXT) qua backend, tra ve cac dong de dua vao o dan xem truoc.
+async function docFileSo(file) {
+  if (file.size > 2 * 1024 * 1024) throw new Error('File quá 2 MB');
+  const data = await new Promise((ok, loi) => { const fr = new FileReader(); fr.onload = () => ok(fr.result); fr.onerror = loi; fr.readAsDataURL(file); });
+  const { data: kq } = await api.post('/nhap-so/doc-file', { ten: file.name, data });
+  return kq;
 }
 
 // Danh sach Sale dang hoat dong (Admin) — lay tu bang ty le chia so.
@@ -115,9 +127,27 @@ export function NhapSo() {
   const gui = async (body, xong) => {
     setLoi(''); setKq(null); setDangGui(true);
     try {
-      const { data } = await api.post('/nhap-so', body);
-      setKq(data); xong?.(); tai();
+      // Nhieu hon 200 so: gui tung lo, gop ket qua (danh lai so dong theo thu tu trong danh sach).
+      const ds = body.ds || [body];
+      const tong = { tao: 0, trung: 0, loi: 0, ket_qua: [] };
+      for (let i = 0; i < ds.length; i += LO) {
+        const { data } = await api.post('/nhap-so', body.ds ? { ...body, ds: ds.slice(i, i + LO) } : body);
+        tong.tao += data.tao; tong.trung += data.trung; tong.loi += data.loi;
+        tong.ket_qua.push(...data.ket_qua.map((k) => ({ ...k, dong: k.dong + i })));
+      }
+      setKq(tong); xong?.(); tai();
     } catch (e) { setLoi(loiCua(e)); } finally { setDangGui(false); }
+  };
+  const [tenFile, setTenFile] = useState('');
+  const [keoTha, setKeoTha] = useState(false);
+  const nhanFile = async (file) => {
+    if (!file) return;
+    setLoi(''); setTenFile('');
+    try {
+      const kq = await docFileSo(file);
+      setDan(kq.dong.map((d) => [d.sdt, d.ten, d.dia_chi, d.nhu_cau, d.nguon].map((x) => x || '').join(' | ').replace(/( \| )+$/, '')).join('\n'));
+      setTenFile(`Đã đọc ${kq.so_dong} số từ "${kq.ten_file}"${kq.bo_qua ? ` (bỏ qua ${kq.bo_qua} dòng không có SĐT)` : ''}${kq.theo_tieu_de ? ' — nhận cột theo dòng tiêu đề' : ''}. Kiểm tra rồi bấm Nhập.`);
+    } catch (e) { setLoi(e.response ? loiCua(e) : e.message); }
   };
   const dsDan = tachDong(dan, nguonDan);
   const doi = (k) => (e) => setMot({ ...mot, [k]: e.target.value });
@@ -153,8 +183,20 @@ export function NhapSo() {
 
         <div className="card">
           <h3>Dán nhiều số</h3>
-          <p className="muted small">Chép từ Excel/Google Sheet, mỗi dòng một số theo thứ tự cột: <b>SĐT | Tên | Địa chỉ | Nhu cầu</b> (chỉ SĐT là bắt buộc).</p>
-          <div className="field"><textarea rows={6} value={dan} onChange={(e) => setDan(e.target.value)} placeholder={'0912345678\tAnh Nam\tCầu Giấy\tSàn gỗ 50m2\n0987654321\tChị Lan'} /></div>
+          <p className="muted small">Chép từ Excel/Google Sheet, mỗi dòng một số theo thứ tự cột: <b>SĐT | Tên | Địa chỉ | Nhu cầu</b> (chỉ SĐT là bắt buộc) — hoặc <b>chọn / kéo thả file</b> Excel (.xlsx), CSV, TXT.</p>
+          <div className="toolbar">
+            <label className="btn sec"><Icon n="paperclip" /> Chọn file Excel / CSV / TXT
+              <input type="file" accept=".xlsx,.csv,.txt,text/plain,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden
+                onChange={(e) => { nhanFile(e.target.files[0]); e.target.value = ''; }} />
+            </label>
+            <button type="button" className="link small" onClick={() => taiFile('/nhap-so/file-mau').catch((e) => setLoi(loiCua(e)))}>Tải file Excel mẫu</button>
+          </div>
+          {tenFile && <div className="success small">{tenFile}</div>}
+          <div className={`field o-tha-file${keoTha ? ' dang-keo' : ''}`}
+            onDragOver={(e) => { e.preventDefault(); setKeoTha(true); }} onDragLeave={() => setKeoTha(false)}
+            onDrop={(e) => { e.preventDefault(); setKeoTha(false); nhanFile(e.dataTransfer.files[0]); }}>
+            <textarea rows={6} value={dan} onChange={(e) => setDan(e.target.value)} placeholder={'0912345678\tAnh Nam\tCầu Giấy\tSàn gỗ 50m2\n0987654321\tChị Lan\n(hoặc kéo thả file vào đây)'} />
+          </div>
           <div className="actions">
             <select value={nguonDan} onChange={(e) => setNguonDan(e.target.value)} aria-label="Nguồn chung">
               {Object.entries(NGUON_SO).map(([v, n]) => <option key={v} value={v}>Nguồn: {n}</option>)}

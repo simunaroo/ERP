@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { api, loiCua } from '../api/client.js';
 import { useAuthStore } from '../store/authStore.js';
-import { NHOM_KHACH, TRANG_THAI_CHAM_SOC, ngay } from '../utils.js';
+import { NHOM_KHACH, TRANG_THAI_CHAM_SOC, ngayGio } from '../utils.js';
+import CapNhatChamSoc from '../components/CapNhatChamSoc.jsx';
+import { TabKhachHang } from './BaoCaoChamSoc.jsx';
 
 function FormThemKhach({ onDong }) {
   const navigate = useNavigate();
@@ -53,6 +55,8 @@ export default function KhachHangList() {
   const [kq, setKq] = useState(null);
   const [loi, setLoi] = useState('');
   const [hienForm, setHienForm] = useState(false);
+  const [moCs, setMoCs] = useState(null); // khach dang mo form cap nhat cham soc tren dong
+  const [lanTai, setLanTai] = useState(0);
 
   const capNhat = (thayDoi) => {
     const moi = new URLSearchParams(params);
@@ -74,11 +78,12 @@ export default function KhachHangList() {
       .then((r) => { setKq(r.data); setLoi(''); })
       .catch((e) => { if (!ctrl.signal.aborted) setLoi(loiCua(e)); });
     return () => ctrl.abort();
-  }, [page, trangThai, q]);
+  }, [page, trangThai, q, lanTai]);
 
   return (
     <>
       <h1>Khách hàng</h1>
+      <TabKhachHang />
       {hienForm && <FormThemKhach onDong={() => setHienForm(false)} />}
       <div className="card">
         <div className="chips">
@@ -95,21 +100,36 @@ export default function KhachHangList() {
         {loi && <div className="error">{loi}</div>}
         <div className="table-wrap">
           <table>
-            <thead><tr><th>Khách hàng</th><th>Nhóm</th><th>Số điện thoại</th><th>Địa chỉ</th>{vaiTro === 'admin' && <th>Sale</th>}<th>Trạng thái</th><th className="num">Đơn</th><th>Chăm sóc gần nhất</th></tr></thead>
+            <thead><tr><th>Khách hàng</th><th>Nhóm</th><th>Số điện thoại</th><th>Địa chỉ</th>{vaiTro === 'admin' && <th>Sale</th>}<th>Trạng thái</th><th className="num">Đơn</th><th>Nhận số</th><th>Chăm sóc gần nhất</th>{vaiTro === 'sale' && <th />}</tr></thead>
             <tbody>
               {(kq?.items || []).map((k) => (
-                <tr key={k.id}>
+                <Fragment key={k.id}>
+                <tr className={moCs === k.id ? 'dong-dang-sua' : ''}>
                   <td><Link to={`/khach-hang/${k.id}`}>{k.ten}</Link></td>
                   <td className="nowrap">{NHOM_KHACH[k.nhom_khach_hang]}</td>
-                  <td className="nowrap">{k.sdt || '—'}</td>
+                  <td className="nowrap">{k.sdt ? <a className="sdt-link" href={`tel:${k.sdt}`} title="Bấm để gọi">{k.sdt}</a> : '—'}</td>
                   <td>{k.dia_chi || '—'}</td>
                   {vaiTro === 'admin' && <td>{k.sale}</td>}
-                  <td><span className={`pill ${TRANG_THAI_CHAM_SOC[k.trang_thai_cham_soc].lop}`}>{TRANG_THAI_CHAM_SOC[k.trang_thai_cham_soc].nhan}</span></td>
+                  <td><span className={`pill ${TRANG_THAI_CHAM_SOC[k.trang_thai_cham_soc].lop}`}>{TRANG_THAI_CHAM_SOC[k.trang_thai_cham_soc].nhan}</span>
+                    {k.trang_thai_cham_soc === 'hen_goi_lai' && k.hen_goi_lai_luc && <div className={`small ${new Date(k.hen_goi_lai_luc) <= new Date() ? 'error-text' : 'muted'}`}>{ngayGio(k.hen_goi_lai_luc)}</div>}</td>
                   <td className="num">{k.so_don}</td>
-                  <td className="nowrap">{k.lan_cham_soc_cuoi ? ngay(k.lan_cham_soc_cuoi) : <span className="muted">Chưa liên hệ</span>}</td>
+                  <td className="nowrap">{ngayGio(k.nhan_so_luc)}</td>
+                  <td className="cs-cuoi">{k.lan_cham_soc_cuoi ? (
+                    <>
+                      <div className="small muted nowrap">{ngayGio(k.lan_cham_soc_cuoi)} · {k.so_lan_cham_soc} lần</div>
+                      {k.ghi_chu_cuoi ? <div className="cs-ghi-chu" title={k.ghi_chu_cuoi}>{k.ghi_chu_cuoi}</div> : <div className="small muted">Không ghi chú</div>}
+                    </>
+                  ) : <span className="muted">Chưa liên hệ</span>}</td>
+                  {vaiTro === 'sale' && <td className="nowrap"><button className="link small" onClick={() => setMoCs(moCs === k.id ? null : k.id)}>{moCs === k.id ? 'Đóng' : 'Cập nhật'}</button></td>}
                 </tr>
+                {moCs === k.id && (
+                  <tr className="dong-cs"><td colSpan={10}>
+                    <CapNhatChamSoc gon kh={k} onXong={() => { setMoCs(null); setLanTai((n) => n + 1); }} />
+                  </td></tr>
+                )}
+                </Fragment>
               ))}
-              {kq && kq.items.length === 0 && <tr><td colSpan="8" className="muted center">Không có khách hàng nào</td></tr>}
+              {kq && kq.items.length === 0 && <tr><td colSpan="10" className="muted center">Không có khách hàng nào</td></tr>}
             </tbody>
           </table>
         </div>

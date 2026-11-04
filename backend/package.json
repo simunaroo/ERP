@@ -15,6 +15,7 @@
     "db:sao-luu": "node scripts/sao-luu.js",
     "db:khoi-phuc": "node scripts/khoi-phuc.js",
     "test": "node --test --test-concurrency=1 \"test/**/*.test.js\"",
+    "test:e2e": "node --test test/16_e2e_vong_doi_don.test.js",
     "test:bao-cao": "node --test --test-concurrency=1 --test-reporter=spec --test-reporter-destination=stdout --test-reporter=./test/bao-cao-md.mjs --test-reporter-destination=test/KET_QUA_KIEM_THU.md \"test/**/*.test.js\""
   },
   "dependencies": {

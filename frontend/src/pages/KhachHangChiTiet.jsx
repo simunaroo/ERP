@@ -1,67 +1,26 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import { api, loiCua } from '../api/client.js';
 import { useAuthStore } from '../store/authStore.js';
 import { NHOM_KHACH, TRANG_THAI_CHAM_SOC, TRANG_THAI_DON, ngay, ngayGio } from '../utils.js';
 import { ChuyenSale, KIEU_GIAO, NGUON_SO, useDsSale } from './NhapSo.jsx';
 import Icon from '../components/Icon.jsx';
-
-function HoiLenDon({ khachHangId, onDong }) {
-  const navigate = useNavigate();
-  const nutDau = useRef(null);
-  useEffect(() => {
-    nutDau.current?.focus();
-    const esc = (e) => e.key === 'Escape' && onDong();
-    document.addEventListener('keydown', esc);
-    return () => document.removeEventListener('keydown', esc);
-  }, [onDong]);
-
-  const di = (cheDo) => navigate(`/don-hang/tao?khach_hang_id=${khachHangId}&che_do=${cheDo}`);
-  return (
-    <div className="modal-backdrop" onClick={onDong}>
-      <div className="modal" role="dialog" aria-modal="true" aria-labelledby="hoi-len-don" onClick={(e) => e.stopPropagation()}>
-        <h3 id="hoi-len-don">Khách đã chốt — lên đơn ngay?</h3>
-        <p className="muted">Bạn có thể tải ảnh tin nhắn hoặc phiếu ghi chép để AI điền sẵn đơn hàng, hoặc tự nhập.</p>
-        <div className="modal-choices">
-          <button ref={nutDau} className="btn" onClick={() => di('ai')}><Icon n="sparkles" /> Lên đơn nhanh bằng AI</button>
-          <button className="btn sec" onClick={() => di('tay')}>Nhập đơn thủ công</button>
-          <button className="link" onClick={onDong}>Để sau</button>
-        </div>
-      </div>
-    </div>
-  );
-}
+import CapNhatChamSoc from '../components/CapNhatChamSoc.jsx';
 
 export default function KhachHangChiTiet() {
   const { id } = useParams();
   const vaiTro = useAuthStore((s) => s.user.vai_tro);
   const [kh, setKh] = useState(null);
   const [loi, setLoi] = useState('');
-  const [trangThai, setTrangThai] = useState('');
-  const [noiDung, setNoiDung] = useState('');
-  const [dangGui, setDangGui] = useState(false);
-  const [hoiLenDon, setHoiLenDon] = useState(false);
+  const [daChep, setDaChep] = useState(false);
   const dsSale = useDsSale(vaiTro === 'admin');
 
   const tai = useCallback(() => {
     api.get(`/khach-hang/${id}`)
-      .then((r) => { setKh(r.data); setTrangThai(r.data.trang_thai_cham_soc); })
+      .then((r) => setKh(r.data))
       .catch((e) => setLoi(loiCua(e)));
   }, [id]);
   useEffect(tai, [tai]);
-
-  const ghi = async (e) => {
-    e.preventDefault();
-    setLoi(''); setDangGui(true);
-    try {
-      await api.post(`/khach-hang/${id}/cham-soc`, { trang_thai: trangThai, noi_dung: noiDung });
-      const vuaChot = trangThai === 'chot' && kh.trang_thai_cham_soc !== 'chot';
-      setNoiDung('');
-      tai();
-      if (vuaChot) setHoiLenDon(true);
-    } catch (err) { setLoi(loiCua(err)); }
-    finally { setDangGui(false); }
-  };
 
   if (!kh) return loi ? <div className="error">{loi}</div> : <p className="muted">Đang tải...</p>;
   const tt = TRANG_THAI_CHAM_SOC[kh.trang_thai_cham_soc];
@@ -70,6 +29,16 @@ export default function KhachHangChiTiet() {
     <>
       <p><Link to="/khach-hang">← Danh sách khách hàng</Link></p>
       <h1>{kh.ten} <span className={`pill ${tt.lop}`}>{tt.nhan}</span></h1>
+      {kh.sdt && (
+        <div className="sdt-noi-bat">
+          <a className="sdt-so" href={`tel:${kh.sdt}`} title="Bấm để gọi"><Icon n="phone" size={22} /> {kh.sdt.replace(/(\d{4})(\d{3})(\d+)/, '$1 $2 $3')}</a>
+          <a className="btn sec" href={`tel:${kh.sdt}`}><Icon n="phone" /> Gọi</a>
+          <a className="btn sec" href={`https://zalo.me/${kh.sdt}`} target="_blank" rel="noreferrer">Zalo</a>
+          <button type="button" className="btn sec" onClick={() => navigator.clipboard?.writeText(kh.sdt).then(() => { setDaChep(true); setTimeout(() => setDaChep(false), 1500); }).catch(() => {})}>
+            <Icon n={daChep ? 'check' : 'copy'} /> {daChep ? 'Đã chép' : 'Chép số'}
+          </button>
+        </div>
+      )}
       {loi && <div className="error">{loi}</div>}
 
       <div className="grid2">
@@ -77,7 +46,6 @@ export default function KhachHangChiTiet() {
           <h3>Thông tin</h3>
           <dl className="kv">
             <dt>Nhóm khách</dt><dd>{NHOM_KHACH[kh.nhom_khach_hang]}</dd>
-            <dt>Số điện thoại</dt><dd>{kh.sdt || '—'}</dd>
             <dt>Địa chỉ</dt><dd>{kh.dia_chi || '—'}</dd>
             <dt>Sale phụ trách</dt><dd>{kh.sale}{vaiTro === 'admin' && <div className="mt"><ChuyenSale khachId={kh.id} saleHienTai={kh.sale} dsSale={dsSale} onXong={tai} /></div>}</dd>
             {kh.nguon && <><dt>Nguồn số</dt><dd>{NGUON_SO[kh.nguon] || kh.nguon}{kh.chia_luc && <span className="muted small"> · nhận {ngayGio(kh.chia_luc)}</span>}</dd></>}
@@ -106,19 +74,7 @@ export default function KhachHangChiTiet() {
         </div>
       </div>
 
-      {vaiTro === 'sale' && (
-        <form className="card" onSubmit={ghi}>
-          <h3>Cập nhật chăm sóc</h3>
-          <div className="toolbar">
-            <select aria-label="Trạng thái chăm sóc" value={trangThai} onChange={(e) => setTrangThai(e.target.value)}>
-              {Object.entries(TRANG_THAI_CHAM_SOC).map(([v, t]) => <option key={v} value={v}>{t.nhan}</option>)}
-            </select>
-            <input className="grow" placeholder="Ghi chú lần chăm sóc này (gọi điện, báo giá, hẹn khảo sát...)"
-              value={noiDung} onChange={(e) => setNoiDung(e.target.value)} />
-            <button className="btn" disabled={dangGui}>Lưu</button>
-          </div>
-        </form>
-      )}
+      {vaiTro === 'sale' && <div className="card"><CapNhatChamSoc key={`${kh.id}-${kh.lich_su.length}`} kh={kh} onXong={tai} /></div>}
 
       <div className="card">
         <h3>Lịch sử chăm sóc</h3>
@@ -127,7 +83,7 @@ export default function KhachHangChiTiet() {
             {kh.lich_su.map((ls) => (
               <li key={ls.id}>
                 <span className={`pill ${TRANG_THAI_CHAM_SOC[ls.trang_thai].lop}`}>{TRANG_THAI_CHAM_SOC[ls.trang_thai].nhan}</span>
-                <span>{ls.noi_dung || <span className="muted">(không ghi chú)</span>}</span>
+                <span>{ls.noi_dung || <span className="muted">(không ghi chú)</span>}{ls.hen_goi_lai_luc && <span className="muted small"> · hẹn {ngayGio(ls.hen_goi_lai_luc)}</span>}</span>
                 <span className="muted small">{ls.nguoi_cham_soc} · {ngayGio(ls.created_at)}</span>
               </li>
             ))}
@@ -150,7 +106,6 @@ export default function KhachHangChiTiet() {
         </div>
       )}
 
-      {hoiLenDon && <HoiLenDon khachHangId={kh.id} onDong={() => setHoiLenDon(false)} />}
     </>
   );
 }

@@ -75,12 +75,16 @@ export function tinhTienDo(don) {
   };
 }
 
+// Trang thai cham soc theo quy trinh goi so. "Moi" do he thong gan luc nhap so, Sale khong chon tay.
 export const TRANG_THAI_CHAM_SOC = {
-  moi: { nhan: 'Mới', lop: 'p-gray' },
-  dang_tu_van: { nhan: 'Đang tư vấn', lop: 'p-new' },
-  da_bao_gia: { nhan: 'Đã báo giá', lop: 'p-wip' },
-  chot: { nhan: 'Chốt', lop: 'p-done' },
-  khong_mua: { nhan: 'Không mua', lop: 'p-lost' },
+  moi: { nhan: 'Mới', lop: 'p-moi' },
+  khong_nghe_may: { nhan: 'Không nghe máy', lop: 'p-gray' },
+  thue_bao: { nhan: 'Thuê bao', lop: 'p-gray' },
+  hen_goi_lai: { nhan: 'Hẹn gọi lại', lop: 'p-wip' },
+  quan_tam: { nhan: 'Quan tâm', lop: 'p-new' },
+  chot: { nhan: 'Chốt đơn', lop: 'p-done' },
+  khong_quan_tam: { nhan: 'Không quan tâm', lop: 'p-lost' },
+  sai_so: { nhan: 'Sai số điện thoại', lop: 'p-lost' },
 };
 
 export const VAI_TRO = { sale: 'Sale', van_hanh: 'Vận hành', ke_toan: 'Kế toán', admin: 'Admin' };

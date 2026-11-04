@@ -4,6 +4,8 @@ import { xacThuc, coQuyen } from '../../middlewares/auth.js';
 import { AppError } from '../../utils/AppError.js';
 import { voiNguoiDung } from '../../config/db.js';
 import * as s from './nhap_so.service.js';
+import { docFile, fileMau } from './doc_file.js';
+import { xuatExcel } from '../../utils/xuatExcel.js';
 
 const router = Router();
 
@@ -21,6 +23,9 @@ router.post('/tu-dong', khoaApi, async (req, res) => res.status(201).json(await 
 
 router.use(xacThuc);
 router.post('/', coQuyen('nhap_so.nhap'), async (req, res) => res.status(201).json(await s.nhap(req.user, req.body, 'form')));
+// Doc file Excel/CSV/TXT -> danh sach dong de xem truoc (chua luu); file mau Excel.
+router.post('/doc-file', coQuyen('nhap_so.nhap', 'nhap_so.quan_ly'), async (req, res) => res.json(await docFile(req.body || {})));
+router.get('/file-mau', coQuyen('nhap_so.nhap', 'nhap_so.quan_ly'), async (req, res) => xuatExcel(res, fileMau()));
 router.get('/gan-day', coQuyen('nhap_so.nhap', 'nhap_so.quan_ly'), async (req, res) => res.json(await s.ganDay(req.user, req.query)));
 router.get('/ty-le', coQuyen('nhap_so.quan_ly'), async (req, res) => res.json(await s.tyLe()));
 router.put('/ty-le', coQuyen('nhap_so.quan_ly'), async (req, res) => res.json(await s.luuTyLe(req.user, req.body || {})));
