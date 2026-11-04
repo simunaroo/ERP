@@ -25,6 +25,7 @@ import NhatKy from './pages/NhatKy.jsx';
 import PhanQuyen from './pages/PhanQuyen.jsx';
 import NganHang from './pages/NganHang.jsx';
 import SaoLuu from './pages/SaoLuu.jsx';
+import BaoCaoChamSoc from './pages/BaoCaoChamSoc.jsx';
 
 function CanDangNhap({ children }) {
   const token = useAuthStore((s) => s.token);
@@ -53,6 +54,7 @@ export default function App() {
         <Route path="/nhap-so" element={<NhapSo />} />
         <Route path="/nhap-so/chia" element={<QuanLyChiaSo />} />
         <Route path="/khach-hang" element={<KhachHangList />} />
+        <Route path="/khach-hang/bao-cao" element={<BaoCaoChamSoc />} />
         <Route path="/khach-hang/:id" element={<KhachHangChiTiet />} />
         <Route path="/nha-cung-cap" element={<NhaCungCapList />} />
         <Route path="/nha-cung-cap/so-sanh-gia" element={<SoSanhGia />} />

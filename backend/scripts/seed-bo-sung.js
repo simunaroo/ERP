@@ -31,10 +31,12 @@ const NHU_CAU = [
   'Lam sóng trang trí phòng khách', 'Sàn gỗ ngoài trời cho ban công', null, null,
 ];
 const NOI_DUNG = {
-  dang_tu_van: ['Đã gọi, khách hẹn gửi ảnh mặt bằng qua Zalo.', 'Tư vấn mẫu, gửi catalogue.', 'Hẹn khảo sát công trình cuối tuần.'],
-  da_bao_gia: ['Đã gửi báo giá, chờ khách phản hồi.', 'Báo giá lần 2 theo diện tích mới.'],
+  quan_tam: ['Đã gửi báo giá, chờ khách phản hồi.', 'Đã gọi, khách hẹn gửi ảnh mặt bằng qua Zalo.', 'Tư vấn mẫu, gửi catalogue.', 'Hẹn khảo sát công trình cuối tuần.'],
   chot: ['Khách đồng ý báo giá, hẹn đặt cọc.', 'Chốt qua điện thoại.'],
-  khong_mua: ['Không nghe máy sau 3 lần gọi.', 'Khách chọn bên khác vì giá.', 'Khách chỉ hỏi giá tham khảo.'],
+  khong_quan_tam: ['Khách chọn bên khác vì giá.', 'Khách chỉ hỏi giá tham khảo.'],
+  khong_nghe_may: ['Gọi 2 lần không nghe máy.', 'Đổ chuông không bắt máy, sẽ gọi lại chiều.'],
+  thue_bao: ['Thuê bao không liên lạc được.', 'Máy báo tắt / ngoài vùng phủ sóng.'],
+  sai_so: ['Số không đúng người, khách bảo nhầm số.', 'Số không tồn tại.'],
 };
 // Ty le chia (%): Sale cu nhan nhieu hon, Sale moi nhan it hon.
 const TY_LE = { thilan: 20, vanhung: 15, minhtuan: 15, thuha: 10, ducanh: 10, ngocmai: 10, quocbao: 10, thanhhuong: 10 };
@@ -131,8 +133,8 @@ async function nhapSo(db, homNay) {
     // Trang thai theo tuoi so: so trong 1 ngay gan nhat de "Moi"; cu hon thi da duoc cham soc dan.
     const tuoi = (homNay - t) / NGAY_MS;
     const tt = tuoi < 1 ? 'moi'
-      : tuoi < 3 ? pick(['moi', 'dang_tu_van', 'dang_tu_van'])
-        : pick(['moi', 'dang_tu_van', 'dang_tu_van', 'da_bao_gia', 'da_bao_gia', 'chot', 'khong_mua', 'khong_mua']);
+      : tuoi < 3 ? pick(['moi', 'quan_tam', 'quan_tam'])
+        : pick(['moi', 'khong_nghe_may', 'thue_bao', 'quan_tam', 'quan_tam', 'quan_tam', 'quan_tam', 'chot', 'khong_quan_tam', 'sai_so']);
     const ten = chance(0.8) ? `${pick(HO)} ${pick(DEM)} ${pick(TEN)}` : null;
     const sdt = sdtMoi();
     khRows.push([ten || `Khách ${sdt.slice(-4)}`, sdt, chance(0.7) ? pick(KHU_VUC) : null, sale, tt, nguon, pick(NHU_CAU), nguoiNhap, t, t]);
@@ -146,7 +148,8 @@ async function nhapSo(db, homNay) {
   const log = [];
   meta.forEach((m, i) => {
     if (m.tt === 'moi') return;
-    const chuoi = { dang_tu_van: ['dang_tu_van'], da_bao_gia: ['dang_tu_van', 'da_bao_gia'], chot: ['dang_tu_van', 'da_bao_gia', 'chot'], khong_mua: ['khong_mua'] }[m.tt];
+    const chuoi = { quan_tam: ['quan_tam'], chot: ['quan_tam', 'quan_tam', 'chot'], khong_quan_tam: ['quan_tam', 'khong_quan_tam'],
+      khong_nghe_may: ['khong_nghe_may'], thue_bao: ['khong_nghe_may', 'thue_bao'], sai_so: ['sai_so'] }[m.tt];
     let t = addDays(m.t, 0.02 + rand() * 0.3);
     for (const tt of chuoi) {
       if (t > homNay) t = homNay;

@@ -15,19 +15,28 @@ export async function findAll({ saleId, trangThai, tuKhoa, limit, offset }) {
     params.push(`%${tuKhoa}%`);
     where.push(`(kh.ten ILIKE $${params.length} OR kh.sdt ILIKE $${params.length})`);
   }
-  const from = `FROM khach_hang kh JOIN users s ON s.id = kh.sale_phu_trach_id
-    ${where.length ? 'WHERE ' + where.join(' AND ') : ''}`;
+  const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
+  const from = `FROM khach_hang kh JOIN users s ON s.id = kh.sale_phu_trach_id`;
   const [{ rows }, { rows: dem }] = await Promise.all([
     query(
-      `SELECT kh.id, kh.ten, kh.sdt, kh.dia_chi, kh.nhom_khach_hang, kh.trang_thai_cham_soc, s.ho_ten AS sale,
-              (SELECT max(cs.created_at) FROM khach_hang_cham_soc cs WHERE cs.khach_hang_id = kh.id) AS lan_cham_soc_cuoi,
+      `SELECT kh.id, kh.ten, kh.sdt, kh.dia_chi, kh.nhom_khach_hang, kh.trang_thai_cham_soc, kh.hen_goi_lai_luc, s.ho_ten AS sale,
+              COALESCE(kh.chia_luc, kh.created_at) AS nhan_so_luc,
+              cs.created_at AS lan_cham_soc_cuoi, cs.noi_dung AS ghi_chu_cuoi, cs.so_lan AS so_lan_cham_soc,
               (SELECT count(*)::int FROM don_hang dh WHERE dh.khach_hang_id = kh.id) AS so_don
          ${from}
-        ORDER BY lan_cham_soc_cuoi DESC NULLS FIRST, kh.id DESC
+         -- Lan cham soc gan nhat (kem ghi chu) de Sale thay lan truoc da tu van gi ngay tren danh sach.
+         LEFT JOIN LATERAL (
+           SELECT c.created_at, c.noi_dung, count(*) OVER()::int AS so_lan
+             FROM khach_hang_cham_soc c WHERE c.khach_hang_id = kh.id
+            ORDER BY c.created_at DESC, c.id DESC LIMIT 1
+         ) cs ON true
+         ${whereSql}
+        -- Mac dinh: so moi day ve (chia/chuyen cho Sale) len dau; khach cu khong co chia_luc dung thoi diem tao.
+        ORDER BY nhan_so_luc DESC, kh.id DESC
         LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
       [...params, limit, offset],
     ),
-    query(`SELECT count(*)::int AS tong ${from}`, params),
+    query(`SELECT count(*)::int AS tong ${from} ${whereSql}`, params),
   ]);
   return { items: rows, tong: dem[0].tong };
 }
@@ -42,7 +51,7 @@ export async function findById(id) {
 
 export async function findLichSu(khachHangId) {
   const { rows } = await query(
-    `SELECT cs.id, cs.trang_thai, cs.noi_dung, cs.created_at, u.ho_ten AS nguoi_cham_soc
+    `SELECT cs.id, cs.trang_thai, cs.noi_dung, cs.hen_goi_lai_luc, cs.created_at, u.ho_ten AS nguoi_cham_soc
        FROM khach_hang_cham_soc cs JOIN users u ON u.id = cs.sale_id
       WHERE cs.khach_hang_id = $1 ORDER BY cs.created_at DESC, cs.id DESC`,
     [khachHangId],
@@ -66,15 +75,16 @@ export async function create(data) {
   return rows[0];
 }
 
-export async function ghiChamSoc(client, { khachHangId, saleId, trangThai, noiDung }) {
+export async function ghiChamSoc(client, { khachHangId, saleId, trangThai, noiDung, henGoiLaiLuc = null }) {
+  // Hen goi lai: luu gio hen o khach (de nhac); trang thai khac thi xoa lich hen cu.
   await client.query(
-    `UPDATE khach_hang SET trang_thai_cham_soc = $2 WHERE id = $1`,
-    [khachHangId, trangThai],
+    `UPDATE khach_hang SET trang_thai_cham_soc = $2, hen_goi_lai_luc = $3 WHERE id = $1`,
+    [khachHangId, trangThai, henGoiLaiLuc],
   );
   const { rows } = await client.query(
-    `INSERT INTO khach_hang_cham_soc (khach_hang_id, sale_id, trang_thai, noi_dung)
-     VALUES ($1, $2, $3, $4) RETURNING *`,
-    [khachHangId, saleId, trangThai, noiDung],
+    `INSERT INTO khach_hang_cham_soc (khach_hang_id, sale_id, trang_thai, noi_dung, hen_goi_lai_luc)
+     VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+    [khachHangId, saleId, trangThai, noiDung, henGoiLaiLuc],
   );
   return rows[0];
 }

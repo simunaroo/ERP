@@ -22,7 +22,7 @@ CREATE TYPE loai_giao_dich_tho_enum AS ENUM ('phai_tra', 'da_tra', 'tam_ung', 't
 CREATE TYPE trang_thai_thi_cong_enum AS ENUM ('lap_lich', 'dang_thi_cong', 'da_nghiem_thu');
 CREATE TYPE trang_thai_de_xuat_chi_enum AS ENUM ('cho_duyet', 'da_duyet', 'tu_choi', 'da_thanh_toan', 'thu_hoi');
 CREATE TYPE hanh_dong_duyet_enum AS ENUM ('duyet', 'tu_choi');
-CREATE TYPE trang_thai_cham_soc_enum AS ENUM ('moi', 'dang_tu_van', 'da_bao_gia', 'chot', 'khong_mua');
+CREATE TYPE trang_thai_cham_soc_enum AS ENUM ('moi', 'khong_nghe_may', 'thue_bao', 'hen_goi_lai', 'quan_tam', 'chot', 'khong_quan_tam', 'sai_so');
 CREATE TYPE hinh_thuc_don_enum AS ENUM ('hoan_thien', 'vat_tu');
 CREATE TYPE nhom_khach_hang_enum AS ENUM ('nha_dan', 'nha_thau', 'doi_tac', 'khac');
 CREATE TYPE dieu_khoan_nghiem_thu_enum AS ENUM ('vat_tu_tieu_hao', 'so_m2_thi_cong', 'theo_hop_dong');
@@ -761,3 +761,23 @@ BEGIN
           NULLIF(current_setting('app.user_id', true), '')::int, NULLIF(current_setting('app.kenh', true), ''));
   RETURN NULL;
 END $$ LANGUAGE plpgsql;
+
+-- ---------- Trang thai cham soc + hen goi lai (migration 029) ----------
+ALTER TABLE khach_hang ADD COLUMN hen_goi_lai_luc TIMESTAMPTZ;
+ALTER TABLE khach_hang_cham_soc ADD COLUMN hen_goi_lai_luc TIMESTAMPTZ;
+ALTER TABLE khach_hang_cham_soc ADD CONSTRAINT ck_cham_soc_hen_goi_lai
+    CHECK (trang_thai <> 'hen_goi_lai' OR hen_goi_lai_luc IS NOT NULL);
+CREATE INDEX idx_kh_hen_goi_lai ON khach_hang(sale_phu_trach_id, hen_goi_lai_luc) WHERE trang_thai_cham_soc = 'hen_goi_lai';
+
+-- Nhat ky AI nhan xet cham soc khach (migration 031): luu ket qua + so lieu da gui de xem lai.
+CREATE TABLE ai_nhan_xet_cham_soc (
+    id           SERIAL PRIMARY KEY,
+    tu_ngay      DATE NOT NULL,
+    den_ngay     DATE NOT NULL,
+    ket_qua      JSONB NOT NULL,
+    so_lieu      JSONB NOT NULL,
+    nguoi_tao_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT ck_ai_nx_ky CHECK (tu_ngay <= den_ngay)
+);
+CREATE INDEX idx_ai_nx_cs_thoi_gian ON ai_nhan_xet_cham_soc(created_at DESC);

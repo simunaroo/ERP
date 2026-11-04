@@ -10,7 +10,7 @@ export default async function* baoCaoMarkdown(nguon) {
     const d = ev.data;
     if (d.details?.type === 'suite' || d.nesting === 0) continue; // chi lay ca kiem thu, bo dong tong cua suite/file
     const ten = d.name;
-    const m = /^(TC-[A-Z]+-\d+):\s*(.*)$/.exec(ten);
+    const m = /^((?:TC-[A-Z0-9]+|E2E)-\d+):\s*(.*)$/.exec(ten); // TC-AUTH-01, TC-2FA-01, E2E-01
     const suite = `${path.basename(d.file || '')}`;
     if (!nhom.has(suite)) nhom.set(suite, []);
     const ok = ev.type === 'test:pass';

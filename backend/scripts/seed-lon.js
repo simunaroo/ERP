@@ -177,7 +177,7 @@ export async function sinhDon(db, { sales, vanHanh, keToan, khachHang, vatTu, gi
   const tongNgay = (homNay - tu) / NGAY_MS;
   // Che do them vao: ~60% don tu khach da chot / da bao gia ma chua co don (khach moi chuyen doi), con lai khach cu mua lai.
   const khachMoi = themVao ? (await db.query(
-    `SELECT k.id FROM khach_hang k WHERE k.trang_thai_cham_soc IN ('chot', 'da_bao_gia') AND NOT EXISTS (SELECT 1 FROM don_hang d WHERE d.khach_hang_id = k.id)
+    `SELECT k.id FROM khach_hang k WHERE k.trang_thai_cham_soc IN ('chot', 'quan_tam') AND NOT EXISTS (SELECT 1 FROM don_hang d WHERE d.khach_hang_id = k.id)
       ORDER BY (k.trang_thai_cham_soc = 'chot') DESC, k.id`)).rows.map((r) => r.id) : [];
   const khTheoId = new Map(khachHang.map((k) => [k.id, k]));
   const chonKhach = () => (khachMoi.length && chance(0.6) ? khTheoId.get(khachMoi.shift()) : pick(khachHang));
@@ -559,10 +559,9 @@ export async function sinhDon(db, { sales, vanHanh, keToan, khachHang, vatTu, gi
   const donDauTien = {};
   for (const d of donSpec) if (!donDauTien[d.kh.id]) donDauTien[d.kh.id] = d.ngay;
   const NOI_DUNG_CS = {
-    dang_tu_van: ['Khách hỏi giá sàn SPC, đã gửi catalogue.', 'Tư vấn mẫu tấm ốp qua Zalo.', 'Hẹn khảo sát công trình cuối tuần.', 'Khách cần cửa nhôm cho ban công.'],
-    da_bao_gia: ['Đã gửi báo giá, chờ khách phản hồi.', 'Báo giá lần 2 sau khi khách giảm diện tích.', 'Gửi báo giá trọn gói vật tư + thi công.'],
+    quan_tam: ['Đã gửi báo giá, chờ khách phản hồi.', 'Khách hỏi giá sàn SPC, đã gửi catalogue.', 'Tư vấn mẫu tấm ốp qua Zalo.', 'Hẹn khảo sát công trình cuối tuần.', 'Khách cần cửa nhôm cho ban công.'],
     chot: ['Khách đồng ý, đặt cọc 30%.', 'Chốt qua điện thoại.', 'Khách ký xác nhận báo giá.'],
-    khong_mua: ['Khách chọn bên khác vì giá.', 'Khách hoãn sửa nhà sang năm sau.', 'Không liên lạc được sau 3 lần gọi.'],
+    khong_quan_tam: ['Khách chọn bên khác vì giá.', 'Khách hoãn sửa nhà sang năm sau.', 'Không liên lạc được sau 3 lần gọi.'],
   };
   const logRows = [];
   if (themVao) {
@@ -575,8 +574,8 @@ export async function sinhDon(db, { sales, vanHanh, keToan, khachHang, vatTu, gi
   for (const [khId, ngayDon] of Object.entries(themVao ? {} : donDauTien)) {
     const kh = khachHang.find((k) => k.id === Number(khId));
     let t = addDays(ngayDon, -int(5, 20));
-    for (const tt of ['dang_tu_van', 'da_bao_gia', 'chot']) {
-      if (tt === 'da_bao_gia' && chance(0.2)) continue;
+    for (const tt of ['quan_tam', 'quan_tam', 'chot']) {
+      if (tt === 'quan_tam' && chance(0.2)) continue;
       logRows.push([kh.id, kh.sale_phu_trach_id, tt, pick(NOI_DUNG_CS[tt]), t]);
       t = addDays(t, int(1, 6));
       if (t > ngayDon) t = ngayDon;
@@ -585,14 +584,14 @@ export async function sinhDon(db, { sales, vanHanh, keToan, khachHang, vatTu, gi
 
   // Khach tiem nang chua chot (dang o cac giai doan cham soc).
   const leads = Array.from({ length: themVao ? 0 : 150 }, () => {
-    const tt = pick(['moi', 'moi', 'dang_tu_van', 'dang_tu_van', 'dang_tu_van', 'da_bao_gia', 'da_bao_gia', 'khong_mua']);
+    const tt = pick(['moi', 'moi', 'quan_tam', 'quan_tam', 'quan_tam', 'quan_tam', 'quan_tam', 'khong_quan_tam']);
     return { row: [hoTen(), sdt(), diaChi(), pick(sales), tt], tt };
   });
   const leadIds = leads.length === 0 ? [] : await insertMany(db, 'khach_hang', ['ten', 'sdt', 'dia_chi', 'sale_phu_trach_id', 'trang_thai_cham_soc'], leads.map((l) => l.row));
   leads.forEach((l, i) => {
     if (l.tt === 'moi') return;
     let t = addDays(homNay, -int(3, 60));
-    const chuoi = l.tt === 'dang_tu_van' ? ['dang_tu_van'] : l.tt === 'da_bao_gia' ? ['dang_tu_van', 'da_bao_gia'] : ['dang_tu_van', 'khong_mua'];
+    const chuoi = l.tt === 'quan_tam' ? ['quan_tam'] : l.tt === 'quan_tam' ? ['quan_tam', 'quan_tam'] : ['quan_tam', 'khong_quan_tam'];
     for (const tt of chuoi) {
       logRows.push([leadIds[i], l.row[3], tt, pick(NOI_DUNG_CS[tt]), t]);
       t = addDays(t, int(1, 5));

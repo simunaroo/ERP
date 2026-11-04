@@ -74,8 +74,13 @@ const VIEC = {
          AND NOT EXISTS (SELECT 1 FROM khach_hang_cham_soc c WHERE c.khach_hang_id = k.id)`],
     ['Đơn nháp chưa chốt', '/don-hang?trang_thai=nhap',
       `SELECT count(*) FROM don_hang WHERE trang_thai = 'nhap' AND sale_id = $1`],
-    ['Khách đang tư vấn/báo giá, quá 7 ngày chưa liên hệ', '/khach-hang?trang_thai=dang_tu_van',
-      `SELECT count(*) FROM khach_hang k WHERE k.sale_phu_trach_id = $1 AND k.trang_thai_cham_soc IN ('dang_tu_van', 'da_bao_gia')
+    ['Khách hẹn gọi lại đã đến giờ', '/khach-hang?trang_thai=hen_goi_lai',
+      `SELECT count(*) FROM khach_hang WHERE sale_phu_trach_id = $1 AND trang_thai_cham_soc = 'hen_goi_lai' AND hen_goi_lai_luc <= now()`, 'gap'],
+    ['Số không nghe máy / thuê bao, quá 1 ngày chưa gọi lại', '/khach-hang?trang_thai=khong_nghe_may',
+      `SELECT count(*) FROM khach_hang k WHERE k.sale_phu_trach_id = $1 AND k.trang_thai_cham_soc IN ('khong_nghe_may', 'thue_bao')
+         AND (SELECT max(created_at) FROM khach_hang_cham_soc c WHERE c.khach_hang_id = k.id) < now() - interval '1 day'`],
+    ['Khách quan tâm, quá 7 ngày chưa liên hệ', '/khach-hang?trang_thai=quan_tam',
+      `SELECT count(*) FROM khach_hang k WHERE k.sale_phu_trach_id = $1 AND k.trang_thai_cham_soc = 'quan_tam'
          AND COALESCE((SELECT max(created_at) FROM khach_hang_cham_soc c WHERE c.khach_hang_id = k.id), k.created_at) < now() - interval '7 days'`],
     ['Đơn đã quyết toán/hoàn tất, khách còn nợ', '/don-hang?con_no=con',
       `SELECT count(*) FROM don_hang d JOIN v_don_hang_tien t ON t.don_hang_id = d.id

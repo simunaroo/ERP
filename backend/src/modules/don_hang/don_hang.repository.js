@@ -179,10 +179,16 @@ export async function chuyenGiaiDoan(client, id, { tu, den, trangThai, vanHanhId
 export async function dieuKienRoiBuoc(client, donHangId) {
   const { rows } = await client.query(
     `SELECT
-       (SELECT count(*) FROM mua_hang_dong m JOIN don_hang_vat_tu v ON v.id = m.don_hang_vat_tu_id
-         WHERE v.don_hang_id = $1 AND m.trang_thai NOT IN ('san_hang', 'da_lay_hang', 'da_giao_hang', 'huy'))::int AS dong_chua_san,
-       (SELECT count(*) FROM mua_hang_dong m JOIN don_hang_vat_tu v ON v.id = m.don_hang_vat_tu_id
-         WHERE v.don_hang_id = $1 AND m.trang_thai <> 'huy')::int AS tong_dong_mua,
+       -- Dem theo VAT TU MUA NGOAI cua don (khong chi theo dong mua da tao): dong mua chi duoc tao khi mo man Mua hang,
+       -- dem theo mua_hang_dong thi don chua ai mo man do se "du hang" vi 0 dong (loi da gap o kiem thu E2E).
+       (SELECT count(*) FROM don_hang_vat_tu v JOIN vat_tu vt ON vt.id = v.vat_tu_id
+          JOIN loai_vat_tu l ON l.id = vt.loai_vat_tu_id AND l.nguon_goc = 'mua_ngoai'
+          LEFT JOIN mua_hang_dong m ON m.don_hang_vat_tu_id = v.id
+         WHERE v.don_hang_id = $1 AND (m.id IS NULL OR m.trang_thai NOT IN ('san_hang', 'da_lay_hang', 'da_giao_hang', 'huy')))::int AS dong_chua_san,
+       (SELECT count(*) FROM don_hang_vat_tu v JOIN vat_tu vt ON vt.id = v.vat_tu_id
+          JOIN loai_vat_tu l ON l.id = vt.loai_vat_tu_id AND l.nguon_goc = 'mua_ngoai'
+          LEFT JOIN mua_hang_dong m ON m.don_hang_vat_tu_id = v.id
+         WHERE v.don_hang_id = $1 AND (m.id IS NULL OR m.trang_thai <> 'huy'))::int AS tong_dong_mua,
        (SELECT count(*) FROM thi_cong WHERE don_hang_id = $1)::int AS so_giai_doan,
        (SELECT count(*) FROM thi_cong WHERE don_hang_id = $1 AND ngay_hoan_thanh IS NULL)::int AS giai_doan_chua_xong`,
     [donHangId],
