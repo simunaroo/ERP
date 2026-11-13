@@ -171,6 +171,8 @@ export async function seedBoSung(conn) {
     const keToan = (await db.query(`SELECT id FROM users WHERE vai_tro = 'ke_toan'`)).rows.map((r) => r.id);
     const thu = await phieuThu(db, keToan, homNay);
     const so = await nhapSo(db, homNay);
+    // San pham cua don + san pham quan tam (doan tu nhu cau, tu don da dat) cho toan bo khach gia lap.
+    await db.query('SELECT fn_suy_san_pham_quan_tam()');
     await db.query('COMMIT');
     return { phieuThu: thu || 'bỏ qua (đã có)', nhapSo: so || 'bỏ qua (đã có)' };
   } catch (e) {

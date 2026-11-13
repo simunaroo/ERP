@@ -4,7 +4,7 @@ import { AppError } from '../../utils/AppError.js';
 const tien = (n) => `${Math.round(Number(n)).toLocaleString('vi-VN')} đ`;
 const LOAI_CHI = { coc: 'Cọc', quyet_toan: 'Quyết toán', chi_bo_sung: 'Chi bổ sung', tra_cong: 'Trả công', ung_cong: 'Ứng công' };
 const BUOC = {
-  len_phuong_an: 'Lên phương án', boc_khoi_luong: 'Bóc khối lượng', mua_hang: 'Mua hàng', giao_hang: 'Giao hàng',
+  len_phuong_an: 'Lên phương án', boc_khoi_luong: 'Tính KLVT', mua_hang: 'Mua hàng', giao_hang: 'Giao hàng',
   thi_cong: 'Thi công', nghiem_thu: 'Nghiệm thu', quyet_toan: 'Quyết toán', hoan_tat: 'Hoàn tất', huy: 'Huỷ',
 };
 

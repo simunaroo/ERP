@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api, loiCua } from '../api/client.js';
 import { TRANG_THAI_CHAM_SOC, ngayGio } from '../utils.js';
-import Icon from './Icon.jsx';
 
 const CAN_LY_DO = ['khong_quan_tam', 'sai_so'];
 const gioMin = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16);
@@ -17,15 +16,14 @@ export function HoiLenDon({ khachHangId, onDong }) {
     document.addEventListener('keydown', esc);
     return () => document.removeEventListener('keydown', esc);
   }, [onDong]);
-  const di = (cheDo) => navigate(`/don-hang/tao?khach_hang_id=${khachHangId}&che_do=${cheDo}`);
+  const di = () => navigate(`/don-hang/tao?khach_hang_id=${khachHangId}`);
   return (
     <div className="modal-backdrop" onClick={onDong}>
       <div className="modal" role="dialog" aria-modal="true" aria-labelledby="hoi-len-don" onClick={(e) => e.stopPropagation()}>
         <h3 id="hoi-len-don">Khách đã chốt — lên đơn ngay?</h3>
-        <p className="muted">Bạn có thể tải ảnh tin nhắn hoặc phiếu ghi chép để AI điền sẵn đơn hàng, hoặc tự nhập.</p>
+        <p className="muted">Nhập vật tư, địa chỉ công trình và điều khoản để chuyển đơn sang Vận hành.</p>
         <div className="modal-choices">
-          <button ref={nutDau} className="btn" onClick={() => di('ai')}><Icon n="sparkles" /> Lên đơn nhanh bằng AI</button>
-          <button className="btn sec" onClick={() => di('tay')}>Nhập đơn thủ công</button>
+          <button ref={nutDau} className="btn" onClick={di}>Lên đơn ngay</button>
           <button className="link" onClick={onDong}>Để sau</button>
         </div>
       </div>

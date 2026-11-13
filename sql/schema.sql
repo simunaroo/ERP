@@ -90,7 +90,7 @@ CREATE TABLE don_hang (
     trang_thai              trang_thai_don_hang_enum NOT NULL DEFAULT 'nhap',
     giai_doan               giai_doan_don_enum,
     hinh_thuc               hinh_thuc_don_enum NOT NULL DEFAULT 'hoan_thien',
-    ma_hop_dong             TEXT,
+    ma_hop_dong             TEXT,          -- "SĐT khách_STT đơn", tự sinh khi chốt (migration 032)
     ngay_chot               DATE,
     ngay_yc_lap_dat         DATE,
     tinh_thanh              TEXT,
@@ -165,7 +165,8 @@ CREATE TABLE don_hang_yeu_cau_sua (
 CREATE TABLE loai_vat_tu (
     id          SERIAL PRIMARY KEY,
     ten         TEXT NOT NULL UNIQUE,
-    nguon_goc   nguon_goc_vat_tu_enum NOT NULL
+    nguon_goc   nguon_goc_vat_tu_enum NOT NULL,
+    tu_khoa     TEXT          -- "ốp, nano, pvc": doan san pham quan tam tu o Nhu cau (migration 033)
 );
 
 CREATE TABLE vat_tu (
@@ -781,3 +782,94 @@ CREATE TABLE ai_nhan_xet_cham_soc (
     CONSTRAINT ck_ai_nx_ky CHECK (tu_ngay <= den_ngay)
 );
 CREATE INDEX idx_ai_nx_cs_thoi_gian ON ai_nhan_xet_cham_soc(created_at DESC);
+
+-- Ma hop dong duy nhat (migration 032)
+CREATE UNIQUE INDEX uq_don_hang_ma_hop_dong ON don_hang(ma_hop_dong) WHERE ma_hop_dong IS NOT NULL;
+
+-- ---------- San pham quan tam / san pham cua don (migration 033) ----------
+-- San pham = loai_vat_tu. Khach co NHIEU san pham quan tam (N-N); don co MOT san pham chinh.
+CREATE TABLE khach_hang_san_pham (
+    khach_hang_id   INTEGER NOT NULL REFERENCES khach_hang(id) ON DELETE CASCADE,
+    loai_vat_tu_id  INTEGER NOT NULL REFERENCES loai_vat_tu(id) ON DELETE RESTRICT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (khach_hang_id, loai_vat_tu_id)
+);
+CREATE INDEX idx_kh_san_pham_loai ON khach_hang_san_pham(loai_vat_tu_id);
+
+-- Them o cuoi vi bang don_hang tao truoc loai_vat_tu.
+ALTER TABLE don_hang ADD COLUMN san_pham_id INTEGER REFERENCES loai_vat_tu(id) ON DELETE RESTRICT;
+CREATE INDEX idx_don_hang_san_pham ON don_hang(san_pham_id);
+
+-- p_khach NULL = toan bo khach. Chi THEM, khong xoa lua chon Sale da tick. Tra ve so dong khach_hang_san_pham them moi.
+CREATE FUNCTION fn_suy_san_pham_quan_tam(p_khach INTEGER DEFAULT NULL) RETURNS INTEGER AS $$
+DECLARE n INTEGER;
+BEGIN
+  -- Don chua co san pham: lay loai vat tu chiem nhieu tien nhat trong don.
+  UPDATE don_hang dh SET san_pham_id = x.loai
+    FROM (SELECT DISTINCT ON (dvt.don_hang_id) dvt.don_hang_id, vt.loai_vat_tu_id AS loai
+            FROM don_hang_vat_tu dvt JOIN vat_tu vt ON vt.id = dvt.vat_tu_id
+           GROUP BY dvt.don_hang_id, vt.loai_vat_tu_id
+           ORDER BY dvt.don_hang_id, sum(dvt.so_luong_can * dvt.don_gia) DESC, vt.loai_vat_tu_id) x
+   WHERE x.don_hang_id = dh.id AND dh.san_pham_id IS NULL AND (p_khach IS NULL OR dh.khach_hang_id = p_khach);
+
+  -- Khach quan tam: (a) san pham cua cac don da dat, (b) tu khoa xuat hien trong "Nhu cầu" (\m \M = ranh gioi tu,
+  -- de "của" khong bi nham thanh "cửa").
+  INSERT INTO khach_hang_san_pham (khach_hang_id, loai_vat_tu_id)
+  SELECT dh.khach_hang_id, dh.san_pham_id FROM don_hang dh
+   WHERE dh.san_pham_id IS NOT NULL AND (p_khach IS NULL OR dh.khach_hang_id = p_khach)
+  UNION
+  SELECT kh.id, tk.id
+    FROM khach_hang kh
+    JOIN (SELECT l.id, '\m(' || string_agg(regexp_replace(lower(trim(k)), '([.^$*+?()\[\]{}|\\])', '\\\1', 'g'), '|') || ')\M' AS mau
+            FROM loai_vat_tu l, regexp_split_to_table(COALESCE(NULLIF(l.tu_khoa, ''), l.ten), ',') k
+           WHERE trim(k) <> '' GROUP BY l.id) tk ON kh.nhu_cau ~* tk.mau
+   WHERE p_khach IS NULL OR kh.id = p_khach
+  ON CONFLICT DO NOTHING;
+  GET DIAGNOSTICS n = ROW_COUNT;
+  RETURN n;
+END $$ LANGUAGE plpgsql;
+
+-- ---------- Tro ly AI theo san pham (migration 034) ----------
+-- Moi loai san pham la mot tro ly; moi cau hoi gui kem ho so kien thuc cua dung san pham (khong huan luyen lai model).
+-- Ho so kien thuc cua tung tro ly (Admin soan / nap tu file). Co id rieng de trigger nhat ky ghi duoc ban_ghi.
+CREATE TABLE tro_ly_san_pham (
+    id                  SERIAL PRIMARY KEY,
+    loai_vat_tu_id      INTEGER NOT NULL UNIQUE REFERENCES loai_vat_tu(id) ON DELETE CASCADE,
+    kien_thuc           TEXT NOT NULL DEFAULT '',
+    cap_nhat_luc        TIMESTAMPTZ NOT NULL DEFAULT now(),
+    nguoi_cap_nhat_id   INTEGER REFERENCES users(id) ON DELETE SET NULL
+);
+CREATE TRIGGER tg_nhat_ky AFTER INSERT OR UPDATE OR DELETE ON tro_ly_san_pham FOR EACH ROW EXECUTE FUNCTION fn_ghi_nhat_ky();
+
+-- Cuoc tro chuyen cua Sale voi mot tro ly (co the gan voi khach dang tu van).
+CREATE TABLE tro_ly_hoi_thoai (
+    id              SERIAL PRIMARY KEY,
+    nguoi_id        INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    loai_vat_tu_id  INTEGER NOT NULL REFERENCES loai_vat_tu(id) ON DELETE CASCADE,
+    khach_hang_id   INTEGER REFERENCES khach_hang(id) ON DELETE SET NULL,
+    tieu_de         TEXT NOT NULL,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    cap_nhat_luc    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_tro_ly_hoi_thoai_nguoi ON tro_ly_hoi_thoai(nguoi_id, loai_vat_tu_id, cap_nhat_luc DESC);
+
+-- Tin nhan: chi luu chu + so anh (khong luu anh: nhe CSDL, tranh luu anh khach ngoai y muon).
+CREATE TABLE tro_ly_tin_nhan (
+    id              BIGSERIAL PRIMARY KEY,
+    hoi_thoai_id    INTEGER NOT NULL REFERENCES tro_ly_hoi_thoai(id) ON DELETE CASCADE,
+    vai_tro         VARCHAR(5) NOT NULL CHECK (vai_tro IN ('user', 'model')),
+    noi_dung        TEXT NOT NULL,
+    so_anh          SMALLINT NOT NULL DEFAULT 0 CHECK (so_anh BETWEEN 0 AND 3),
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_tro_ly_tin_nhan_hoi_thoai ON tro_ly_tin_nhan(hoi_thoai_id, id);
+
+-- ---------- Bat/tat xac thuc 2 lop theo vai tro (migration 035) ----------
+CREATE TABLE xac_thuc_vai_tro (
+    id                  SERIAL PRIMARY KEY,           -- id rieng de trigger nhat ky ghi duoc ban_ghi
+    vai_tro             vai_tro_enum NOT NULL UNIQUE,
+    bat_2fa             BOOLEAN NOT NULL DEFAULT false,
+    nguoi_cap_nhat_id   INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    cap_nhat_luc        TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE TRIGGER tg_nhat_ky AFTER INSERT OR UPDATE OR DELETE ON xac_thuc_vai_tro FOR EACH ROW EXECUTE FUNCTION fn_ghi_nhat_ky();

@@ -14,7 +14,7 @@ export const BUOC_DON = {
 export const GIAI_DOAN = {
   chot: { nhan: 'Chốt đơn' },
   len_phuong_an: { nhan: 'Lên phương án' },
-  boc_khoi_luong: { nhan: 'Bóc khối lượng' },
+  boc_khoi_luong: { nhan: 'Tính KLVT' },
   mua_hang: { nhan: 'Mua hàng' },
   giao_hang: { nhan: 'Giao hàng' },
   thi_cong: { nhan: 'Thi công' },
@@ -47,7 +47,7 @@ export const TRANG_THAI_CHI = {
   da_thanh_toan: { nhan: 'Đã chi', lop: 'p-done' },
 };
 export const LOAI_MBS = {
-  hang_hong: 'Hàng hỏng/xước/vỡ', giao_thieu_sai: 'NCC giao thiếu/sai', boc_khoi_luong_thieu: 'Bóc khối lượng thiếu',
+  hang_hong: 'Hàng hỏng/xước/vỡ', giao_thieu_sai: 'NCC giao thiếu/sai', boc_khoi_luong_thieu: 'Tính KLVT thiếu',
   tho_lam_hong: 'Thợ làm hỏng', khach_bo_sung: 'Khách bổ sung', mat_hang: 'Mất hàng', khac: 'Khác',
 };
 export const NGUON_TRACH_NHIEM = {

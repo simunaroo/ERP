@@ -27,10 +27,10 @@ INSERT INTO khach_hang_cham_soc (khach_hang_id, sale_id, trang_thai, noi_dung, c
   (5, 2, 'quan_tam', 'Khách quan tâm tấm ốp phòng ngủ, hẹn khảo sát.', '2026-10-03 09:30+07'),
   (5, 2, 'quan_tam',  'Đã báo giá 22 m² tấm ốp PVC vân đá, chờ khách phản hồi.', '2026-10-04 16:00+07');
 
-INSERT INTO loai_vat_tu (ten, nguon_goc) VALUES
-  ('Cửa',    'tu_san_xuat'),
-  ('Sàn',    'mua_ngoai'),
-  ('Tấm ốp', 'mua_ngoai');
+INSERT INTO loai_vat_tu (ten, nguon_goc, tu_khoa) VALUES
+  ('Cửa',    'tu_san_xuat', 'cửa, cửa nhôm, cửa gỗ, xingfa'),
+  ('Sàn',    'mua_ngoai',   'sàn, lát sàn, sàn gỗ, spc'),
+  ('Tấm ốp', 'mua_ngoai',   'tấm ốp, ốp, nano, pvc, lam sóng');
 
 INSERT INTO vat_tu (ten, loai_vat_tu_id, don_vi_tinh, quy_cach) VALUES
   ('Cửa nhôm Xingfa 2 cánh', 1, 'bộ', '1200x2200'),
@@ -86,7 +86,7 @@ INSERT INTO don_hang (ma_don, khach_hang_id, sale_id, vanhanh_phu_trach_id, tran
 INSERT INTO don_hang_giai_doan_log (don_hang_id, tu_giai_doan, den_giai_doan, nguoi_id, ghi_chu, created_at) VALUES
   (1, NULL, 'len_phuong_an', 2, 'Chốt đơn', '2026-10-01 09:15+07'),
   (1, 'len_phuong_an', 'boc_khoi_luong', 4, NULL, '2026-10-01 15:00+07'),
-  (1, 'boc_khoi_luong', 'mua_hang', 4, 'Đã bóc khối lượng theo bản vẽ mặt bằng.', '2026-10-02 10:20+07'),
+  (1, 'boc_khoi_luong', 'mua_hang', 4, 'Đã tính KLVT theo bản vẽ mặt bằng.', '2026-10-02 10:20+07'),
   (2, NULL, 'len_phuong_an', 2, 'Chốt đơn', '2026-10-02 10:30+07'),
   (3, NULL, 'len_phuong_an', 3, 'Chốt đơn', '2026-08-14 14:00+07'),
   (3, 'len_phuong_an', 'boc_khoi_luong', 4, NULL, '2026-08-14 17:00+07'),
@@ -172,10 +172,11 @@ INSERT INTO quyen (ma, ten, nhom, thu_tu, chi_admin) VALUES
   ('nhap_so.nhap',        'Nhập số (khách tiềm năng)',                        'Bán hàng', 12, false),
   ('nhap_so.quan_ly',     'Quản lý tỷ lệ chia số, chuyển số giữa Sale',       'Bán hàng', 13, false),
   ('don_hang.lap',        'Lập / sửa đơn nháp, gửi báo giá, yêu cầu sửa đơn', 'Bán hàng', 14, false),
-  ('tro_ly.ai',           'Lên đơn nhanh bằng AI',                            'Bán hàng', 15, false),
+  ('tro_ly.ai',           'Hỏi trợ lý AI sản phẩm',                           'Bán hàng', 15, false),
+  ('tro_ly.kien_thuc',    'Soạn kiến thức cho trợ lý AI sản phẩm',            'Bán hàng', 16, false),
   ('don_hang.dieu_phoi',  'Lên phương án, xử lý yêu cầu sửa đơn',             'Điều phối', 20, false),
   ('don_hang.chuyen_buoc','Chuyển bước tiến độ đơn',                          'Điều phối', 21, false),
-  ('don_hang.boc_kl',     'Xác nhận bóc khối lượng',                          'Điều phối', 22, false),
+  ('don_hang.boc_kl',     'Xác nhận tính KLVT (khối lượng vật tư)',            'Điều phối', 22, false),
   ('don_hang.huy',        'Huỷ đơn',                                          'Điều phối', 23, false),
   ('don_hang.phu_trach',  'Đổi Vận hành phụ trách đơn',                       'Điều phối', 24, false),
   ('mua_hang.xem',        'Xem mua hàng, đặt hàng NCC',                       'Điều phối', 25, false),
@@ -207,4 +208,73 @@ INSERT INTO vai_tro_quyen (vai_tro, ma_quyen) VALUES
   ('admin', 'khach_hang.xem'), ('admin', 'nhap_so.nhap'), ('admin', 'nhap_so.quan_ly'), ('admin', 'don_hang.chuyen_buoc'), ('admin', 'don_hang.boc_kl'),
   ('admin', 'don_hang.huy'), ('admin', 'don_hang.phu_trach'), ('admin', 'mua_hang.xem'), ('admin', 'mua_hang.lay_hang'), ('admin', 'thi_cong.xem'),
   ('admin', 'thi_cong.thao_tac'), ('admin', 'chi.xem'), ('admin', 'chi.duyet'), ('admin', 'mua_hang.da_mua'), ('admin', 'thu.ghi_nhan'),
-  ('admin', 'thu.xac_nhan'), ('admin', 'ncc.xem'), ('admin', 'ncc.sua'), ('admin', 'vat_tu.sua'), ('admin', 'bao_cao.xem'), ('admin', 'he_thong.quan_tri');
+  ('admin', 'thu.xac_nhan'), ('admin', 'ncc.xem'), ('admin', 'ncc.sua'), ('admin', 'vat_tu.sua'), ('admin', 'bao_cao.xem'), ('admin', 'he_thong.quan_tri'),
+  ('admin', 'tro_ly.ai'), ('admin', 'tro_ly.kien_thuc');
+
+-- Ma hop dong "SĐT khách_STT đơn" cho cac don da chot (cung quy tac voi backend/src/modules/don_hang/ma_hop_dong.js)
+WITH g AS (
+  SELECT dh.id, COALESCE(NULLIF(regexp_replace(kh.sdt, '\D', '', 'g'), ''), 'KH' || kh.id) AS goc,
+         ROW_NUMBER() OVER (PARTITION BY COALESCE(NULLIF(regexp_replace(kh.sdt, '\D', '', 'g'), ''), 'KH' || kh.id)
+                            ORDER BY dh.ngay_chot NULLS LAST, dh.created_at, dh.id) AS stt
+    FROM don_hang dh JOIN khach_hang kh ON kh.id = dh.khach_hang_id
+   WHERE dh.trang_thai <> 'nhap')
+UPDATE don_hang dh SET ma_hop_dong = g.goc || '_' || g.stt FROM g WHERE g.id = dh.id;
+
+-- San pham cua don + san pham quan tam cua khach (migration 033). Khach chua co don: Sale tick tay.
+INSERT INTO khach_hang_san_pham (khach_hang_id, loai_vat_tu_id) VALUES (4, 2), (4, 3), (5, 3), (6, 1);
+SELECT fn_suy_san_pham_quan_tam();
+
+-- Ho so kien thuc tro ly AI theo san pham (migration 034) - DU LIEU MAU, Admin thay bang tai lieu that.
+INSERT INTO tro_ly_san_pham (loai_vat_tu_id, kien_thuc, nguoi_cap_nhat_id) VALUES
+(1, $kt$# Cửa (dữ liệu mẫu)
+## Dòng sản phẩm
+- Cửa nhôm Xingfa 2 cánh: nhôm hệ Xingfa nhập khẩu, dày 1,4-2,0 mm, kính cường lực 8 mm hoặc kính hộp 2 lớp cách âm. Kích thước chuẩn 1200x2200 mm, làm theo kích thước ô chờ thực tế.
+- Cửa gỗ công nghiệp: lõi MDF chống ẩm, phủ Melamine hoặc Laminate, khung bao gỗ. Chuẩn 900x2200 mm, dùng cho phòng ngủ, phòng làm việc. Không dùng cho nhà vệ sinh/ngoài trời.
+## Giá bán tham khảo (chưa VAT)
+- Xingfa 2 cánh kính cường lực: 2.400.000 - 2.800.000 đ/m2 tuỳ phụ kiện. Kính hộp cộng thêm khoảng 350.000 đ/m2.
+- Cửa gỗ công nghiệp Melamine: 3.200.000 đ/bộ; Laminate: 3.900.000 đ/bộ (gồm khung bao, bản lề, khoá tay gạt).
+## Bảo hành & thi công
+- Nhôm Xingfa: bảo hành 5 năm khung, 2 năm phụ kiện. Cửa gỗ công nghiệp: 2 năm.
+- Đo đạc miễn phí nội thành; sản xuất 7-10 ngày; lắp đặt 1 ngày/căn hộ.
+- Ô chờ cần hoàn thiện trát, cân chỉnh trước khi đo chính xác.
+## Lưu ý tư vấn
+- Nhà mặt đường, tầng thấp, nhiều bụi ồn: gợi ý kính hộp cách âm.
+- Cửa gỗ công nghiệp kỵ nước: hỏi khách vị trí lắp có gần nhà tắm không.$kt$, NULL),
+(2, $kt$# Sàn (dữ liệu mẫu)
+## Dòng sản phẩm
+- Sàn SPC vân gỗ 4 mm: lõi đá nhựa SPC, lớp phủ chống trầy AC4, kích thước tấm 1220x180 mm, hèm khoá click. Chống nước 100%, dùng được bếp, nhà tắm khô.
+- Sàn SPC vân đá 5 mm: tấm 600x600 mm, phù hợp sảnh, showroom, phòng khách phong cách hiện đại.
+## Giá bán tham khảo (chưa VAT, đã gồm công lắp nội thành)
+- SPC vân gỗ 4 mm: 285.000 đ/m2. SPC vân đá 5 mm: 335.000 đ/m2.
+- Xốp lót IXPE 2 mm (khuyên dùng): 25.000 đ/m2. Nẹp kết thúc: 60.000 đ/m dài. Len chân tường nhựa: 55.000 đ/m dài.
+## Tính khối lượng
+- Diện tích sàn x 1,05 (hao hụt 5%); phòng nhiều góc cạnh, lát chéo: x 1,08.
+- Len chân tường = chu vi phòng trừ chiều rộng cửa đi.
+## Bảo hành & thi công
+- Bảo hành 10 năm lớp phủ bề mặt, 1 năm thi công.
+- Nền cần phẳng (chênh không quá 3 mm/2 m), khô; nền gồ ghề phải cán lại hoặc tự san phẳng, báo giá riêng.
+- Thi công 1 ngày cho căn hộ 70-80 m2.
+## Lưu ý tư vấn
+- Nhà có trẻ nhỏ, thú cưng, hay lau nước: SPC phù hợp hơn sàn gỗ công nghiệp.
+- Không lát dưới tủ bếp cố định; lắp sàn trước, tủ sau thì phải chừa khe giãn nở 8-10 mm.$kt$, NULL),
+(3, $kt$# Tấm ốp (dữ liệu mẫu)
+## Dòng sản phẩm
+- Tấm ốp nano 8 mm: lõi nhựa PVC phủ phim vân gỗ/vân đá/trơn, khổ 400x3000 mm, chống ẩm, chống mối mọt. Dùng ốp tường phòng khách, phòng ngủ, ốp trần.
+- Tấm ốp PVC vân đá: khổ 1220x2440 mm, bề mặt bóng giả đá marble, làm vách tivi, sảnh, quầy lễ tân.
+## Kiểu thi công
+- Ốp tường không xương: dán keo trực tiếp lên tường phẳng, khô; nhanh, rẻ.
+- Ốp tường có xương: khung xương gỗ/nhôm hộp, dùng khi tường cong vênh, ẩm, hoặc cần đi dây điện ngầm.
+- Ốp trần phẳng / trần giật cấp: cần khung xương, giật cấp tính thêm công đi nẹp và đèn hắt.
+## Giá bán tham khảo (chưa VAT, gồm công)
+- Nano 8 mm ốp tường không xương: 230.000 đ/m2; có xương: 290.000 đ/m2; ốp trần phẳng: 320.000 đ/m2; trần giật cấp: 380.000 đ/m2.
+- PVC vân đá 1220x2440: 420.000 đ/m2 (gồm keo, nẹp chỉ).
+## Tính khối lượng
+- Diện tích ốp = dài x cao mảng tường, trừ cửa sổ/cửa đi lớn hơn 1 m2, cộng hao hụt 7%.
+- 1 tấm nano 400x3000 = 1,2 m2.
+## Bảo hành & lưu ý
+- Bảo hành 5 năm bong phim, 1 năm thi công.
+- Tường bị thấm phải xử lý chống thấm trước, không ốp che lỗi thấm.
+- Gần bếp nấu cần cách nguồn nhiệt trên 50 cm.$kt$, NULL);
+
+-- Xac thuc 2 lop theo vai tro (migration 035): Admin, Ke toan bat; Sale, Van hanh tat.
+INSERT INTO xac_thuc_vai_tro (vai_tro, bat_2fa) VALUES ('admin', true), ('ke_toan', true), ('sale', false), ('van_hanh', false);

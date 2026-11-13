@@ -1,8 +1,9 @@
 import { query } from '../../config/db.js';
 
-const COT_DON = ['hinh_thuc', 'ma_hop_dong', 'ngay_yc_lap_dat', 'tinh_thanh', 'phuong_xa', 'dia_chi_cong_trinh',
+// ma_hop_dong khong nam day: he thong tu sinh luc chot (ma_hop_dong.js), khong nhan tu form.
+const COT_DON = ['hinh_thuc', 'ngay_yc_lap_dat', 'tinh_thanh', 'phuong_xa', 'dia_chi_cong_trinh',
   'phi_van_chuyen', 'phu_thu', 'chiet_khau_pct', 'tien_coc', 'ngay_coc', 'ty_le_tam_ung',
-  'dieu_khoan_nghiem_thu', 'ghi_chu_van_chuyen'];
+  'dieu_khoan_nghiem_thu', 'ghi_chu_van_chuyen', 'san_pham_id'];
 
 // Cot sap xep: chi nhan khoa trong danh sach nay (ORDER BY khong dung duoc tham so $n,
 // nen tuyet doi khong ghep chuoi nguoi dung gui len vao SQL).
@@ -16,7 +17,7 @@ const SAP_XEP = {
 export const KHOA_SAP_XEP = Object.keys(SAP_XEP);
 
 export async function findAll({
-  saleId, anNhap, trangThai, giaiDoan, hinhThuc, vanHanhId, tuKhoa, nhomKhach, tinhThanh, nghiemThu,
+  saleId, anNhap, trangThai, giaiDoan, hinhThuc, vanHanhId, tuKhoa, nhomKhach, tinhThanh, nghiemThu, sanPhamId,
   chotTu, chotDen, lapDatTu, lapDatDen, tongTu, tongDen, conNo, sapXep, limit, offset,
 }) {
   const where = [];
@@ -32,6 +33,7 @@ export async function findAll({
   if (nhomKhach) them('kh.nhom_khach_hang = ?', nhomKhach);
   if (tinhThanh) them('dh.tinh_thanh = ?', tinhThanh);
   if (nghiemThu) them('dh.dieu_khoan_nghiem_thu = ?', nghiemThu);
+  if (sanPhamId) them('dh.san_pham_id = ?', sanPhamId);
   if (chotTu) them('dh.ngay_chot >= ?', chotTu);
   if (chotDen) them('dh.ngay_chot <= ?', chotDen);
   if (lapDatTu) them('dh.ngay_yc_lap_dat >= ?', lapDatTu);
@@ -42,20 +44,21 @@ export async function findAll({
   if (conNo === 'het') where.push('t.con_phai_thu <= 0');
   if (tuKhoa) {
     params.push(`%${tuKhoa}%`);
-    where.push(`(dh.ma_don ILIKE $${params.length} OR kh.ten ILIKE $${params.length} OR dh.ma_hop_dong ILIKE $${params.length})`);
+    where.push(`(dh.ma_don ILIKE $${params.length} OR kh.ten ILIKE $${params.length} OR dh.ma_hop_dong ILIKE $${params.length} OR kh.sdt ILIKE $${params.length})`);
   }
   const from = `FROM don_hang dh
        JOIN khach_hang kh ON kh.id = dh.khach_hang_id
        JOIN users s ON s.id = dh.sale_id
        LEFT JOIN users vh ON vh.id = dh.vanhanh_phu_trach_id
+       LEFT JOIN loai_vat_tu sp ON sp.id = dh.san_pham_id
        JOIN v_don_hang_tien t ON t.don_hang_id = dh.id
       ${where.length ? 'WHERE ' + where.join(' AND ') : ''}`;
 
   const [{ rows }, { rows: dem }] = await Promise.all([
     query(
-      `SELECT dh.id, dh.ma_don, dh.trang_thai, dh.giai_doan, dh.hinh_thuc, dh.tinh_thanh, dh.dia_chi_cong_trinh, dh.created_at,
+      `SELECT dh.id, dh.ma_don, dh.ma_hop_dong, dh.trang_thai, dh.giai_doan, dh.hinh_thuc, dh.tinh_thanh, dh.dia_chi_cong_trinh, dh.created_at,
               dh.ngay_chot, dh.ngay_yc_lap_dat, kh.ten AS khach_hang, s.ho_ten AS sale, vh.ho_ten AS van_hanh,
-              t.tong_don, t.con_phai_thu
+              dh.san_pham_id, sp.ten AS san_pham, t.tong_don, t.con_phai_thu
          ${from}
         ORDER BY ${SAP_XEP[sapXep] || SAP_XEP.moi_nhat}
         LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
@@ -69,12 +72,13 @@ export async function findAll({
 export async function findById(id) {
   const { rows } = await query(
     `SELECT dh.*, kh.ten AS khach_hang, kh.sdt AS khach_hang_sdt, kh.nhom_khach_hang,
-            s.ho_ten AS sale, vh.ho_ten AS van_hanh,
+            s.ho_ten AS sale, vh.ho_ten AS van_hanh, sp.ten AS san_pham,
             t.tong_vat_tu, t.tien_chiet_khau, t.tong_don, t.con_phai_thu, t.da_thu_khach, t.tho_thu_ho
        FROM don_hang dh
        JOIN khach_hang kh ON kh.id = dh.khach_hang_id
        JOIN users s ON s.id = dh.sale_id
        LEFT JOIN users vh ON vh.id = dh.vanhanh_phu_trach_id
+       LEFT JOIN loai_vat_tu sp ON sp.id = dh.san_pham_id
        JOIN v_don_hang_tien t ON t.don_hang_id = dh.id
       WHERE dh.id = $1`,
     [id],
@@ -138,6 +142,25 @@ export async function update(client, id, data) {
     [id, ...COT_DON.map((c) => data[c] ?? null)],
   );
   return rows[0];
+}
+
+// Loai san pham cua tung vat tu (de suy san pham chinh khi Sale bo trong).
+export async function loaiCuaVatTu(vatTuIds) {
+  const { rows } = await query('SELECT id, loai_vat_tu_id FROM vat_tu WHERE id = ANY($1::int[])', [vatTuIds]);
+  return new Map(rows.map((r) => [r.id, r.loai_vat_tu_id]));
+}
+
+export async function coSanPham(id) {
+  return (await query('SELECT 1 FROM loai_vat_tu WHERE id = $1', [id])).rowCount > 0;
+}
+
+// Khach dat san pham nao thi chac chan quan tam san pham do.
+export async function themSanPhamQuanTam(client, khachHangId, sanPhamId) {
+  if (!sanPhamId) return;
+  await client.query(
+    'INSERT INTO khach_hang_san_pham (khach_hang_id, loai_vat_tu_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+    [khachHangId, sanPhamId],
+  );
 }
 
 export async function thayVatTu(client, donHangId, items) {

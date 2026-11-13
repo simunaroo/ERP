@@ -6,7 +6,7 @@ export const BUOC = {
 };
 
 export const NHAN = {
-  len_phuong_an: 'Lên phương án', boc_khoi_luong: 'Bóc khối lượng', mua_hang: 'Mua hàng', giao_hang: 'Giao hàng',
+  len_phuong_an: 'Lên phương án', boc_khoi_luong: 'Tính KLVT', mua_hang: 'Mua hàng', giao_hang: 'Giao hàng',
   thi_cong: 'Thi công', nghiem_thu: 'Nghiệm thu', quyet_toan: 'Quyết toán', hoan_tat: 'Hoàn tất', huy: 'Huỷ',
 };
 

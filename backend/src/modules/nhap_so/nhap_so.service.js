@@ -77,6 +77,8 @@ export async function nhap(nguoiNhap, body, kenh = 'form') {
          VALUES ($1, $2, $3, $4, $5, $6, $7, now()) RETURNING id`,
         [ten, sdt, chu(d.dia_chi), saleId, nguon, chu(d.nhu_cau), nguoiNhap?.id ?? null],
       )).rows[0];
+      // Doan san pham quan tam tu "Nhu cầu" (theo tu khoa cua tung loai san pham); Sale sua lai o ho so khach.
+      if (chu(d.nhu_cau)) await client.query('SELECT fn_suy_san_pham_quan_tam($1)', [kh.id]);
       await client.query(
         `INSERT INTO chia_so_log (khach_hang_id, sale_id, kieu, kenh, nguoi_nhap_id) VALUES ($1, $2, $3, $4, $5)`,
         [kh.id, saleId, kieu, kenh, nguoiNhap?.id ?? null],

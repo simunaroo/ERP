@@ -5,10 +5,11 @@ import { useAuthStore } from '../store/authStore.js';
 import { NHOM_KHACH, TRANG_THAI_CHAM_SOC, ngayGio } from '../utils.js';
 import CapNhatChamSoc from '../components/CapNhatChamSoc.jsx';
 import { TabKhachHang } from './BaoCaoChamSoc.jsx';
+import { ChonSanPham, NhanSanPham, useDsSanPham } from '../components/SanPham.jsx';
 
-function FormThemKhach({ onDong }) {
+function FormThemKhach({ onDong, dsSanPham }) {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ ten: '', sdt: '', dia_chi: '', nhom_khach_hang: 'nha_dan' });
+  const [form, setForm] = useState({ ten: '', sdt: '', dia_chi: '', nhom_khach_hang: 'nha_dan', san_pham_ids: [] });
   const [loi, setLoi] = useState('');
   const [dangGui, setDangGui] = useState(false);
 
@@ -35,6 +36,8 @@ function FormThemKhach({ onDong }) {
           </select></div>
         <div className="field"><label htmlFor="kh-dc">Địa chỉ</label>
           <input id="kh-dc" value={form.dia_chi} onChange={(e) => setForm({ ...form, dia_chi: e.target.value })} /></div>
+        <div className="field span2"><label>Sản phẩm quan tâm</label>
+          <ChonSanPham dsSanPham={dsSanPham} giaTri={form.san_pham_ids} onChange={(ids) => setForm({ ...form, san_pham_ids: ids })} /></div>
       </div>
       {loi && <div className="error mt">{loi}</div>}
       <div className="actions">
@@ -51,6 +54,8 @@ export default function KhachHangList() {
   const page = Number(params.get('page')) || 1;
   const trangThai = params.get('trang_thai') || '';
   const q = params.get('q') || '';
+  const sanPham = params.get('san_pham') || '';
+  const dsSanPham = useDsSanPham();
   const [oTim, setOTim] = useState(q);
   const [kq, setKq] = useState(null);
   const [loi, setLoi] = useState('');
@@ -74,17 +79,17 @@ export default function KhachHangList() {
 
   useEffect(() => {
     const ctrl = new AbortController();
-    api.get('/khach-hang', { params: { page, trang_thai: trangThai || undefined, q: q || undefined }, signal: ctrl.signal })
+    api.get('/khach-hang', { params: { page, trang_thai: trangThai || undefined, q: q || undefined, san_pham: sanPham || undefined }, signal: ctrl.signal })
       .then((r) => { setKq(r.data); setLoi(''); })
       .catch((e) => { if (!ctrl.signal.aborted) setLoi(loiCua(e)); });
     return () => ctrl.abort();
-  }, [page, trangThai, q, lanTai]);
+  }, [page, trangThai, q, sanPham, lanTai]);
 
   return (
     <>
       <h1>Khách hàng</h1>
       <TabKhachHang />
-      {hienForm && <FormThemKhach onDong={() => setHienForm(false)} />}
+      {hienForm && <FormThemKhach dsSanPham={dsSanPham} onDong={() => setHienForm(false)} />}
       <div className="card">
         <div className="chips">
           <button className={!trangThai ? 'chip on' : 'chip'} onClick={() => capNhat({ trang_thai: '' })}>Tất cả</button>
@@ -94,6 +99,10 @@ export default function KhachHangList() {
         </div>
         <div className="toolbar">
           <input className="search" placeholder="Tìm theo tên, số điện thoại..." value={oTim} onChange={(e) => setOTim(e.target.value)} />
+          <select aria-label="Lọc theo sản phẩm quan tâm" value={sanPham} onChange={(e) => capNhat({ san_pham: e.target.value })}>
+            <option value="">Mọi sản phẩm</option>
+            {dsSanPham.map((sp) => <option key={sp.id} value={sp.id}>{sp.ten}</option>)}
+          </select>
           <span className="grow" />
           {vaiTro === 'sale' && !hienForm && <button className="btn" onClick={() => setHienForm(true)}>+ Thêm khách hàng</button>}
         </div>
@@ -105,7 +114,10 @@ export default function KhachHangList() {
               {(kq?.items || []).map((k) => (
                 <Fragment key={k.id}>
                 <tr className={moCs === k.id ? 'dong-dang-sua' : ''}>
-                  <td><Link to={`/khach-hang/${k.id}`}>{k.ten}</Link></td>
+                  <td><Link to={`/khach-hang/${k.id}`}>{k.ten}</Link>
+                    {k.san_pham.length > 0
+                      ? <div title={k.nhu_cau || undefined}><NhanSanPham ds={k.san_pham} /></div>
+                      : k.nhu_cau && <div className="muted small cs-ghi-chu" title={k.nhu_cau}>{k.nhu_cau}</div>}</td>
                   <td className="nowrap">{NHOM_KHACH[k.nhom_khach_hang]}</td>
                   <td className="nowrap">{k.sdt ? <a className="sdt-link" href={`tel:${k.sdt}`} title="Bấm để gọi">{k.sdt}</a> : '—'}</td>
                   <td>{k.dia_chi || '—'}</td>

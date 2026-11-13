@@ -112,4 +112,21 @@ describe('Đơn hàng: chốt, phân công, tiến độ', () => {
     const c = sau.find((v) => v.id === tao.d.id);
     assert.ok(c.so_don_dang_mo >= 3, `Vận hành mới phải nhận phần lớn đơn (nhận ${c.so_don_dang_mo})`);
   });
+
+  it('TC-DH-11: Mã hợp đồng tự sinh "SĐT_STT": đơn nháp chưa có mã, chốt đồng thời không trùng, chốt nháp nhận STT kế tiếp', async () => {
+    const kh = (await ctx.api(sale, 'POST', '/khach-hang', { ten: 'Khách Mã HĐ', sdt: '0977 123 456' })).d;
+    const body = {
+      khach_hang_id: kh.id, hinh_thuc: 'vat_tu', tinh_thanh: 'Hà Nội', dia_chi_cong_trinh: 'Số 2 Đường Thử', dieu_khoan_nghiem_thu: 'theo_hop_dong',
+      vat_tu: [{ vat_tu_id: 3, so_luong_can: 10, don_gia: 300000 }], ma_hop_dong: 'NHAP-TAY',
+    };
+    const nhap = (await ctx.api(sale, 'POST', '/don-hang', body)).d;
+    assert.equal(nhap.ma_hop_dong, null, 'đơn nháp chưa có mã; mã nhập tay bị bỏ qua');
+    const hai = await Promise.all([1, 2].map(() => ctx.api(sale, 'POST', '/don-hang', { ...body, chot: true })));
+    assert.deepEqual(hai.map((r) => r.d.ma_hop_dong).sort(), ['0977123456_1', '0977123456_2']);
+    const chot = await ctx.api(sale, 'PUT', `/don-hang/${nhap.id}`, { ...body, chot: true });
+    assert.equal(chot.s, 200, chot.d?.message);
+    assert.equal(chot.d.ma_hop_dong, '0977123456_3');
+    // Tim duoc don theo ma hop dong
+    assert.ok((await ctx.api(sale, 'GET', '/don-hang?q=0977123456_2')).d.items.some((d) => d.ma_hop_dong === '0977123456_2'));
+  });
 });

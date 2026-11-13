@@ -9,5 +9,6 @@ router.get('/', coQuyen('khach_hang.xem'), c.list);
 router.get('/:id', coQuyen('khach_hang.xem'), c.detail);
 router.post('/', coQuyen('khach_hang.sua'), c.create);
 router.post('/:id/cham-soc', coQuyen('khach_hang.sua'), c.chamSoc);
+router.put('/:id/san-pham', coQuyen('khach_hang.sua'), c.sanPham);
 
 export default router;

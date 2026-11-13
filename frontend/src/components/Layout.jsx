@@ -5,6 +5,8 @@ import { VAI_TRO } from '../utils.js';
 import ThongBao from './ThongBao.jsx';
 import { api } from '../api/client.js';
 import Icon from './Icon.jsx';
+import TroLyChat from './TroLyChat.jsx';
+import { useTroLyStore } from '../store/troLyStore.js';
 
 // Chi liet ke module da lam; them dong khi hoan thanh module moi.
 const NAV_ITEMS = [
@@ -19,6 +21,7 @@ const NAV_ITEMS = [
   { path: '/bao-cao', label: 'Báo cáo lãi/lỗ', icon: 'chart', quyen: ['bao_cao.xem'], vaiTro: ['ke_toan', 'admin'] },
   { path: '/vat-tu', label: 'Danh mục vật tư', icon: 'package', quyen: ['mua_hang.xem', 'vat_tu.sua'], vaiTro: ['van_hanh', 'ke_toan', 'admin'] },
   { path: '/nha-cung-cap', label: 'Nhà cung cấp', icon: 'factory', quyen: ['ncc.xem'], vaiTro: ['ke_toan', 'van_hanh', 'admin'] },
+  { path: '/tro-ly/kien-thuc', label: 'Kiến thức trợ lý AI', icon: 'sparkles', quyen: ['tro_ly.kien_thuc'], vaiTro: ['admin'] },
   { path: '/nguoi-dung', label: 'Người dùng', icon: 'user', quyen: ['he_thong.quan_tri'], vaiTro: ['admin'] },
   { path: '/phan-quyen', label: 'Phân quyền', icon: 'lock', quyen: ['he_thong.quan_tri'], vaiTro: ['admin'] },
   { path: '/sao-luu', label: 'Sao lưu dữ liệu', icon: 'package', quyen: ['he_thong.quan_tri'], vaiTro: ['admin'] },
@@ -63,6 +66,8 @@ export default function Layout() {
   const trangHienTai = pathname === '/doi-mat-khau' ? 'Đổi mật khẩu' : mucMo?.label ?? '';
 
   const thoat = () => {
+    // Xoa trang thai khung chat de nguoi dang nhap sau tren cung may khong thay cuoc tro chuyen cu.
+    useTroLyStore.setState({ mo: false, sanPhamId: null, hoiThoaiId: null, khachHangId: null });
     logout();
     navigate('/login', { replace: true });
   };
@@ -102,6 +107,8 @@ export default function Layout() {
           <Outlet />
         </main>
       </div>
+      {/* Khung chat tro ly san pham: nam ngoai Outlet nen giu nguyen khi chuyen trang */}
+      {(user.quyen ? user.quyen.includes('tro_ly.ai') : ['sale', 'admin'].includes(user.vai_tro)) && <TroLyChat />}
     </div>
   );
 }

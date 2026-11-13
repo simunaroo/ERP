@@ -556,3 +556,63 @@ td.cs-cuoi { min-width: 200px; max-width: 320px; }
 .cs-ghi-chu { font-size: 13px; color: var(--text-soft); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; white-space: normal; }
 /* Nhan "Moi" (so chua goi): do dac de Sale nhin thay ngay, khac do nhat cua Khong quan tam / Sai so */
 .p-moi { background: #dc2626; color: #fff; font-weight: 600; }
+
+/* San pham quan tam (khach hang) / san pham cua don */
+.sp-nhan { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+.sp-chon { margin-bottom: 0; }
+
+/* Tro ly AI san pham: khung chat noi goc phai duoi, mo duoc o moi man hinh */
+.chat-noi-nut { position: fixed; right: 20px; bottom: 20px; z-index: 60; display: inline-flex; align-items: center; gap: 6px;
+  background: var(--primary); color: var(--primary-text); border: none; border-radius: 999px; padding: 12px 18px; font-weight: 600;
+  box-shadow: 0 6px 20px rgba(0,0,0,.18); cursor: pointer; }
+.chat-noi-nut:hover { transform: translateY(-1px); }
+.chat-noi-nut:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; }
+.chat-noi { position: fixed; right: 20px; bottom: 20px; z-index: 60; width: 420px; height: min(640px, calc(100vh - 40px));
+  display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--surface); color: var(--text);
+  border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,.22); }
+.chat-noi-dau { display: flex; align-items: center; gap: 4px; }
+.chat-noi-dau .icon-btn { width: 30px; height: 30px; font-size: 18px; }
+.chat-noi-sp { display: flex; gap: 6px; flex-wrap: wrap; }
+.chat-noi-sp .chip { font-size: 13px; padding: 3px 12px; }
+.chat-noi-khach { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; background: var(--sidebar); border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; }
+.chat-noi-loi { margin: 0; }
+.chat-noi-anh { display: flex; gap: 6px; }
+.chat-noi-anh .thumb { width: 56px; height: 56px; }
+.chat-noi-chu-thich { font-size: 11px; margin: 0; }
+.chat-tin { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; padding: 2px; }
+.chat-tin.keo-tha { outline: 2px dashed var(--link); outline-offset: -2px; border-radius: 8px; }
+.chat-goi-y { margin: auto 0; text-align: center; }
+.chat-tn { max-width: 90%; border-radius: 12px; padding: 8px 11px; line-height: 1.5; font-size: 13.5px; }
+.chat-tn.toi { align-self: flex-end; background: var(--p-new-bg); color: var(--text-strong); }
+.chat-tn.ai { align-self: flex-start; background: var(--sidebar); border: 1px solid var(--border); }
+.chat-chu { white-space: pre-wrap; }
+.chat-anh { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+.chat-anh img { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; }
+.chat-nut { display: flex; gap: 12px; margin-top: 6px; flex-wrap: wrap; }
+.chat-nhap { display: flex; gap: 6px; align-items: flex-end; }
+.chat-nhap textarea { flex: 1; resize: none; min-width: 0; }
+.chat-ds-list { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+.chat-ds-list li { display: flex; align-items: center; gap: 4px; border-radius: 8px; }
+.chat-ds-list li.on, .chat-ds-list li:hover { background: var(--sidebar); }
+.chat-ds-mo { flex: 1; min-width: 0; text-align: left; background: none; border: none; color: inherit; cursor: pointer; padding: 6px 8px; display: flex; flex-direction: column; }
+.chat-ds-tieu-de { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ai-van-ban p, .ai-van-ban ul, .ai-van-ban h4 { margin: 0 0 6px; }
+.ai-van-ban ul { padding-left: 18px; }
+.ai-van-ban h4 { font-size: 14px; }
+@media (max-width: 600px) {
+  .chat-noi { inset: 0; width: auto; height: auto; border-radius: 0; }
+  .chat-noi-nut { right: 16px; bottom: 16px; }
+}
+@media print { .chat-noi, .chat-noi-nut { display: none; } }
+textarea.kien-thuc { width: 100%; font-family: ui-monospace, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+/* Cong tac bat/tat (xac thuc 2 lop theo vai tro) */
+.cong-tac { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.cong-tac input { appearance: none; width: 38px; height: 22px; border-radius: 999px; background: var(--border-input); position: relative; cursor: pointer; transition: background .15s; margin: 0; }
+.cong-tac input::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .15s; }
+.cong-tac input:checked { background: var(--p-done); }
+.cong-tac input:checked::after { transform: translateX(16px); }
+.cong-tac input:focus-visible { outline: 2px solid var(--link); outline-offset: 2px; }
+.cong-tac input:disabled { opacity: .6; cursor: wait; }
+
+/* Chua cho nut tro ly noi: khong che nut phan trang / nut luu cuoi trang */
+body:has(.chat-noi-nut) .content { padding-bottom: 84px; }

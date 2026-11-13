@@ -16,13 +16,25 @@ async function layKhachDuocPhep(user, id) {
   return kh;
 }
 
-export async function danhSach(user, { trang_thai, q, page, limit }) {
+// San pham quan tam gui len: mang id loai san pham (khong trung, phai co trong danh muc).
+async function chuanHoaSanPham(dsId) {
+  if (dsId === undefined || dsId === null) return [];
+  if (!Array.isArray(dsId)) throw new AppError(400, 'Sản phẩm quan tâm không hợp lệ');
+  const ids = [...new Set(dsId.map(Number))];
+  if (ids.some((n) => !Number.isInteger(n) || n <= 0)) throw new AppError(400, 'Sản phẩm quan tâm không hợp lệ');
+  if (ids.length && (await repo.sanPhamKhongCo(ids)).length) throw new AppError(400, 'Sản phẩm không có trong danh mục');
+  return ids;
+}
+
+export async function danhSach(user, { trang_thai, q, san_pham, page, limit }) {
   if (trang_thai && !TRANG_THAI_CHAM_SOC.includes(trang_thai)) throw new AppError(400, 'Trạng thái không hợp lệ');
+  const sanPhamId = san_pham ? Number(san_pham) : null;
+  if (san_pham && !(Number.isInteger(sanPhamId) && sanPhamId > 0)) throw new AppError(400, 'Sản phẩm không hợp lệ');
   const trang = Math.max(1, parseInt(page, 10) || 1);
   const soDong = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
   const { items, tong } = await repo.findAll({
     saleId: user.vai_tro === 'sale' ? user.id : null,
-    trangThai: trang_thai, tuKhoa: q?.trim() || null, limit: soDong, offset: (trang - 1) * soDong,
+    trangThai: trang_thai, tuKhoa: q?.trim() || null, sanPhamId, limit: soDong, offset: (trang - 1) * soDong,
   });
   return { items, tong, page: trang, limit: soDong, soTrang: Math.max(1, Math.ceil(tong / soDong)) };
 }
@@ -33,12 +45,25 @@ export async function chiTiet(user, id) {
   return { ...kh, lich_su: lichSu, don_hang: donHang, giao_so: giaoSo };
 }
 
-export async function taoKhach(user, { ten, sdt, dia_chi, nhom_khach_hang = 'nha_dan' }) {
+export async function taoKhach(user, { ten, sdt, dia_chi, nhom_khach_hang = 'nha_dan', san_pham_ids }) {
   if (!ten?.trim()) throw new AppError(400, 'Vui lòng nhập tên khách hàng');
   if (!NHOM_KHACH.includes(nhom_khach_hang)) throw new AppError(400, 'Nhóm khách hàng không hợp lệ');
   const soDt = (sdt || '').replace(/\D/g, '');
   if (soDt && !/^0\d{9,10}$/.test(soDt)) throw new AppError(400, 'Số điện thoại không hợp lệ');
-  return repo.create({ ten: ten.trim(), sdt: soDt || null, dia_chi: dia_chi?.trim() || null, nhom_khach_hang, sale_phu_trach_id: user.id });
+  const sanPham = await chuanHoaSanPham(san_pham_ids);
+  return withTransaction(async (client) => {
+    const kh = await repo.create(client, { ten: ten.trim(), sdt: soDt || null, dia_chi: dia_chi?.trim() || null, nhom_khach_hang, sale_phu_trach_id: user.id });
+    await repo.datSanPham(client, kh.id, sanPham);
+    return kh;
+  });
+}
+
+// Sale (khach minh phu trach) / Admin tick lai danh sach san pham khach quan tam.
+export async function capNhatSanPham(user, id, { san_pham_ids }) {
+  await layKhachDuocPhep(user, id);
+  const sanPham = await chuanHoaSanPham(san_pham_ids);
+  await withTransaction((client) => repo.datSanPham(client, id, sanPham));
+  return (await repo.findById(id)).san_pham;
 }
 
 export async function ghiChamSoc(user, id, { trang_thai, noi_dung, hen_goi_lai_luc }) {

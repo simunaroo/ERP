@@ -6,6 +6,7 @@ import * as thongBao from '../thong_bao/thong_bao.service.js';
 import { tomTat as tomTatTien } from '../thu_tien/thu_tien.service.js';
 import { vatTuDaNgung } from '../danh_muc/danh_muc.repository.js';
 import { BUOC, HUY_DUOC, NHAN, buocKe, vaiTroPhuTrach } from './giai_doan.js';
+import { ganMaHopDong } from './ma_hop_dong.js';
 
 const TRANG_THAI_DON = ['nhap', 'moi', 'dang_xu_ly', 'hoan_tat', 'huy'];
 const GIAI_DOAN = [...BUOC.hoan_thien, 'hoan_tat', 'huy'];
@@ -49,13 +50,37 @@ const soNguyenDuong = (v, ten) => {
   return n;
 };
 
+const soNguyenDuongOrNull = (v, ten) => {
+  if (v === '' || v === null || v === undefined) return null;
+  const n = Number(v);
+  if (!Number.isInteger(n) || n <= 0) throw new AppError(400, `${ten} không hợp lệ`);
+  return n;
+};
+
+// San pham chinh cua don (mot loai san pham: Cửa / Sàn / Tấm ốp...). Sale chon; bo trong thi tu lay
+// loai vat tu chiem nhieu tien nhat trong don (cung quy tac voi ham SQL fn_suy_san_pham_quan_tam).
+async function xacDinhSanPham(don) {
+  if (don.san_pham_id) {
+    if (!(await repo.coSanPham(don.san_pham_id))) throw new AppError(400, 'Sản phẩm không có trong danh mục');
+    return;
+  }
+  if (!don.vat_tu.length) return;
+  const loaiCua = await repo.loaiCuaVatTu(don.vat_tu.map((v) => v.vat_tu_id));
+  const tien = new Map();
+  for (const v of don.vat_tu) {
+    const loai = loaiCua.get(v.vat_tu_id);
+    if (loai) tien.set(loai, (tien.get(loai) || 0) + v.so_luong_can * v.don_gia);
+  }
+  const [dau] = [...tien].sort((a, b) => b[1] - a[1] || a[0] - b[0]);
+  don.san_pham_id = dau ? dau[0] : null;
+}
+
 function chuanHoaDon(data) {
   const hinhThuc = data.hinh_thuc || 'hoan_thien';
   if (!HINH_THUC.includes(hinhThuc)) throw new AppError(400, 'Hình thức đơn không hợp lệ');
   const vatTu = Array.isArray(data.vat_tu) ? data.vat_tu : [];
   return {
     hinh_thuc: hinhThuc,
-    ma_hop_dong: chuOrNull(data.ma_hop_dong),
     ngay_yc_lap_dat: ngayHopLe(data.ngay_yc_lap_dat, 'Ngày yêu cầu lắp đặt'),
     tinh_thanh: chuOrNull(data.tinh_thanh),
     phuong_xa: chuOrNull(data.phuong_xa),
@@ -68,6 +93,7 @@ function chuanHoaDon(data) {
     ty_le_tam_ung: Math.round(phanTram(data.ty_le_tam_ung, 'Tỷ lệ tạm ứng', 80)),
     dieu_khoan_nghiem_thu: motTrong(data.dieu_khoan_nghiem_thu, NGHIEM_THU, 'Điều khoản nghiệm thu'),
     ghi_chu_van_chuyen: chuOrNull(data.ghi_chu_van_chuyen),
+    san_pham_id: soNguyenDuongOrNull(data.san_pham_id, 'Sản phẩm'),
     vat_tu: vatTu.map((it, i) => {
       if (!it.vat_tu_id) throw new AppError(400, `Dòng vật tư ${i + 1}: chưa chọn vật tư`);
       const sl = Number(it.so_luong_can);
@@ -91,6 +117,7 @@ function kiemTraDuDeChot(don) {
   if (don.vat_tu.some((v) => !(v.don_gia > 0))) thieu.push('đơn giá cho mọi dòng vật tư');
   if (don.hinh_thuc === 'hoan_thien' && !don.ngay_yc_lap_dat) thieu.push('ngày yêu cầu lắp đặt');
   if (!don.dieu_khoan_nghiem_thu) thieu.push('điều khoản nghiệm thu');
+  if (!don.san_pham_id) thieu.push('sản phẩm');
   if (thieu.length) throw new AppError(400, `Chưa thể chốt đơn, còn thiếu: ${thieu.join(', ')}`);
 }
 
@@ -134,6 +161,7 @@ export async function danhSach(user, query, { toiDa } = {}) {
     nhomKhach: motTrong(query.nhom_khach, NHOM_KHACH, 'Nhóm khách'),
     tinhThanh: chuOrNull(query.tinh_thanh),
     nghiemThu: motTrong(query.nghiem_thu, NGHIEM_THU, 'Điều khoản nghiệm thu'),
+    sanPhamId: soNguyenDuongOrNull(query.san_pham, 'Sản phẩm'),
     chotTu: ngayHopLe(query.chot_tu, 'Ngày chốt từ'), chotDen: ngayHopLe(query.chot_den, 'Ngày chốt đến'),
     lapDatTu: ngayHopLe(query.lap_dat_tu, 'Ngày lắp đặt từ'), lapDatDen: ngayHopLe(query.lap_dat_den, 'Ngày lắp đặt đến'),
     tongTu: soOrNull(query.tong_tu, 'Tổng đơn từ'), tongDen: soOrNull(query.tong_den, 'Tổng đơn đến'),
@@ -144,7 +172,7 @@ export async function danhSach(user, query, { toiDa } = {}) {
 }
 
 // Xuat Excel danh sach don theo dung bo loc dang xem (pham vi du lieu giong danhSach: Sale/VH chi thay don cua minh).
-const TEN_GIAI_DOAN = { len_phuong_an: 'Lên phương án', boc_khoi_luong: 'Bóc khối lượng', mua_hang: 'Mua hàng', giao_hang: 'Giao hàng', thi_cong: 'Thi công', nghiem_thu: 'Nghiệm thu', quyet_toan: 'Quyết toán', hoan_tat: 'Hoàn tất', huy: 'Huỷ' };
+const TEN_GIAI_DOAN = { len_phuong_an: 'Lên phương án', boc_khoi_luong: 'Tính KLVT', mua_hang: 'Mua hàng', giao_hang: 'Giao hàng', thi_cong: 'Thi công', nghiem_thu: 'Nghiệm thu', quyet_toan: 'Quyết toán', hoan_tat: 'Hoàn tất', huy: 'Huỷ' };
 export async function excelDanhSach(user, query) {
   const { items } = await danhSach(user, { ...query, page: 1 }, { toiDa: 5000 });
   return {
@@ -152,7 +180,7 @@ export async function excelDanhSach(user, query) {
     cot: [
       { key: 'ma_don', nhan: 'Mã đơn', rong: 14 }, { key: 'ngay_chot', nhan: 'Ngày chốt', kieu: 'ngay', rong: 12 },
       { key: 'khach_hang', nhan: 'Khách hàng', rong: 24 }, { key: 'dia_chi_cong_trinh', nhan: 'Công trình', rong: 34 },
-      { key: 'hinh_thuc_ten', nhan: 'Hình thức', rong: 12 }, { key: 'giai_doan_ten', nhan: 'Tiến độ', rong: 15 },
+      { key: 'san_pham', nhan: 'Sản phẩm', rong: 12 }, { key: 'hinh_thuc_ten', nhan: 'Hình thức', rong: 12 }, { key: 'giai_doan_ten', nhan: 'Tiến độ', rong: 15 },
       { key: 'sale', nhan: 'Sale', rong: 18 }, { key: 'van_hanh', nhan: 'Vận hành', rong: 18 },
       { key: 'ngay_yc_lap_dat', nhan: 'YC lắp đặt', kieu: 'ngay', rong: 12 },
       { key: 'tong_don', nhan: 'Tổng đơn', kieu: 'tien' }, { key: 'con_phai_thu', nhan: 'Còn phải thu', kieu: 'tien' },
@@ -213,6 +241,7 @@ export async function taoDonHang(user, data) {
     throw new AppError(403, 'Khách hàng không thuộc danh sách bạn phụ trách');
   }
   const don = chuanHoaDon(data);
+  await xacDinhSanPham(don);
   if (data.chot) kiemTraDuDeChot(don);
   const ngung = await vatTuDaNgung(don.vat_tu.map((v) => v.vat_tu_id));
   if (ngung.length) throw new AppError(400, `Vật tư đã ngừng kinh doanh: ${ngung.join(', ')}`);
@@ -225,8 +254,12 @@ export async function taoDonHang(user, data) {
       ngay_chot: data.chot ? new Date().toISOString().slice(0, 10) : null,
     });
     await repo.thayVatTu(client, moi.id, don.vat_tu);
-    if (data.chot) await repo.ghiLichSuGiaiDoan(client, { donHangId: moi.id, tu: null, den: 'len_phuong_an', nguoiId: user.id, ghiChu: 'Chốt đơn' });
-    if (data.chot) await phanCongTuDong(client, moi.id);
+    await repo.themSanPhamQuanTam(client, moi.khach_hang_id, don.san_pham_id);
+    if (data.chot) {
+      moi.ma_hop_dong = await ganMaHopDong(client, moi.id);
+      await repo.ghiLichSuGiaiDoan(client, { donHangId: moi.id, tu: null, den: 'len_phuong_an', nguoiId: user.id, ghiChu: 'Chốt đơn' });
+      await phanCongTuDong(client, moi.id);
+    }
     return moi;
   });
 }
@@ -235,14 +268,17 @@ export async function suaDonNhap(user, id, data) {
   const hienTai = await layDonCuaToi(user, id);
   if (hienTai.trang_thai !== 'nhap') throw new AppError(409, 'Đơn đã chốt, không sửa trực tiếp được — hãy gửi yêu cầu chỉnh sửa cho Vận hành');
   const don = chuanHoaDon(data);
+  await xacDinhSanPham(don);
   if (data.chot) kiemTraDuDeChot(don);
   const ngung = await vatTuDaNgung(don.vat_tu.map((v) => v.vat_tu_id));
   if (ngung.length) throw new AppError(400, `Vật tư đã ngừng kinh doanh: ${ngung.join(', ')}`);
   await withTransaction(async (client) => {
     await repo.update(client, id, don);
     await repo.thayVatTu(client, id, don.vat_tu);
+    await repo.themSanPhamQuanTam(client, hienTai.khach_hang_id, don.san_pham_id);
     if (data.chot) {
       if (!(await repo.chot(client, id))) throw new AppError(409, 'Đơn đã được chốt trước đó');
+      await ganMaHopDong(client, id);
       await repo.ghiLichSuGiaiDoan(client, { donHangId: id, tu: null, den: 'len_phuong_an', nguoiId: user.id, ghiChu: 'Chốt đơn' });
       await phanCongTuDong(client, id);
     }
@@ -384,7 +420,7 @@ export async function bocKhoiLuong(user, id, { dong = [], ghi_chu }) {
     const don = rows[0];
     if (!don) throw new AppError(404, 'Không tìm thấy đơn hàng');
     await damBaoPhuTrach(user, id, client);
-    if (don.giai_doan !== 'boc_khoi_luong') throw new AppError(409, 'Chỉ xác nhận khối lượng ở bước Bóc khối lượng');
+    if (don.giai_doan !== 'boc_khoi_luong') throw new AppError(409, 'Chỉ xác nhận khối lượng ở bước Tính KLVT');
     const truoc = await tomTatTien(id, client);
     const { rows: hienTai } = await client.query(
       `SELECT dvt.id, dvt.so_luong_can, vt.ten, vt.don_vi_tinh, m.trang_thai AS tt_mua

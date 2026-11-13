@@ -6,7 +6,8 @@ export async function findAll() {
   const { rows } = await query(
     `SELECT ${COT},
             (SELECT count(*) FROM don_hang d WHERE d.sale_id = u.id)::int AS so_don_sale,
-            (SELECT count(*) FROM khach_hang k WHERE k.sale_phu_trach_id = u.id)::int AS so_khach
+            (SELECT count(*) FROM khach_hang k WHERE k.sale_phu_trach_id = u.id)::int AS so_khach,
+            COALESCE((SELECT x.bat_2fa FROM xac_thuc_vai_tro x WHERE x.vai_tro = u.vai_tro), false) AS vai_tro_bat_2fa
        FROM users u ORDER BY u.trang_thai, u.vai_tro, u.ho_ten`,
   );
   return rows;

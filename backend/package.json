@@ -12,6 +12,7 @@
     "db:migrate": "node scripts/migrate.js",
     "db:seed:bo-sung": "node scripts/seed-bo-sung.js",
     "db:seed:don-moi": "node scripts/seed-don-moi.js",
+    "db:nap-kien-thuc": "node scripts/nap-kien-thuc.js",
     "db:sao-luu": "node scripts/sao-luu.js",
     "db:khoi-phuc": "node scripts/khoi-phuc.js",
     "test": "node --test --test-concurrency=1 \"test/**/*.test.js\"",
