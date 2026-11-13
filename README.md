@@ -2,7 +2,7 @@
 
 Đồ án tốt nghiệp.
 
-Hệ thống ERP cho doanh nghiệp NST: Node.js/Express + PostgreSQL + React (Vite, Zustand), tích hợp trợ lý AI (Gemini API) hỗ trợ nhập đơn hàng.
+Hệ thống ERP cho doanh nghiệp NST: Node.js/Express + PostgreSQL + React (Vite, Zustand), tích hợp trợ lý AI (Gemini API): mỗi sản phẩm (Cửa, Sàn, Tấm ốp) một trợ lý tư vấn cho Sale, và AI nhận xét số liệu phân tích.
 
 ## Cấu trúc
 
@@ -15,7 +15,7 @@ _hinh/      Mã nguồn sơ đồ UML (PlantUML) và mockup giao diện cho báo
 
 ## Chạy ở máy local
 
-Yêu cầu: Node.js 20+, PostgreSQL 16 đang chạy ở `localhost:5432`.
+Yêu cầu: Node.js 22+, PostgreSQL 16 đang chạy ở `localhost:5432`.
 
 ```bash
 # 1. Backend
@@ -37,7 +37,7 @@ Duyệt chi qua Telegram (không bắt buộc): tạo bot bằng @BotFather lấ
 
 `npm run db:migrate` chỉ chạy migration chưa chạy (ghi trong bảng `schema_migrations`); DB tạo bằng `db:reset` đã được đánh dấu đủ migration.
 
-Trợ lý AI: tạo API key miễn phí tại Google AI Studio, thêm `GEMINI_API_KEY=...` vào `backend/.env`; `GEMINI_MODEL` (mặc định `gemini-3.8-flash`) và `GEMINI_MODEL_DU_PHONG` dùng khi model chính quá tải. Không có key thì phần còn lại vẫn chạy bình thường, chỉ các nút AI báo chưa cấu hình.
+Trợ lý AI: tạo API key miễn phí tại Google AI Studio, thêm `GEMINI_API_KEY=...` vào `backend/.env`; `GEMINI_MODEL` (mặc định `gemini-3.8-flash`) và `GEMINI_MODEL_DU_PHONG` dùng khi model chính quá tải. Không có key thì phần còn lại vẫn chạy bình thường, chỉ các nút AI báo chưa cấu hình. Nạp tài liệu kiến thức mẫu cho trợ lý sản phẩm: `npm run db:nap-kien-thuc` (chỉ điền trợ lý còn trống; thêm `-- --ghi-de` để ghi đè).
 
 Tài khoản demo — mật khẩu là tên tài khoản + `123456` (ví dụ `thilan123456`):
 
@@ -54,7 +54,9 @@ Tài khoản demo — mật khẩu là tên tài khoản + `123456` (ví dụ `t
 - [x] Đăng nhập (JWT + bcrypt), phân quyền theo vai trò
 - [x] Đơn hàng: danh sách, tạo đơn, chi tiết, phương án vận chuyển – thi công, yêu cầu chỉnh sửa
 - [x] Khách hàng: trạng thái chăm sóc, lịch sử chăm sóc
-- [x] Lên đơn nhanh bằng AI: đọc ảnh tin nhắn/phiếu ghi tay khi khách chốt; kèm nhập đơn thủ công
+- [x] ~~Lên đơn nhanh bằng AI~~ (đã bỏ) → thay bằng trợ lý AI theo sản phẩm: khung chat nổi ở mọi màn hình, hỏi bằng chữ hoặc ảnh, Admin soạn kiến thức
+- [x] Sản phẩm quan tâm của khách (tự suy từ nhu cầu + đơn đã đặt), đơn hàng lưu sản phẩm chính
+- [x] Xác thực 2 lớp (TOTP) bật/tắt theo từng vai trò
 - [x] Form nhập đơn đầy đủ: hình thức đơn, giá bán, chiết khấu, cọc, % tạm ứng, đơn nháp → chốt đơn
 - [x] Điều khoản nghiệm thu, loại thi công + kích thước từng dòng, link báo giá gửi khách (không cần đăng nhập)
 - [x] Bộ lọc danh sách đơn hàng nhiều điều kiện (lọc ở server, lưu trên URL)
@@ -72,4 +74,4 @@ Tài khoản demo — mật khẩu là tên tài khoản + `123456` (ví dụ `t
 - [x] Thông báo trong hệ thống (nút chuông): thao tác xong báo người liên quan
 - [x] Đặt hàng NCC (gửi nhóm Telegram NCC / chép gửi Zalo), NCC cho xuất hoặc yêu cầu cọc → tự lập đề xuất cọc/quyết toán
 - [x] Công nợ khách hàng: phiếu thu (Kế toán xác nhận tiền về), điều kiện tạm ứng trước giao hàng, QR thu tiền
-- [x] Bộ kiểm thử tự động 69 ca (`cd backend && npm test`, báo cáo: `npm run test:bao-cao`)
+- [x] Bộ kiểm thử tự động 158 ca (`cd backend && npm test`, báo cáo: `npm run test:bao-cao`)

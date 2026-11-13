@@ -231,6 +231,26 @@ for r in list(tvt.rows)[1:]:
         for p in o.paragraphs:
             p.alignment = WD_ALIGN_PARAGRAPH.LEFT
 
+# DANH MUC BANG BIEU: ban goc khong co truong TOC nen F9 khong bao gio dien duoc -> them truong
+# loc theo kieu chu thich bang "1bb" (giong truong "1hinh" cua danh muc hinh anh).
+from docx.oxml import parse_xml
+dm_bang = next(p for p in ds_doan() if p.text.strip() == 'DANH MỤC BẢNG BIỂU' and p.style.name.startswith('Heading'))
+W = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"'
+dm_bang._p.addnext(parse_xml(
+    f'<w:p {W}><w:r><w:fldChar w:fldCharType="begin" w:dirty="true"/></w:r>'
+    f'<w:r><w:instrText xml:space="preserve"> TOC \\h \\z \\t "1bb,1" </w:instrText></w:r>'
+    f'<w:r><w:fldChar w:fldCharType="separate"/></w:r><w:r><w:t>Nhấn F9 để cập nhật danh mục bảng biểu.</w:t></w:r>'
+    f'<w:r><w:fldChar w:fldCharType="end"/></w:r></w:p>'))
+# Doan tieu de nay dong thoi ket thuc mot section (co sectPr) -> chuyen sectPr sang doan truong vua them,
+# neu khong danh muc se bi day sang trang moi, tach khoi tieu de.
+sect = dm_bang._p.pPr.find(qn('w:sectPr'))
+if sect is not None:
+    moi_p = dm_bang._p.getnext()
+    moi_p.get_or_add_pPr().append(sect)
+thay(tim('3.1.1.3.Kết quả đạt được'), '3.1.1.3.Kết quả', '3.1.1.3. Kết quả')
+# Chuong II bat dau giua trang (cac chuong khac deu sang trang moi)
+next(p for p in ds_doan() if p.text.startswith('CHƯƠNG II.') and p.style.name == 'Heading 1').paragraph_format.page_break_before = True
+
 # ================================================================ MO DAU
 thay(tim('Bên cạnh đó, sự phát triển của các mô hình ngôn ngữ lớn'),
      'như đọc tin nhắn đặt hàng của khách hay', 'như tra cứu thông tin sản phẩm để tư vấn khách hay')
@@ -247,7 +267,7 @@ thay(tim('Xuất phát từ thực tế đó, đề tài xây dựng hệ thốn
      'trong lúc tư vấn, nhân viên kinh doanh có thể hỏi trợ lý AI của sản phẩm khách quan tâm, bằng câu hỏi hoặc ảnh chụp công trình, để nhận câu trả lời kèm mẫu tin nhắn gửi khách.')
 thay(tim('Do vật tư mua ngoài được NCC giao thẳng đến công trình'),
      'AI chỉ hỗ trợ trích xuất thông tin và diễn giải số liệu.',
-     'AI chỉ trả lời dựa trên tài liệu sản phẩm do doanh nghiệp nạp và diễn giải số liệu; AI không nhận giá nhập của NCC hay tên, số điện thoại của khách hàng.')
+     'AI chỉ trả lời dựa trên tài liệu sản phẩm do doanh nghiệp nạp và diễn giải số liệu; trợ lý tư vấn sản phẩm không nhận giá nhập của NCC, và AI không bao giờ nhận tên, số điện thoại của khách hàng.')
 thay(tim('Khâu đầu tiên là nhập số và chăm sóc khách hàng.'),
      'được hệ thống nhắc khi đến giờ hẹn gọi lại.',
      'được hệ thống nhắc khi đến giờ hẹn gọi lại. Mỗi khách hàng được gắn các sản phẩm quan tâm, suy ra tự động từ nhu cầu khách để lại và từ các đơn đã đặt.')
@@ -276,7 +296,10 @@ thay(tim('Các vòng sau mở rộng hệ thống về hai đầu của chuỗi.
      'cùng báo cáo hiệu quả chăm sóc khách hàng kèm nhận xét của AI. Cũng ở vòng cuối, chức năng tạo đơn bằng AI được thay bằng trợ lý AI tư vấn theo từng sản phẩm, vì việc nhập đơn vốn đã nhanh, còn nhu cầu lớn hơn của nhân viên kinh doanh là tra cứu kiến thức sản phẩm ngay khi đang tư vấn khách; đồng thời hệ thống bổ sung sản phẩm quan tâm của khách hàng, sản phẩm chính của đơn hàng và cấu hình xác thực hai lớp theo vai trò.')
 thay(tim('Đối với trợ lý AI, hệ thống sử dụng mô hình Gemini'),
      'cho ba việc: trích xuất thông tin đơn hàng từ tin nhắn hoặc ảnh chụp, viết nhận xét',
-     'cho ba việc: trả lời câu hỏi tư vấn sản phẩm của nhân viên kinh doanh, viết nhận xét')
+     'cho bốn việc: trả lời câu hỏi tư vấn sản phẩm của nhân viên kinh doanh, viết nhận xét')
+thay(tim('Đối với trợ lý AI, hệ thống sử dụng mô hình Gemini'),
+     'và đánh giá hiệu quả chăm sóc khách hàng của từng nhân viên kinh doanh.',
+     'đánh giá hiệu quả chăm sóc khách hàng của từng nhân viên kinh doanh, và đọc tệp PDF hoặc ảnh catalog thành văn bản để Admin nạp kiến thức cho trợ lý.')
 thay(tim('Đối với trợ lý AI, hệ thống sử dụng mô hình Gemini'),
      'Nguyên tắc xuyên suốt là mọi con số đều do cơ sở dữ liệu tính toán, AI chỉ diễn giải.',
      'Mỗi sản phẩm (Cửa, Sàn, Tấm ốp) có một trợ lý riêng: tài liệu kiến thức của sản phẩm được đưa vào ngữ cảnh mỗi lần hỏi thay vì huấn luyện lại mô hình, trợ lý nhận được cả ảnh chụp, nhớ khoảng 10 lượt hỏi đáp gần nhất và từ chối câu hỏi ngoài phạm vi. Nguyên tắc xuyên suốt là mọi con số đều do cơ sở dữ liệu tính toán, AI chỉ diễn giải.')
@@ -350,9 +373,42 @@ b = bang_sau(tim('Bảng 2.8. Bảng đặc tả usecase Tạo và chốt đơn 
 o = next(r for r in b.rows if r.cells[0].text.startswith('Luồng sự kiện chính')).cells[1]
 thay_o(o, 'hình thức (vật tư / hoàn thiện), địa chỉ,', 'hình thức (vật tư / hoàn thiện), sản phẩm chính, địa chỉ,')
 thay_o(o, ' (có thể dùng trợ lý AI điền sẵn)', '')
-thay_o(o, 'tạo đơn ở bước "Lên phương án".', 'tạo đơn ở bước "Lên phương án" và gắn sản phẩm của đơn vào sản phẩm quan tâm của khách.')
+thay_o(o, 'điều khoản nghiệm thu.', 'điều khoản nghiệm thu. Khi lưu (kể cả lưu nháp), sản phẩm của đơn được gắn vào sản phẩm quan tâm của khách.')
 o = next(r for r in b.rows if r.cells[0].text.startswith('Luồng rẽ nhánh')).cells[1]
 thay_o(o, '3a. Thiếu thông tin: báo danh sách phần còn thiếu.', '3a. Thiếu thông tin (kể cả chưa chọn sản phẩm khi chốt): báo danh sách phần còn thiếu.')
+
+# ---- Sua theo doi chieu voi ma nguon (13/11/2026) ----
+def o_dac_ta(ma_uc, muc):
+    for t in d.tables:
+        if len(t.columns) == 2 and any(r.cells[1].text.strip() == ma_uc for r in t.rows[:3]):
+            return next(r for r in t.rows if r.cells[0].text.startswith(muc)).cells[1]
+    raise AssertionError(ma_uc)
+
+
+# 2.4.2.3: CHECK theo trang thai that su nam o phieu thu, de_xuat_chi khong co CHECK nguoi duyet
+thay(tim('Các nghiệp vụ liên quan đến tiền và tiến độ chạy trong giao dịch'),
+     'CHECK theo trạng thái (chuyển khoản phải có bill, đã duyệt phải có người duyệt)',
+     'CHECK theo trạng thái (phiếu thu chuyển khoản phải có ảnh bill hoặc giao dịch ngân hàng, phiếu đã xác nhận phải có người xác nhận, phiếu bị từ chối phải có lý do)')
+# 2.3: chi tien VAO chua khop moi bao ke toan; tien ra chua khop chi ghi lai
+thay(tim('Đối soát ngân hàng: dịch vụ báo giao dịch (SePay)'),
+     'Giao dịch không khớp được chuyển cho kế toán xử lý.',
+     'Tiền vào chưa khớp đơn nào được báo để kế toán khớp tay; tiền ra chưa khớp được ghi lại trong danh sách giao dịch để kế toán xem.')
+# Bang 2.1: dieu kien thuc te theo ma nguon
+b = bang_sau(tim('Bảng 2.1. Các bước tiến độ của đơn hàng'))
+r = next(r for r in b.rows if r.cells[0].text.strip() == 'Mua hàng')
+thay_o(r.cells[3], '100% vật tư sẵn hàng', '100% vật tư mua ngoài sẵn hàng')
+r = next(r for r in b.rows if r.cells[0].text.strip() == 'Giao hàng')
+dat_o(r.cells[3], 'Đơn hoàn thiện: thợ bắt đầu giai đoạn đầu tiên (tự động); đơn vật tư: bấm "Xong" để sang Quyết toán')
+# UC01: chap nhan lech +-1 buoc 30 giay
+thay_o(o_dac_ta('UC01', 'Luồng sự kiện chính'), 'lệch tối đa ±30 giây', 'chấp nhận lệch ±1 bước 30 giây')
+# UC10: don vat tu cung chot quyet toan (so luong thuc te lay bang so luong dat)
+dat_o(o_dac_ta('UC10', 'Điều kiện trước'), 'Đơn ở bước Quyết toán (đơn hoàn thiện đã nghiệm thu, hoặc đơn vật tư đã giao hàng; với đơn vật tư, số lượng thực tế lấy bằng số lượng đặt).')
+# UC12: chi tu Giao hang den Quyet toan, don Hoan tat khong lap duoc
+dat_o(o_dac_ta('UC12', 'Điều kiện trước'), 'Đơn đang ở bước Giao hàng, Thi công, Nghiệm thu hoặc Quyết toán (đơn đã hoàn tất thì không lập được).')
+# UC16: thong bao ca Van hanh phu trach
+thay_o(o_dac_ta('UC16', 'Luồng sự kiện chính'), 'thông báo Sale, Kế toán.', 'thông báo Sale, Vận hành phụ trách và Kế toán.')
+# UC17: 2FA nay theo vai tro
+dat_o(o_dac_ta('UC17', 'Điều kiện trước'), 'Admin đã đăng nhập (và đã nhập mã xác thực hai lớp nếu vai trò Admin đang bật).')
 
 # 2.6.13: thay dac ta "Trich xuat don" bang "Hoi tro ly AI san pham"
 DT_TRO_LY = [
