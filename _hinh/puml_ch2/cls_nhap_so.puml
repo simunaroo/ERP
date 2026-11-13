@@ -1,0 +1,67 @@
+@startuml cls_nhap_so
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+hide empty members
+skinparam classAttributeIconSize 0
+
+class NhapSoRoutes {
++POST /
++POST /tu-dong
++POST /doc-file
++PUT /ty-le
++PUT /khach/:id/chuyen-sale
+}
+class NhapSoService {
++nhap(user, ds)
+-chuanHoaSdt(sdt)
+-chonSale(client)
++chuyenSale(user, id, data)
++tyLe()
++luuTyLe(ds)
++ganDay()
+}
+class DocFile {
++docFile(ten, base64)
++fileMau()
+}
+class ThongBaoService {
++gui(client, thongTin)
+}
+class KhachHang <<entity>> {
+id : SERIAL
+sdt : VARCHAR
+sale_phu_trach_id : INTEGER
+nguon : VARCHAR
+chia_luc : TIMESTAMPTZ
+}
+class TyLeChiaSo <<entity>> {
+sale_id : INTEGER
+ty_le : SMALLINT
+}
+class ChiaSoLog <<entity>> {
+khach_hang_id : INTEGER
+sale_id : INTEGER
+kieu : VARCHAR
+kenh : VARCHAR
+tu_sale_id : INTEGER
+ly_do : TEXT
+}
+NhapSoRoutes --> NhapSoService
+NhapSoRoutes --> DocFile
+NhapSoService --> ThongBaoService
+NhapSoService ..> KhachHang
+NhapSoService ..> TyLeChiaSo
+NhapSoService ..> ChiaSoLog
+KhachHang "1" -- "n" ChiaSoLog
+@enduml

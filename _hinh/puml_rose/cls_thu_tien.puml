@@ -1,0 +1,91 @@
+@startuml cls_thu_tien
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+hide circle
+skinparam classAttributeIconSize 0
+class "ThuTienUI" as UI <<boundary>> {
+  --
+  +Kich nut 'Thu tien'()
+  +Hien thi ma QR thu tien()
+  +Nhap so tien, tai anh bill va kich nut 'Luu'()
+  +Doi chieu sao ke, kich nut 'Da nhan tien'()
+  +Cap nhat so con phai thu()
+}
+class "ThuTienController" as C <<control>> {
+  --
+  +Lay ma QR thu tien()
+  +Ghi nhan thanh toan()
+  +Kiem tra khong vuot so con phai thu()
+  +Xac nhan tien ve()
+}
+class "don_hang" as DH <<entity>> {
+  -id
+  -ma_don
+  -khach_hang_id
+  -sale_id
+  -vanhanh_phu_trach_id
+  -trang_thai
+  -giai_doan
+  -hinh_thuc
+  -ma_hop_dong
+  -...
+  --
+  +Tinh so con phai thu()
+}
+class "thanh_toan_khach" as TT <<entity>> {
+  -id
+  -don_hang_id
+  -loai
+  -so_tien
+  -hinh_thuc
+  -ngay_thu
+  -bill_anh
+  -ghi_chu
+  -trang_thai
+  -...
+  --
+  +Them phieu 'Cho xac nhan'()
+  +Cap nhat trang thai 'Da xac nhan'()
+}
+class "thong_bao" as TB <<entity>> {
+  -id
+  -nguoi_nhan_id
+  -nguoi_gay_id
+  -loai
+  -tieu_de
+  -noi_dung
+  -link
+  -da_doc_luc
+  -created_at
+  --
+  +Gui thong bao cho Ke toan()
+  +Gui thong bao cho Sale()
+}
+UI "1" -- "1" C
+C "1" -- "*" DH
+C "1" -- "*" TT
+C "1" -- "*" TB
+DH "1" -- "*" TT
+@enduml

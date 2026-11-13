@@ -1,0 +1,146 @@
+@startuml cls_tao_don
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+hide circle
+skinparam classAttributeIconSize 0
+class "TaoDonUI" as UI <<boundary>> {
+  --
+  +Kich nut 'Nhap don'()
+  +Hien thi form tao don()
+  +Nhap thong tin don, chon san pham va vat tu()
+  +Kich nut 'Chot don'()
+  +Hien thi chi tiet don hang()
+}
+class "DonHangController" as C <<control>> {
+  --
+  +Lay danh sach khach va vat tu()
+  +Tao va chot don hang()
+  +Kiem tra du thong tin de chot()
+}
+class "khach_hang" as KH <<entity>> {
+  -id
+  -ten
+  -sdt
+  -dia_chi
+  -sale_phu_trach_id
+  -nhom_khach_hang
+  -trang_thai_cham_soc
+  -created_at
+  -nguon
+  -...
+  --
+  +Lay khach cua Sale()
+}
+class "don_hang" as DH <<entity>> {
+  -id
+  -ma_don
+  -khach_hang_id
+  -sale_id
+  -vanhanh_phu_trach_id
+  -trang_thai
+  -giai_doan
+  -hinh_thuc
+  -ma_hop_dong
+  -...
+  --
+  +Them don hang()
+  +Sinh ma hop dong SDT_STT()
+}
+class "don_hang_vat_tu" as VT <<entity>> {
+  -id
+  -don_hang_id
+  -vat_tu_id
+  -so_luong_can
+  -don_gia
+  -loai_thi_cong
+  -dai_mm
+  -rong_mm
+  -so_luong_thuc_te
+  -...
+  --
+  +Them vat tu cua don()
+}
+class "khach_hang_san_pham" as SP <<entity>> {
+  -khach_hang_id
+  -loai_vat_tu_id
+  -created_at
+  --
+  +Them san pham quan tam cua khach()
+}
+class "users" as US <<entity>> {
+  -id
+  -ho_ten
+  -username
+  -password_hash
+  -vai_tro
+  -trang_thai
+  -phien_ban_token
+  -doi_mat_khau_luc
+  -created_at
+  -...
+  --
+  +Chon van hanh it viec nhat()
+}
+class "don_hang_phan_cong_log" as PC <<entity>> {
+  -id
+  -don_hang_id
+  -tu_van_hanh_id
+  -den_van_hanh_id
+  -nguoi_id
+  -ly_do
+  -created_at
+  --
+  +Ghi lich su phan cong()
+}
+class "thong_bao" as TB <<entity>> {
+  -id
+  -nguoi_nhan_id
+  -nguoi_gay_id
+  -loai
+  -tieu_de
+  -noi_dung
+  -link
+  -da_doc_luc
+  -created_at
+  --
+  +Gui thong bao cho van hanh()
+}
+UI "1" -- "1" C
+C "1" -- "*" KH
+C "1" -- "*" DH
+C "1" -- "*" VT
+C "1" -- "*" SP
+C "1" -- "*" US
+C "1" -- "*" PC
+C "1" -- "*" TB
+US "1" -- "*" KH
+DH "1" -- "*" PC
+KH "1" -- "*" DH
+US "1" -- "*" DH
+US "1" -- "*" PC
+DH "1" -- "*" VT
+US "1" -- "*" TB
+KH "1" -- "*" SP
+@enduml

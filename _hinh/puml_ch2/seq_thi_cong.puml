@@ -1,0 +1,38 @@
+@startuml seq_thi_cong
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+autonumber
+actor "Vận hành" as U
+boundary "Giao diện\nThi công" as FE
+control "ThiCongService" as S
+control "DonHangService" as D
+database "PostgreSQL" as DB
+U -> FE : Lập giai đoạn (đội thợ, khối lượng, giá công, ngày)
+FE -> S : POST /api/thi-cong
+S -> DB : kiểm tra trùng lịch đội thợ
+alt trùng lịch
+  S --> FE : cảnh báo, yêu cầu xác nhận
+end
+S -> DB : INSERT thi_cong
+U -> FE : Bắt đầu giai đoạn đầu
+S -> D : tuDongChuyenBuoc(giao_hang -> thi_cong)
+U -> FE : Báo xong giai đoạn cuối
+S -> D : tuDongChuyenBuoc(thi_cong -> nghiem_thu)
+U -> FE : Nhập số lượng, khối lượng thực tế; "Xác nhận nghiệm thu"
+S -> S : cảnh báo nếu hao hụt > 10%
+S -> D : tuDongChuyenBuoc(nghiem_thu -> quyet_toan)
+U -> FE : "Chốt quyết toán"
+S -> DB : lưu giá trị quyết toán; ghi công thợ phải trả (giao_dich_tho)
+S -> D : chuyển đơn sang "Hoàn tất"
+@enduml

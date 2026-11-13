@@ -1,0 +1,57 @@
+@startuml seq_thu_tien
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+autonumber
+hide footbox
+actor "Sale" as U
+actor "Ke toan" as KT
+boundary "ThuTienUI" as UI
+control "ThuTienController" as C
+entity "don_hang" as DH
+entity "thanh_toan_khach" as TT
+entity "thong_bao" as TB
+U -> UI : Kich nut "Thu tien"()
+UI -> C : Lay ma QR thu tien()
+C -> DH : Tinh so con phai thu()
+DH --> C : return so tien
+C --> UI : return ket qua
+UI -> UI : Hien thi ma QR thu tien()
+U -> UI : Nhap so tien, tai anh bill va kich nut "Luu"
+UI -> C : Ghi nhan thanh toan()
+C -> C : Kiem tra khong vuot so con phai thu()
+C -> TT : Them phieu "Cho xac nhan"()
+C -> TB : Gui thong bao cho Ke toan()
+C --> UI : return ket qua
+KT -> UI : Doi chieu sao ke, kich nut "Da nhan tien"
+UI -> C : Xac nhan tien ve()
+C -> TT : Cap nhat trang thai "Da xac nhan"()
+C -> TB : Gui thong bao cho Sale()
+C --> UI : return ket qua
+UI -> UI : Cap nhat so con phai thu()
+note right of UI
+Neu Ke toan "Chua thay tien":
+bat buoc ghi ly do, bao nguoi ghi nhan
+end note
+@enduml

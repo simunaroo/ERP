@@ -1,0 +1,114 @@
+@startuml cls_doi_soat
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+hide circle
+skinparam classAttributeIconSize 0
+class "NganHangWebhook" as WH <<boundary>> {
+  --
+  +Gui giao dich (so tien, noi dung chuyen khoan)
+}
+class "DoiSoatUI" as UI <<boundary>> {
+  --
+  +Kich nut 'Doi soat ngan hang'()
+  +Hien thi danh sach giao dich()
+  +Chon don va kich nut 'Khop tay'()
+  +Hien thi ket qua doi soat()
+}
+class "NganHangController" as C <<control>> {
+  --
+  +Xu ly giao dich()
+  +Kiem tra khoa API()
+  +Tim ma don trong noi dung chuyen khoan()
+  +Lay giao dich chua khop()
+  +Khop tay giao dich()
+}
+class "giao_dich_ngan_hang" as GD <<entity>> {
+  -id
+  -nguon
+  -ma_gd_ngoai
+  -ngan_hang
+  -so_tk
+  -loai
+  -so_tien
+  -noi_dung
+  -ma_tham_chieu
+  -...
+  --
+  +Kiem tra giao dich da xu ly()
+  +Them giao dich()
+  +Lay giao dich chua khop()
+  +Cap nhat trang thai 'Da khop'()
+}
+class "thanh_toan_khach" as TT <<entity>> {
+  -id
+  -don_hang_id
+  -loai
+  -so_tien
+  -hinh_thuc
+  -ngay_thu
+  -bill_anh
+  -ghi_chu
+  -trang_thai
+  -...
+  --
+  +Xac nhan phieu thu()
+}
+class "de_xuat_chi" as DX <<entity>> {
+  -id
+  -loai_chi
+  -ncc_id
+  -doi_tho_id
+  -don_hang_id
+  -mua_bo_sung_id
+  -nguoi_tao_id
+  -gia_tri_hang
+  -coc_da_tru
+  -...
+  --
+  +Ghi 'Da chi'()
+}
+class "thong_bao" as TB <<entity>> {
+  -id
+  -nguoi_nhan_id
+  -nguoi_gay_id
+  -loai
+  -tieu_de
+  -noi_dung
+  -link
+  -da_doc_luc
+  -created_at
+  --
+  +Gui thong bao()
+}
+WH "1" -- "1" C
+UI "1" -- "1" C
+C "1" -- "*" GD
+C "1" -- "*" TT
+C "1" -- "*" DX
+C "1" -- "*" TB
+TT "1" -- "*" GD
+DX "1" -- "*" GD
+GD "1" -- "*" TT
+@enduml

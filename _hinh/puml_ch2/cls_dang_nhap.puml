@@ -1,0 +1,71 @@
+@startuml cls_dang_nhap
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+hide empty members
+skinparam classAttributeIconSize 0
+
+class AuthController {
++login(req, res)
++me(req, res)
++doiMatKhau(req, res)
+}
+class AuthService {
++dangNhap(username, matKhau, ip)
++phienDangNhap(user)
++kyToken(user)
++doiMatKhau(user, data)
+}
+class HaiLopService {
++kyMaTam(user)
++khoiTao(maTam)
++kichHoat(maTam, ma)
++xacMinh(maTam, ma)
++datLai(id)
+}
+class Totp {
++taoKhoa()
++maTai(khoa, buoc)
++kiemTra(khoa, ma)
+}
+class MaHoa {
++maHoa(chuoi)
++giaiMa(chuoi)
+}
+class AuthRepository {
++findByUsername(username)
++findById(id)
++layHash(id)
++doiMatKhau(id, hash)
+}
+class "xacThuc / coQuyen" as MW <<middleware>>
+class User <<entity>> {
+id : SERIAL
+username : TEXT
+password_hash : TEXT
+vai_tro : vai_tro_enum
+trang_thai : enum
+phien_ban_token : INTEGER
+totp_khoa : TEXT
+totp_buoc_cuoi : BIGINT
+totp_ma_du_phong : TEXT[]
+}
+AuthController --> AuthService
+AuthController --> HaiLopService
+HaiLopService --> Totp
+HaiLopService --> MaHoa
+AuthService --> AuthRepository
+HaiLopService --> AuthRepository
+AuthRepository ..> User
+MW ..> User
+@enduml

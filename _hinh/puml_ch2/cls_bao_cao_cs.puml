@@ -1,0 +1,58 @@
+@startuml cls_bao_cao_cs
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+hide empty members
+skinparam classAttributeIconSize 0
+
+class ChamSocRoutes {
++GET /bao-cao
++GET /ton-dong
++POST /chuyen-nhieu
++POST /ai-nhan-xet
++GET /ai-lich-su
+}
+class ChamSocService {
++tongHop(ky)
++tonDong(loai, saleId)
++chuyenNhieu(user, data)
++nhanXetAi(user, ky)
++lichSuAi(trang)
++xemAi(id)
+-khongDau(kq)
+}
+class NhapSoService {
++chuyenSale(user, id, data)
+}
+class GeminiClient {
++sinhJson(systemPrompt, userText, schema)
+}
+class KhachHang <<entity>>
+class KhachHangChamSoc <<entity>>
+class ChiaSoLog <<entity>>
+class AiNhanXetChamSoc <<entity>> {
+id : SERIAL
+tu_ngay : DATE
+den_ngay : DATE
+ket_qua : JSONB
+so_lieu : JSONB
+nguoi_tao_id : INTEGER
+}
+ChamSocRoutes --> ChamSocService
+ChamSocService --> NhapSoService
+ChamSocService --> GeminiClient
+ChamSocService ..> KhachHang
+ChamSocService ..> KhachHangChamSoc
+ChamSocService ..> ChiaSoLog
+ChamSocService ..> AiNhanXetChamSoc
+@enduml

@@ -1,0 +1,77 @@
+@startuml uc_tongquan
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+left to right direction
+actor "Người dùng" as ND
+actor "Sale" as SALE
+actor "Vận hành" as VH
+actor "Kế toán" as KT
+actor "Admin" as AD
+SALE -up-|> ND
+VH -up-|> ND
+KT -up-|> ND
+AD -up-|> ND
+actor "Người duyệt chi\n(Telegram)" as DC
+actor "Nhà cung cấp\n(Telegram)" as NCC
+actor "Khách hàng" as KH
+actor "Gemini AI" as AI
+actor "Ngân hàng\n(SePay)" as NH
+actor "Website /\nkênh quảng cáo" as WEB
+rectangle "Hệ thống ERP NST" {
+  usecase "Đăng nhập" as UC_DN
+  usecase "Xác thực hai lớp" as UC_2FA
+  usecase "Đổi mật khẩu" as UC_MK
+  usecase "Xem thông báo" as UC_TB
+  usecase "Nhập số và chia số" as UC_NS
+  usecase "Chăm sóc khách hàng" as UC_CS
+  usecase "Báo cáo chăm sóc\nkhách hàng" as UC_BCCS
+  usecase "Quản lý đơn hàng" as UC_DH
+  usecase "Mua hàng –\nđặt hàng NCC" as UC_MH
+  usecase "Thi công – nghiệm thu\n– quyết toán" as UC_TC
+  usecase "Đề xuất chi\nvà duyệt chi" as UC_CHI
+  usecase "Thu tiền khách hàng" as UC_THU
+  usecase "Đối soát ngân hàng" as UC_NH
+  usecase "Quản lý NCC –\nbảng giá – vật tư" as UC_NCC
+  usecase "Phân tích, báo cáo\nlãi/lỗ và trợ lý AI" as UC_BC
+  usecase "Quản trị hệ thống" as UC_QT
+}
+ND --> UC_DN
+ND --> UC_MK
+ND --> UC_TB
+UC_2FA .> UC_DN : <<extend>>
+SALE --> UC_NS
+SALE --> UC_CS
+SALE --> UC_DH
+SALE --> UC_THU
+VH --> UC_DH
+VH --> UC_MH
+VH --> UC_TC
+KT --> UC_CHI
+KT --> UC_THU
+KT --> UC_NH
+KT --> UC_NCC
+KT --> UC_BC
+AD --> UC_NS
+AD --> UC_BCCS
+AD --> UC_CHI
+AD --> UC_BC
+AD --> UC_QT
+DC --> UC_CHI
+NCC --> UC_MH
+KH --> UC_DH
+AI --> UC_BC
+AI --> UC_BCCS
+NH --> UC_NH
+WEB --> UC_NS
+@enduml

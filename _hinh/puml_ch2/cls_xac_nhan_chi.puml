@@ -1,0 +1,54 @@
+@startuml cls_xac_nhan_chi
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+hide empty members
+skinparam classAttributeIconSize 0
+
+class CongNoService {
++daChi(user, id, data, kenh)
++xuLyAnhBill(update)
+-sauKhiChiCoc(client, dx)
++taoQuyetToanNcc(client, id)
+}
+class LuuAnh {
++luuAnhBase64(base64)
++duongDanAnh(ten)
+}
+class TelegramClient {
++hoiAnhBill(chatId)
++taiFile(fileId)
+}
+class NganHangService {
++xuLyGiaoDich(payload)
+}
+class DeXuatChi <<entity>> {
+id : SERIAL
+trang_thai : enum
+so_tien : NUMERIC
+}
+class PhieuThanhToan <<entity>> {
+de_xuat_chi_id : INTEGER
+so_tien : NUMERIC
+bill_anh : TEXT
+nguoi_tao_id : INTEGER
+}
+class GiaoDichTho <<entity>>
+CongNoService --> LuuAnh
+CongNoService --> TelegramClient
+NganHangService --> CongNoService
+CongNoService ..> DeXuatChi
+CongNoService ..> PhieuThanhToan
+CongNoService ..> GiaoDichTho
+DeXuatChi "1" -- "0..1" PhieuThanhToan
+@enduml

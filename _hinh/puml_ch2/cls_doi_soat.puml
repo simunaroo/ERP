@@ -1,0 +1,58 @@
+@startuml cls_doi_soat
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+hide empty members
+skinparam classAttributeIconSize 0
+
+class NganHangRoutes {
++POST /webhook
++POST /gia-lap
++POST /:id/khop-tay
++POST /:id/bo-qua
+}
+class NganHangService {
++xuLyGiaoDich(payload, nguon)
+-tuSepay(p)
+-timMaDon(noiDung)
+-khopTienVao(client, gd)
+-timDxcTienRa(client, gd)
++khopTay(user, id, donId)
++boQua(user, id, lyDo)
++giaLap(user, data)
+}
+class CongNoService {
++daChi(user, id, data)
+}
+class ThongBaoService
+class GiaoDichNganHang <<entity>> {
+id : SERIAL
+nguon : VARCHAR
+ma_gd_ngoai : TEXT
+loai : vao / ra
+so_tien : NUMERIC
+noi_dung : TEXT
+trang_thai : enum
+cach_khop : VARCHAR
+thanh_toan_khach_id : INTEGER
+de_xuat_chi_id : INTEGER
+}
+class ThanhToanKhach <<entity>>
+class DeXuatChi <<entity>>
+NganHangRoutes --> NganHangService
+NganHangService --> CongNoService
+NganHangService --> ThongBaoService
+NganHangService ..> GiaoDichNganHang
+ThanhToanKhach "1" -- "0..1" GiaoDichNganHang
+DeXuatChi "1" -- "0..1" GiaoDichNganHang
+@enduml

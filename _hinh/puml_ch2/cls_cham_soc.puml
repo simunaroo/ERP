@@ -1,0 +1,64 @@
+@startuml cls_cham_soc
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+hide empty members
+skinparam classAttributeIconSize 0
+
+class KhachHangController {
++list(req, res)
++detail(req, res)
++create(req, res)
++chamSoc(req, res)
+}
+class KhachHangService {
++danhSach(user, loc)
++chiTiet(user, id)
++taoKhach(user, data)
++ghiChamSoc(user, id, data)
+}
+class KhachHangRepository {
++findAll(loc)
++findById(id)
++findLichSu(id)
++create(data)
++ghiChamSoc(client, data)
+}
+class CapNhatChamSoc <<React>> {
++luu()
++HoiLenDon()
+}
+class KhachHang <<entity>> {
+id : SERIAL
+ten : TEXT
+sdt : VARCHAR
+trang_thai_cham_soc : enum
+hen_goi_lai_luc : TIMESTAMPTZ
+chia_luc : TIMESTAMPTZ
+}
+class KhachHangChamSoc <<entity>> {
+id : SERIAL
+khach_hang_id : INTEGER
+sale_id : INTEGER
+trang_thai : enum
+noi_dung : TEXT
+hen_goi_lai_luc : TIMESTAMPTZ
+created_at : TIMESTAMPTZ
+}
+CapNhatChamSoc ..> KhachHangController : HTTP
+KhachHangController --> KhachHangService
+KhachHangService --> KhachHangRepository
+KhachHangRepository ..> KhachHang
+KhachHangRepository ..> KhachHangChamSoc
+KhachHang "1" -- "n" KhachHangChamSoc
+@enduml

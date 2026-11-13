@@ -1,0 +1,62 @@
+@startuml seq_thi_cong
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+autonumber
+hide footbox
+actor "Van hanh" as U
+boundary "ThiCongUI" as UI
+control "ThiCongController" as C
+entity "thi_cong" as TC
+entity "don_hang" as DH
+entity "don_hang_vat_tu" as VT
+entity "giao_dich_tho" as GDT
+U -> UI : Kich nut "Thi cong"()
+UI -> UI : Hien thi form lap giai doan()
+U -> UI : Nhap giai doan, chon doi tho va kich nut "Luu"
+UI -> C : Lap giai doan thi cong()
+C -> TC : Kiem tra trung lich doi tho()
+note right of C
+Neu doi tho trung lich: canh bao,
+yeu cau xac nhan
+end note
+C -> TC : Them giai doan()
+C --> UI : return ket qua
+U -> UI : Kich nut "Bat dau" / "Bao xong"()
+UI -> C : Cap nhat giai doan()
+C -> TC : Cap nhat trang thai giai doan()
+C -> DH : Tu dong chuyen buoc tien do()
+C --> UI : return ket qua
+U -> UI : Nhap so luong thuc te va kich nut "Xac nhan nghiem thu"
+UI -> C : Xac nhan nghiem thu()
+C -> VT : Cap nhat so luong thuc te()
+C -> DH : Chuyen buoc "Quyet toan"()
+C --> UI : return ket qua
+U -> UI : Kich nut "Chot quyet toan"()
+UI -> C : Chot quyet toan()
+C -> DH : Luu gia tri quyet toan()
+C -> GDT : Ghi cong tho phai tra()
+C --> UI : return ket qua
+UI -> UI : Hien thi don "Hoan tat"()
+@enduml

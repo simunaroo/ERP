@@ -1,0 +1,38 @@
+@startuml seq_thu_tien
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+autonumber
+actor "Sale" as U
+actor "Kế toán" as KT
+boundary "Giao diện\nChi tiết đơn" as FE
+control "ThuTienService" as S
+control "ThongBaoService" as TB
+database "PostgreSQL" as DB
+U -> FE : Xem QR thu tiền (GET /api/thu-tien/don/:id)
+U -> FE : Ghi nhận khoản thu + ảnh bill
+FE -> S : POST /api/thu-tien
+S -> S : kiểm tra quyền theo đơn
+S -> DB : BEGIN; khoá đơn
+S -> DB : kiểm tra không vượt số còn phải thu (v_don_hang_tien)
+S -> DB : INSERT thanh_toan_khach ("Chờ xác nhận")
+S -> TB : gui(Kế toán)
+S -> DB : COMMIT
+KT -> FE : Đối chiếu sao kê, bấm "Đã nhận tiền"
+FE -> S : xuLy(): xác nhận phiếu
+S -> DB : UPDATE phiếu "Đã xác nhận"
+S -> TB : gui(Sale)
+alt Kế toán "Chưa thấy tiền"
+  S -> DB : ghi lý do, báo người ghi nhận
+end
+@enduml

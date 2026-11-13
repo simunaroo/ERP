@@ -27,3 +27,6 @@ backend/sao-luu/
 # Cong cu sinh bao cao: anh chup va schema sinh lai duoc
 _cong_cu_bao_cao/anh/
 _cong_cu_bao_cao/schema.json
+
+# Ban sao luu bao cao Word truoc khi sua (file lon, chi giu tren may)
+_cong_cu_bao_cao/sao_luu/

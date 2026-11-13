@@ -1,0 +1,91 @@
+@startuml cls_duyet_chi
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+hide circle
+skinparam classAttributeIconSize 0
+class "DeXuatChiUI" as UI <<boundary>> {
+  --
+  +Kich nut 'Chi & cong no'()
+  +Hien thi danh sach de xuat cho duyet()
+  +Chon de xuat()
+  +Hien thi chi tiet de xuat kem ma QR()
+  +Kich nut 'Duyet'()
+  +Hien thi trang thai 'Da duyet'()
+}
+class "DeXuatChiController" as C <<control>> {
+  --
+  +Lay danh sach de xuat()
+  +Duyet de xuat chi()
+}
+class "TelegramBot" as TG <<boundary>> {
+  --
+  +Sua tin nhan thanh 'Da duyet'()
+}
+class "de_xuat_chi" as DX <<entity>> {
+  -id
+  -loai_chi
+  -ncc_id
+  -doi_tho_id
+  -don_hang_id
+  -mua_bo_sung_id
+  -nguoi_tao_id
+  -gia_tri_hang
+  -coc_da_tru
+  -...
+  --
+  +Lay de xuat cho duyet()
+  +Cap nhat trang thai 'Da duyet'()
+}
+class "de_xuat_chi_duyet_log" as LOG <<entity>> {
+  -id
+  -de_xuat_chi_id
+  -telegram_user
+  -nguoi_id
+  -hanh_dong
+  -ghi_chu
+  -thoi_gian
+  --
+  +Ghi nguoi duyet()
+}
+class "thong_bao" as TB <<entity>> {
+  -id
+  -nguoi_nhan_id
+  -nguoi_gay_id
+  -loai
+  -tieu_de
+  -noi_dung
+  -link
+  -da_doc_luc
+  -created_at
+  --
+  +Gui thong bao cho Ke toan()
+}
+UI "1" -- "1" C
+TG "1" -- "1" C
+C "1" -- "*" DX
+C "1" -- "*" LOG
+C "1" -- "*" TB
+DX "1" -- "*" LOG
+@enduml

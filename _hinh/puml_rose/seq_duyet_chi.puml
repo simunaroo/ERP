@@ -1,0 +1,59 @@
+@startuml seq_duyet_chi
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+autonumber
+hide footbox
+actor "Admin" as U
+boundary "DeXuatChiUI" as UI
+control "DeXuatChiController" as C
+boundary "TelegramBot" as TG
+entity "de_xuat_chi" as DX
+entity "de_xuat_chi_duyet_log" as LOG
+entity "thong_bao" as TB
+U -> UI : Kich nut "Chi & cong no"()
+UI -> C : Lay danh sach de xuat()
+C -> DX : Lay de xuat cho duyet()
+DX --> C : return danh sach
+C --> UI : return ket qua
+UI -> UI : Hien thi danh sach de xuat cho duyet()
+U -> UI : Chon de xuat
+UI -> UI : Hien thi chi tiet de xuat kem ma QR()
+U -> UI : Kich nut "Duyet"()
+UI -> C : Duyet de xuat chi()
+C -> DX : Cap nhat trang thai "Da duyet"()
+note right of C
+Chi cap nhat khi de xuat con "Cho duyet"
+(hai nguoi bam cung luc chi mot nguoi thanh cong)
+end note
+C -> LOG : Ghi nguoi duyet()
+C -> TB : Gui thong bao cho Ke toan()
+C -> TG : Sua tin nhan thanh "Da duyet"()
+C --> UI : return ket qua
+UI -> UI : Hien thi trang thai "Da duyet"()
+note right of UI
+Tu choi: bat buoc nhap ly do.
+Nguoi duyet chi co the bam "Duyet" ngay tren Telegram
+end note
+@enduml

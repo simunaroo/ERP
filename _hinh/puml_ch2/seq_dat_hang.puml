@@ -1,0 +1,40 @@
+@startuml seq_dat_hang
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+autonumber
+actor "Vận hành" as U
+boundary "Giao diện\nMua hàng" as FE
+control "MuaHangService" as S
+control "CongNoService" as CN
+participant "Telegram\nBot API" as TG
+actor "Nhà cung cấp" as NCC
+database "PostgreSQL" as DB
+U -> FE : Bấm "Đặt hàng" tại một NCC
+FE -> S : POST /api/mua-hang/don/:id/dat-hang
+S -> DB : BEGIN; khoá đơn; lấy dòng "Đã chọn NCC"
+S -> DB : INSERT dat_hang_ncc; dòng -> "Đã đặt"; COMMIT
+S -> TG : sendMessage(đơn đặt hàng + nút "Cho xuất hàng" / "Yêu cầu cọc")
+TG -> NCC : tin nhắn trong nhóm NCC
+alt NCC bấm "Cho xuất hàng"
+  NCC -> TG : callback_query
+  TG -> S : xuLyTelegramNcc() (kiểm tra đúng nhóm, đúng tin)
+  S -> DB : ghiPhanHoiNcc(): dòng -> "Sẵn hàng"
+  S -> CN : taoQuyetToanNcc() (gửi đề xuất kèm QR vào nhóm duyệt chi)
+else NCC bấm "Yêu cầu cọc"
+  S -> TG : hỏi số tiền cọc (ForceReply)
+  NCC -> TG : trả lời "2tr"
+  S -> CN : taoCocTuNcc(); dòng -> "Chờ cọc"
+end
+S -> TG : sửa tin nhóm NCC "Đã ghi nhận"
+@enduml

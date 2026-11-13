@@ -1,0 +1,108 @@
+@startuml cls_tro_ly
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+hide circle
+skinparam classAttributeIconSize 0
+class "TroLyChatUI" as UI <<boundary>> {
+  --
+  +Kich nut 'Tro ly AI' va chon san pham()
+  +Hien thi khung chat()
+  +Nhap cau hoi, dinh kem anh (neu co) va kich nut 'Gui'()
+  +Hien thi cau tra loi va nut 'Chep tin nhan gui khach'()
+}
+class "TroLyController" as C <<control>> {
+  --
+  +Hoi tro ly()
+  +Kiem tra cau hoi va anh hop le()
+}
+class "GeminiAPI" as AI <<boundary>> {
+  --
+  +Gui huong dan, kien thuc, lich su, cau hoi va anh()
+}
+class "tro_ly_san_pham" as TL <<entity>> {
+  -id
+  -loai_vat_tu_id
+  -kien_thuc
+  -cap_nhat_luc
+  -nguoi_cap_nhat_id
+  --
+  +Lay kien thuc san pham()
+}
+class "vat_tu" as VT <<entity>> {
+  -id
+  -ten
+  -loai_vat_tu_id
+  -don_vi_tinh
+  -quy_cach
+  -trang_thai
+  --
+  +Lay danh muc vat tu dang ban()
+}
+class "khach_hang" as KH <<entity>> {
+  -id
+  -ten
+  -sdt
+  -dia_chi
+  -sale_phu_trach_id
+  -nhom_khach_hang
+  -trang_thai_cham_soc
+  -created_at
+  -nguon
+  -...
+  --
+  +Lay nhom khach va nhu cau()
+}
+class "tro_ly_hoi_thoai" as HT <<entity>> {
+  -id
+  -nguoi_id
+  -loai_vat_tu_id
+  -khach_hang_id
+  -tieu_de
+  -created_at
+  -cap_nhat_luc
+  --
+  +Tao cuoc tro chuyen (lan hoi dau)()
+}
+class "tro_ly_tin_nhan" as TN <<entity>> {
+  -id
+  -hoi_thoai_id
+  -vai_tro
+  -noi_dung
+  -so_anh
+  -created_at
+  --
+  +Lay 10 luot hoi dap gan nhat()
+  +Luu cau hoi va cau tra loi()
+}
+UI "1" -- "1" C
+AI "1" -- "1" C
+C "1" -- "*" TL
+C "1" -- "*" VT
+C "1" -- "*" KH
+C "1" -- "*" HT
+C "1" -- "*" TN
+KH "1" -- "*" HT
+HT "1" -- "*" TN
+@enduml

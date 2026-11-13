@@ -1,0 +1,58 @@
+@startuml seq_tao_don
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+autonumber
+hide footbox
+actor "Sale" as U
+boundary "TaoDonUI" as UI
+control "DonHangController" as C
+entity "khach_hang" as KH
+entity "don_hang" as DH
+entity "don_hang_vat_tu" as VT
+entity "khach_hang_san_pham" as SP
+entity "users" as US
+entity "don_hang_phan_cong_log" as PC
+entity "thong_bao" as TB
+U -> UI : Kich nut "Nhap don"()
+UI -> C : Lay danh sach khach va vat tu()
+C -> KH : Lay khach cua Sale()
+KH --> C : return danh sach
+C --> UI : return ket qua
+UI -> UI : Hien thi form tao don()
+U -> UI : Nhap thong tin don, chon san pham va vat tu
+U -> UI : Kich nut "Chot don"()
+UI -> C : Tao va chot don hang()
+C -> C : Kiem tra du thong tin de chot()
+C -> DH : Them don hang()
+C -> VT : Them vat tu cua don()
+C -> DH : Sinh ma hop dong SDT_STT()
+C -> SP : Them san pham quan tam cua khach()
+C -> US : Chon van hanh it viec nhat()
+US --> C : return van hanh
+C -> PC : Ghi lich su phan cong()
+C -> TB : Gui thong bao cho van hanh()
+C --> UI : return ket qua
+UI -> UI : Hien thi chi tiet don hang()
+@enduml

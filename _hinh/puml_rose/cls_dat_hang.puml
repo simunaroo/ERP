@@ -1,0 +1,111 @@
+@startuml cls_dat_hang
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+hide circle
+skinparam classAttributeIconSize 0
+class "MuaHangUI" as UI <<boundary>> {
+  --
+  +Kich nut 'Mua hang'()
+  +Hien thi danh sach vat tu can mua()
+  +Chon nha cung cap cho tung vat tu()
+  +Kich nut 'Dat hang'()
+  +Hien thi trang thai dat hang()
+}
+class "MuaHangController" as C <<control>> {
+  --
+  +Lay chi tiet mua hang cua don()
+  +Cap nhat nha cung cap()
+  +Dat hang nha cung cap()
+  +Ghi nhan phan hoi nha cung cap()
+}
+class "TelegramBot" as TG <<boundary>> {
+  --
+  +Gui don dat hang vao nhom NCC()
+  +Kich nut 'Cho xuat hang'()
+}
+class "mua_hang_dong" as MH <<entity>> {
+  -id
+  -don_hang_vat_tu_id
+  -ncc_id
+  -gia_chot
+  -vat_pct
+  -trang_thai
+  -ghi_chu
+  -nguoi_cap_nhat_id
+  -cap_nhat_luc
+  -...
+  --
+  +Lay dong vat tu can mua()
+  +Cap nhat NCC va gia chot()
+  +Chuyen trang thai 'Da dat'()
+  +Chuyen trang thai 'San hang'()
+}
+class "ncc_bang_gia" as BG <<entity>> {
+  -id
+  -ncc_id
+  -vat_tu_id
+  -don_gia
+  -ngay_hieu_luc
+  -ngay_het_hieu_luc
+  --
+  +Lay gia hieu luc cua cac NCC()
+}
+class "dat_hang_ncc" as DAT <<entity>> {
+  -id
+  -don_hang_id
+  -ncc_id
+  -nguoi_dat_id
+  -noi_dung
+  -tong_tien
+  -trang_thai
+  -so_tien_coc
+  -de_xuat_chi_id
+  -...
+  --
+  +Them don dat hang()
+}
+class "de_xuat_chi" as DX <<entity>> {
+  -id
+  -loai_chi
+  -ncc_id
+  -doi_tho_id
+  -don_hang_id
+  -mua_bo_sung_id
+  -nguoi_tao_id
+  -gia_tri_hang
+  -coc_da_tru
+  -...
+  --
+  +Tao de xuat quyet toan NCC()
+}
+UI "1" -- "1" C
+TG "1" -- "1" C
+C "1" -- "*" MH
+C "1" -- "*" BG
+C "1" -- "*" DAT
+C "1" -- "*" DX
+DX "1" -- "*" DAT
+DAT "1" -- "*" MH
+@enduml

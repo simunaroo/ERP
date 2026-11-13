@@ -1,0 +1,125 @@
+@startuml erd_1_khach_hang
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+hide circle
+hide empty members
+skinparam linetype ortho
+skinparam ClassBackgroundColor #FFFFFF
+skinparam ClassHeaderBackgroundColor #1F5FAF
+skinparam ClassFontColor #FFFFFF
+entity users {
+  * id : integer <<PK>>
+  ho_ten : text
+  username : text
+  password_hash : text
+  vai_tro : enum
+  trang_thai : enum
+  phien_ban_token : integer
+  doi_mat_khau_luc : timestamptz
+  created_at : timestamptz
+  totp_khoa : text
+  totp_bat_luc : timestamptz
+  totp_buoc_cuoi : bigint
+  totp_ma_du_phong : ARRAY
+  telegram_username : text
+}
+entity thong_bao {
+  * id : bigint <<PK>>
+  nguoi_nhan_id : integer <<FK>>
+  nguoi_gay_id : integer <<FK>>
+  loai : varchar
+  tieu_de : text
+  noi_dung : text
+  link : text
+  da_doc_luc : timestamptz
+  created_at : timestamptz
+}
+entity ty_le_chia_so {
+  * sale_id : integer <<PK>>
+  ty_le : smallint
+  nguoi_cap_nhat_id : integer <<FK>>
+  cap_nhat_luc : timestamptz
+}
+entity chia_so_log {
+  * id : integer <<PK>>
+  khach_hang_id : integer <<FK>>
+  sale_id : integer <<FK>>
+  kieu : varchar
+  kenh : varchar
+  nguoi_nhap_id : integer <<FK>>
+  created_at : timestamptz
+  tu_sale_id : integer <<FK>>
+  ly_do : text
+}
+entity khach_hang {
+  * id : integer <<PK>>
+  ten : text
+  sdt : text
+  dia_chi : text
+  sale_phu_trach_id : integer <<FK>>
+  nhom_khach_hang : enum
+  trang_thai_cham_soc : enum
+  created_at : timestamptz
+  nguon : varchar
+  nhu_cau : text
+  nguoi_nhap_id : integer <<FK>>
+  chia_luc : timestamptz
+  hen_goi_lai_luc : timestamptz
+}
+entity khach_hang_cham_soc {
+  * id : integer <<PK>>
+  khach_hang_id : integer <<FK>>
+  sale_id : integer <<FK>>
+  trang_thai : enum
+  noi_dung : text
+  created_at : timestamptz
+  hen_goi_lai_luc : timestamptz
+}
+entity khach_hang_san_pham {
+  * khach_hang_id : integer <<PK>>
+  * loai_vat_tu_id : integer <<PK>>
+  created_at : timestamptz
+}
+entity ai_nhan_xet_cham_soc {
+  * id : integer <<PK>>
+  tu_ngay : date
+  den_ngay : date
+  ket_qua : jsonb
+  so_lieu : jsonb
+  nguoi_tao_id : integer <<FK>>
+  created_at : timestamptz
+}
+entity loai_vat_tu #EEEEEE;text:black
+users ||--o{ khach_hang
+khach_hang ||--o{ khach_hang_cham_soc
+users ||--o{ khach_hang_cham_soc
+users ||--o{ thong_bao
+loai_vat_tu ||--o{ khach_hang_san_pham
+users ||--o{ ty_le_chia_so
+khach_hang ||--o{ chia_so_log
+users ||--o{ chia_so_log
+users ||--o{ ai_nhan_xet_cham_soc
+khach_hang ||--o{ khach_hang_san_pham
+@enduml

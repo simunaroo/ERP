@@ -1,0 +1,65 @@
+@startuml erd_5_tro_ly_ai
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+hide circle
+hide empty members
+skinparam linetype ortho
+skinparam ClassBackgroundColor #FFFFFF
+skinparam ClassHeaderBackgroundColor #1F5FAF
+skinparam ClassFontColor #FFFFFF
+entity tro_ly_san_pham {
+  * id : integer <<PK>>
+  loai_vat_tu_id : integer <<FK>>
+  kien_thuc : text
+  cap_nhat_luc : timestamptz
+  nguoi_cap_nhat_id : integer <<FK>>
+}
+entity tro_ly_hoi_thoai {
+  * id : integer <<PK>>
+  nguoi_id : integer <<FK>>
+  loai_vat_tu_id : integer <<FK>>
+  khach_hang_id : integer <<FK>>
+  tieu_de : text
+  created_at : timestamptz
+  cap_nhat_luc : timestamptz
+}
+entity tro_ly_tin_nhan {
+  * id : bigint <<PK>>
+  hoi_thoai_id : integer <<FK>>
+  vai_tro : varchar
+  noi_dung : text
+  so_anh : smallint
+  created_at : timestamptz
+}
+entity loai_vat_tu #EEEEEE;text:black
+entity users #EEEEEE;text:black
+entity khach_hang #EEEEEE;text:black
+loai_vat_tu ||--o{ tro_ly_san_pham
+users ||--o{ tro_ly_san_pham
+users ||--o{ tro_ly_hoi_thoai
+loai_vat_tu ||--o{ tro_ly_hoi_thoai
+khach_hang ||--o{ tro_ly_hoi_thoai
+tro_ly_hoi_thoai ||--o{ tro_ly_tin_nhan
+@enduml

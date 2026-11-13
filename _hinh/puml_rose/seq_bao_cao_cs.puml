@@ -1,0 +1,61 @@
+@startuml seq_bao_cao_cs
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+autonumber
+hide footbox
+actor "Admin" as U
+boundary "BaoCaoChamSocUI" as UI
+control "BaoCaoChamSocController" as C
+boundary "GeminiAPI" as AI
+entity "khach_hang" as KH
+entity "khach_hang_cham_soc" as CS
+entity "chia_so_log" as LOG
+entity "ai_nhan_xet_cham_soc" as NX
+U -> UI : Kich tab "Bao cao cham soc"()
+U -> UI : Chon ky bao cao
+UI -> C : Tong hop bao cao theo Sale()
+C -> KH : Thong ke so duoc chia, so ton dong()
+C -> CS : Thong ke lan goi, ty le chot()
+CS --> C : return so lieu
+C --> UI : return ket qua
+UI -> UI : Hien thi bang theo Sale va so ton dong()
+U -> UI : Chon khach ton dong, Sale nhan, nhap ly do va kich nut "Chuyen khach"
+UI -> C : Chuyen nhieu khach()
+C -> KH : Cap nhat Sale phu trach()
+C -> LOG : Ghi nhat ky chuyen so()
+C --> UI : return ket qua
+U -> UI : Kich nut "Phan tich bang AI"()
+UI -> C : Nhan xet bang AI()
+C -> AI : Gui so lieu tong hop theo Sale()
+AI --> C : return nhan xet
+C -> C : Kiem tra lai ten Sale va con so()
+C -> NX : Luu ban phan tich()
+C --> UI : return ket qua
+UI -> UI : Hien thi nhan xet AI va lich su phan tich()
+note right of C
+Chi gui so lieu tong hop,
+khong gui ten, so dien thoai khach
+end note
+@enduml

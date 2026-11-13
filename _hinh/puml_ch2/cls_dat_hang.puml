@@ -1,0 +1,66 @@
+@startuml cls_dat_hang
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+hide empty members
+skinparam classAttributeIconSize 0
+
+class MuaHangController {
++chiTietDon()
++capNhatDong()
++datHang()
++phanHoiNcc()
++huyDatHang()
++layHang()
+}
+class MuaHangService {
++capNhatDong(user, id, data)
++datHang(user, donId, nccId)
+-ghiPhanHoiNcc(client, dh, data)
++phanHoiNccWeb(user, id, data)
++huyDatHang(user, id)
++xuLyTelegramNcc(update)
+}
+class MuaHangRepository
+class CongNoService {
++taoQuyetToanNcc(client, datHangId)
++taoCocTuNcc(client, datHangId, soTien)
+}
+class TelegramClient {
++guiDatHangNcc(dh)
++hoiSoTienCoc(chatId)
++capNhatTinNhan()
+}
+class MuaHangDong <<entity>> {
+don_hang_vat_tu_id : INTEGER
+ncc_id : INTEGER
+gia_chot : NUMERIC
+trang_thai : enum
+}
+class DatHangNcc <<entity>> {
+id : SERIAL
+don_hang_id : INTEGER
+ncc_id : INTEGER
+trang_thai : enum
+so_tien_coc : NUMERIC
+}
+class NhaCungCap <<entity>>
+MuaHangController --> MuaHangService
+MuaHangService --> MuaHangRepository
+MuaHangService --> CongNoService
+MuaHangService --> TelegramClient
+MuaHangRepository ..> MuaHangDong
+MuaHangRepository ..> DatHangNcc
+DatHangNcc "1" -- "n" MuaHangDong
+NhaCungCap "1" -- "n" DatHangNcc
+@enduml

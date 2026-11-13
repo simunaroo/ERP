@@ -1,0 +1,59 @@
+@startuml uc_ketoan
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+left to right direction
+actor "Kế toán" as KT
+actor "Người duyệt chi\n(Telegram)" as DC
+actor "Gemini AI" as AI
+actor "Ngân hàng\n(SePay)" as NH
+rectangle "Phân hệ nhân viên kế toán" {
+  usecase "Quản lý NCC và bảng giá" as NCC
+  usecase "Quản lý danh mục vật tư" as VT
+  usecase "Lập đề xuất chi" as DX
+  usecase "Gửi đề xuất kèm QR\nvào nhóm Telegram" as GUI
+  usecase "Gửi lại đề xuất bị từ chối" as GL
+  usecase "Xác nhận đã chi" as CHI
+  usecase "Tải ảnh bill" as BILL
+  usecase "Xác nhận qua Telegram" as TG
+  usecase "Xem công nợ NCC, đội thợ" as CN
+  usecase "Xác nhận tiền khách về" as XN
+  usecase "Xem công nợ khách hàng" as CNK
+  usecase "Đối soát giao dịch ngân hàng" as DS
+  usecase "Chốt phiếu mua bổ sung" as MBS
+  usecase "Phân tích vật tư bán chạy\nvà giá NCC" as PT
+  usecase "AI nhận xét" as AINX
+  usecase "Xem báo cáo lãi/lỗ" as LL
+  usecase "Xuất Excel" as XL
+}
+KT --> NCC
+KT --> VT
+KT --> DX
+KT --> GL
+KT --> CHI
+KT --> CN
+KT --> XN
+KT --> CNK
+KT --> DS
+KT --> MBS
+KT --> PT
+KT --> LL
+DX ..> GUI : <<include>>
+GUI -- DC
+CHI ..> BILL : <<include>>
+TG ..> CHI : <<extend>>
+AINX ..> PT : <<extend>>
+AINX -- AI
+XL ..> LL : <<extend>>
+NH --> DS
+@enduml

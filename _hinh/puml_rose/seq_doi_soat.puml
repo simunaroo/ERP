@@ -1,0 +1,66 @@
+@startuml seq_doi_soat
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+autonumber
+hide footbox
+actor "Ngan hang" as NH
+actor "Ke toan" as KT
+boundary "NganHangWebhook" as WH
+boundary "DoiSoatUI" as UI
+control "NganHangController" as C
+entity "giao_dich_ngan_hang" as GD
+entity "thanh_toan_khach" as TT
+entity "de_xuat_chi" as DX
+entity "thong_bao" as TB
+NH -> WH : Gui giao dich (so tien, noi dung chuyen khoan)
+WH -> C : Xu ly giao dich()
+C -> C : Kiem tra khoa API()
+C -> GD : Kiem tra giao dich da xu ly()
+C -> GD : Them giao dich()
+C -> C : Tim ma don trong noi dung chuyen khoan()
+note right of C
+Tien vao: xac nhan phieu thu cua don
+Tien ra: ghi "Da chi" cho de xuat khop
+end note
+C -> TT : Xac nhan phieu thu()
+C -> DX : Ghi "Da chi"()
+C -> TB : Gui thong bao()
+C --> WH : return thanh cong
+note right of C
+Khong tim thay don / khong khop:
+giao dich "Chua khop", bao Ke toan
+end note
+KT -> UI : Kich nut "Doi soat ngan hang"()
+UI -> C : Lay giao dich chua khop()
+C -> GD : Lay giao dich chua khop()
+GD --> C : return danh sach
+C --> UI : return ket qua
+UI -> UI : Hien thi danh sach giao dich()
+KT -> UI : Chon don va kich nut "Khop tay"
+UI -> C : Khop tay giao dich()
+C -> GD : Cap nhat trang thai "Da khop"()
+C --> UI : return ket qua
+UI -> UI : Hien thi ket qua doi soat()
+@enduml

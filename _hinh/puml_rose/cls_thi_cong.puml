@@ -1,0 +1,114 @@
+@startuml cls_thi_cong
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+hide circle
+skinparam classAttributeIconSize 0
+class "ThiCongUI" as UI <<boundary>> {
+  --
+  +Kich nut 'Thi cong'()
+  +Hien thi form lap giai doan()
+  +Nhap giai doan, chon doi tho va kich nut 'Luu'()
+  +Kich nut 'Bat dau' / 'Bao xong'()
+  +Nhap so luong thuc te va kich nut 'Xac nhan nghiem thu'()
+  +Kich nut 'Chot quyet toan'()
+  +Hien thi don 'Hoan tat'()
+}
+class "ThiCongController" as C <<control>> {
+  --
+  +Lap giai doan thi cong()
+  +Cap nhat giai doan()
+  +Xac nhan nghiem thu()
+  +Chot quyet toan()
+}
+class "thi_cong" as TC <<entity>> {
+  -id
+  -don_hang_id
+  -doi_tho_id
+  -nguoi_phu_trach_id
+  -ten_giai_doan
+  -don_vi_cong
+  -gia_cong
+  -kl_du_kien
+  -kl_thuc_te
+  -...
+  --
+  +Kiem tra trung lich doi tho()
+  +Them giai doan()
+  +Cap nhat trang thai giai doan()
+}
+class "don_hang" as DH <<entity>> {
+  -id
+  -ma_don
+  -khach_hang_id
+  -sale_id
+  -vanhanh_phu_trach_id
+  -trang_thai
+  -giai_doan
+  -hinh_thuc
+  -ma_hop_dong
+  -...
+  --
+  +Tu dong chuyen buoc tien do()
+  +Chuyen buoc 'Quyet toan'()
+  +Luu gia tri quyet toan()
+}
+class "don_hang_vat_tu" as VT <<entity>> {
+  -id
+  -don_hang_id
+  -vat_tu_id
+  -so_luong_can
+  -don_gia
+  -loai_thi_cong
+  -dai_mm
+  -rong_mm
+  -so_luong_thuc_te
+  -...
+  --
+  +Cap nhat so luong thuc te()
+}
+class "giao_dich_tho" as GDT <<entity>> {
+  -id
+  -doi_tho_id
+  -don_hang_id
+  -thi_cong_id
+  -loai
+  -so_tien
+  -de_xuat_chi_id
+  -phat_sinh_id
+  -ghi_chu
+  -...
+  --
+  +Ghi cong tho phai tra()
+}
+UI "1" -- "1" C
+C "1" -- "*" TC
+C "1" -- "*" DH
+C "1" -- "*" VT
+C "1" -- "*" GDT
+DH "1" -- "*" VT
+DH "1" -- "*" TC
+DH "1" -- "*" GDT
+TC "1" -- "*" GDT
+@enduml

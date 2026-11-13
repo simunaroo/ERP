@@ -1,0 +1,100 @@
+@startuml cls_xac_nhan_chi
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+hide circle
+skinparam classAttributeIconSize 0
+class "DeXuatChiUI" as UI <<boundary>> {
+  --
+  +Chon de xuat 'Da duyet'()
+  +Hien thi ma QR chuyen khoan()
+  +Kich nut 'Da chi' va tai anh bill()
+  +Hien thi trang thai 'Da chi'()
+}
+class "DeXuatChiController" as C <<control>> {
+  --
+  +Xac nhan da chi()
+  +Kiem tra anh bill()
+}
+class "de_xuat_chi" as DX <<entity>> {
+  -id
+  -loai_chi
+  -ncc_id
+  -doi_tho_id
+  -don_hang_id
+  -mua_bo_sung_id
+  -nguoi_tao_id
+  -gia_tri_hang
+  -coc_da_tru
+  -...
+  --
+  +Cap nhat trang thai 'Da chi'()
+  +Tao de xuat quyet toan con lai()
+}
+class "phieu_thanh_toan" as PTT <<entity>> {
+  -id
+  -de_xuat_chi_id
+  -ma_qr
+  -so_tien
+  -ngay_thanh_toan
+  -nguoi_tao_id
+  -noi_dung_ck
+  -bill_anh
+  --
+  +Them phieu thanh toan()
+}
+class "mua_hang_dong" as MH <<entity>> {
+  -id
+  -don_hang_vat_tu_id
+  -ncc_id
+  -gia_chot
+  -vat_pct
+  -trang_thai
+  -ghi_chu
+  -nguoi_cap_nhat_id
+  -cap_nhat_luc
+  -...
+  --
+  +Chuyen trang thai 'San hang'()
+}
+class "thong_bao" as TB <<entity>> {
+  -id
+  -nguoi_nhan_id
+  -nguoi_gay_id
+  -loai
+  -tieu_de
+  -noi_dung
+  -link
+  -da_doc_luc
+  -created_at
+  --
+  +Gui thong bao cho nguoi lap()
+}
+UI "1" -- "1" C
+C "1" -- "*" DX
+C "1" -- "*" PTT
+C "1" -- "*" MH
+C "1" -- "*" TB
+DX "1" -- "*" PTT
+@enduml

@@ -1,0 +1,63 @@
+@startuml seq_dat_hang
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+autonumber
+hide footbox
+actor "Van hanh" as U
+boundary "MuaHangUI" as UI
+control "MuaHangController" as C
+boundary "TelegramBot" as TG
+actor "Nha cung cap" as NCC
+entity "mua_hang_dong" as MH
+entity "ncc_bang_gia" as BG
+entity "dat_hang_ncc" as DAT
+entity "de_xuat_chi" as DX
+U -> UI : Kich nut "Mua hang"()
+UI -> C : Lay chi tiet mua hang cua don()
+C -> MH : Lay dong vat tu can mua()
+C -> BG : Lay gia hieu luc cua cac NCC()
+BG --> C : return bang gia
+C --> UI : return ket qua
+UI -> UI : Hien thi danh sach vat tu can mua()
+U -> UI : Chon nha cung cap cho tung vat tu
+UI -> C : Cap nhat nha cung cap()
+C -> MH : Cap nhat NCC va gia chot()
+U -> UI : Kich nut "Dat hang"()
+UI -> C : Dat hang nha cung cap()
+C -> DAT : Them don dat hang()
+C -> MH : Chuyen trang thai "Da dat"()
+C -> TG : Gui don dat hang vao nhom NCC()
+TG -> NCC : Hien thi tin nhan kem nut "Cho xuat hang", "Yeu cau coc"()
+NCC -> TG : Kich nut "Cho xuat hang"
+TG -> C : Ghi nhan phan hoi nha cung cap()
+C -> MH : Chuyen trang thai "San hang"()
+C -> DX : Tao de xuat quyet toan NCC()
+note right of C
+Neu NCC "Yeu cau coc": hoi so tien coc,
+tao de xuat coc, vat tu chuyen "Cho coc"
+end note
+C --> UI : return ket qua
+UI -> UI : Hien thi trang thai dat hang()
+@enduml

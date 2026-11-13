@@ -1,0 +1,68 @@
+@startuml cls_tao_don
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+hide empty members
+skinparam classAttributeIconSize 0
+
+class DonHangController {
++list()
++detail()
++create()
++giaiDoan()
++doiPhuTrach()
+}
+class DonHangService {
++taoDonHang(user, data)
+-kiemTraDuDeChot(don)
+-phanCongTuDong(client, don)
++chuyenGiaiDoan(user, id, data)
++bocKhoiLuong(user, id, ds)
++doiPhuTrach(user, id, data)
+}
+class DonHangRepository {
++create(client, don)
++findById(id)
++ghiLichSuGiaiDoan(client, data)
++chonVanHanhItViec(client)
++ganVanHanh(client, id, vh)
++dieuKienRoiBuoc(id)
+}
+class ThongBaoService {
++giaoDon()
++tienDoDon()
+}
+class DonHang <<entity>> {
+id : SERIAL
+ma_don : VARCHAR
+khach_hang_id : INTEGER
+sale_id : INTEGER
+vanhanh_phu_trach_id : INTEGER
+giai_doan : enum
+}
+class DonHangVatTu <<entity>> {
+don_hang_id : INTEGER
+vat_tu_id : INTEGER
+so_luong_can : NUMERIC
+don_gia : NUMERIC
+}
+class DonHangPhanCongLog <<entity>>
+class DonHangGiaiDoanLog <<entity>>
+DonHangController --> DonHangService
+DonHangService --> DonHangRepository
+DonHangService --> ThongBaoService
+DonHangRepository ..> DonHang
+DonHang "1" -- "n" DonHangVatTu
+DonHang "1" -- "n" DonHangPhanCongLog
+DonHang "1" -- "n" DonHangGiaiDoanLog
+@enduml
