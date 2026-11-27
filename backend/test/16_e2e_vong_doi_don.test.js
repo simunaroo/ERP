@@ -77,7 +77,7 @@ describe('E2E — vòng đời một khách hàng: từ số điện thoại đ�
     assert.equal(Number((await tien()).tong_don), 4250000);
   });
 
-  it('E2E-04: Lên phương án → bóc khối lượng (đo thực tế 12 m²) → tổng đơn đổi, Sale được báo → sang Mua hàng', async () => {
+  it('E2E-04: Lên phương án → tính KLVT (đo thực tế 12 m²) → tổng đơn đổi, Sale được báo → sang Mua hàng', async () => {
     await ctx.api(tk.vannam, 'PATCH', `/don-hang/${S.donId}/phuong-an`, { phuong_an_van_chuyen: 'Xe tải 1,5 tấn giao sáng', phuong_an_thi_cong: 'Lát sàn ngày 1, ốp tường ngày 2' });
     assert.equal((await ctx.api(tk.vannam, 'POST', `/don-hang/${S.donId}/giai-doan`, { huong: 'tiep' })).d.giai_doan, 'boc_khoi_luong');
     // Chua xac nhan khoi luong thi khong sang Mua hang

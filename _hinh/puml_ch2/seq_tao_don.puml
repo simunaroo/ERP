@@ -1,0 +1,43 @@
+@startuml seq_tao_don
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+autonumber
+actor "Sale" as U
+boundary "Giao diện\nTạo đơn" as FE
+control "DonHangController" as C
+control "DonHangService" as S
+entity "DonHangRepository" as R
+control "ThongBaoService" as TB
+database "PostgreSQL" as DB
+U -> FE : Nhập khách, vật tư, giá, cọc; bấm "Chốt đơn"
+FE -> C : POST /api/don-hang (chot = true)
+C -> S : taoDonHang(user, data)
+S -> S : kiemTraDuDeChot()
+alt thiếu thông tin
+  S --> FE : 400 + danh sách phần còn thiếu
+end
+S -> DB : BEGIN
+S -> R : create(đơn, vật tư)
+S -> R : ghi lịch sử bước "Lên phương án"
+S -> R : phanCongTuDong(): chonVanHanhItViec() (pg_advisory_xact_lock)
+alt có vận hành hoạt động
+  S -> R : ganVanHanh() + ghi phân công
+  S -> TB : giaoDon(vận hành)
+else không có
+  S -> S : đơn "chưa phân công" (Admin phân sau)
+end
+S -> DB : COMMIT
+S --> C : đơn đã chốt
+C --> FE : 201 Created
+@enduml

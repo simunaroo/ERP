@@ -1,0 +1,3254 @@
+{
+ "bang": {
+  "ai_nhan_xet_cham_soc": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "tu_ngay",
+    "d": "date",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "den_ngay",
+    "d": "date",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ket_qua",
+    "d": "jsonb",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "so_lieu",
+    "d": "jsonb",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "nguoi_tao_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "created_at",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "cau_hinh": [
+   {
+    "c": "khoa",
+    "d": "varchar",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "gia_tri",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "mo_ta",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "don_vi",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "toi_thieu",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "toi_da",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "nguoi_cap_nhat_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "cap_nhat_luc",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "chia_so_log": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "khach_hang_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "sale_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "kieu",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "kenh",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "nguoi_nhap_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "created_at",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "tu_sale_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "ly_do",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   }
+  ],
+  "dat_hang_ncc": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "don_hang_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "ncc_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "nguoi_dat_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "noi_dung",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "tong_tien",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "trang_thai",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "so_tien_coc",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "de_xuat_chi_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "phan_hoi_qua",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "nguoi_phan_hoi",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "phan_hoi_luc",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "tg_chat_id",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "tg_message_id",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "tg_hoi_coc_message_id",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "created_at",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "de_xuat_chi": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "loai_chi",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ncc_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "doi_tho_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "don_hang_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "mua_bo_sung_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "nguoi_tao_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "gia_tri_hang",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "coc_da_tru",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "so_tien",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "trang_thai",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "noi_dung_ck",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "ly_do_tu_choi",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "ghi_chu",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "telegram_message_id",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "telegram_chat_id",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "created_at",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "tg_hoi_bill_message_id",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   }
+  ],
+  "de_xuat_chi_dong": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "de_xuat_chi_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "mua_hang_dong_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "so_luong",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "don_gia",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "vat_pct",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "thanh_tien",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "de_xuat_chi_duyet_log": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "de_xuat_chi_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "telegram_user",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "nguoi_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "hanh_dong",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ghi_chu",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "thoi_gian",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "doi_tho": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ten",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "sdt",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "nang_luc",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "so_tk",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "ten_ngan_hang",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "chu_tk",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "trang_thai",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "don_hang": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ma_don",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "khach_hang_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "sale_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "vanhanh_phu_trach_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "trang_thai",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "giai_doan",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "hinh_thuc",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ma_hop_dong",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "ngay_chot",
+    "d": "date",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "ngay_yc_lap_dat",
+    "d": "date",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "tinh_thanh",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "phuong_xa",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "dia_chi_cong_trinh",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "phi_van_chuyen",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "phu_thu",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "chiet_khau_pct",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "tien_coc",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ngay_coc",
+    "d": "date",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "ty_le_tam_ung",
+    "d": "smallint",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "dieu_khoan_nghiem_thu",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "ghi_chu_van_chuyen",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "phuong_an_van_chuyen",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "phuong_an_thi_cong",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "bao_gia_token",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "bao_gia_tao_luc",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "nghiem_thu_luc",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "nguoi_nghiem_thu_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "gia_tri_quyet_toan",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "quyet_toan_luc",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "nguoi_quyet_toan_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "created_at",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "boc_khoi_luong_luc",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "nguoi_boc_khoi_luong_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "san_pham_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   }
+  ],
+  "don_hang_giai_doan_log": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "don_hang_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "tu_giai_doan",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "den_giai_doan",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "nguoi_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "ghi_chu",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "created_at",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "don_hang_hinh_anh": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "don_hang_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "url",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "loai",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "created_at",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "don_hang_phan_cong_log": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "don_hang_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "tu_van_hanh_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "den_van_hanh_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "nguoi_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "ly_do",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "created_at",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "don_hang_vat_tu": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "don_hang_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "vat_tu_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "so_luong_can",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "don_gia",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "loai_thi_cong",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "dai_mm",
+    "d": "integer",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "rong_mm",
+    "d": "integer",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "so_luong_thuc_te",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "ghi_chu",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   }
+  ],
+  "don_hang_yeu_cau_sua": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "don_hang_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "sale_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "noi_dung",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "trang_thai",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "created_at",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "giao_dich_ngan_hang": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "nguon",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ma_gd_ngoai",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ngan_hang",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "so_tk",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "loai",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "so_tien",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "noi_dung",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "ma_tham_chieu",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "thoi_gian_gd",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "trang_thai",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "cach_khop",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "don_hang_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "thanh_toan_khach_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "de_xuat_chi_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "ghi_chu",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "nguoi_xu_ly_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "du_lieu_goc",
+    "d": "jsonb",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "created_at",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "giao_dich_tho": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "doi_tho_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "don_hang_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "thi_cong_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "loai",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "so_tien",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "de_xuat_chi_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "phat_sinh_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "ghi_chu",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "created_at",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "khach_hang": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ten",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "sdt",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "dia_chi",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "sale_phu_trach_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "nhom_khach_hang",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "trang_thai_cham_soc",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "created_at",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "nguon",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "nhu_cau",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "nguoi_nhap_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "chia_luc",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "hen_goi_lai_luc",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": true
+   }
+  ],
+  "khach_hang_cham_soc": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "khach_hang_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "sale_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "trang_thai",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "noi_dung",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "created_at",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "hen_goi_lai_luc",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": true
+   }
+  ],
+  "khach_hang_san_pham": [
+   {
+    "c": "khach_hang_id",
+    "d": "integer",
+    "pk": true,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "loai_vat_tu_id",
+    "d": "integer",
+    "pk": true,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "created_at",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "loai_vat_tu": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ten",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "nguon_goc",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "tu_khoa",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   }
+  ],
+  "mua_bo_sung": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "don_hang_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "loai_phat_sinh",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ly_do",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "trang_thai",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ncc_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "ngay_mua",
+    "d": "date",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "nguoi_tao_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "created_at",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "mua_bo_sung_dong": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "mua_bo_sung_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "vat_tu_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "so_luong",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "don_gia",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": true
+   }
+  ],
+  "mua_bo_sung_trach_nhiem": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "mua_bo_sung_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "nguon",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "so_tien",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "mua_hang_dong": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "don_hang_vat_tu_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "ncc_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "gia_chot",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "vat_pct",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "trang_thai",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ghi_chu",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "nguoi_cap_nhat_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "cap_nhat_luc",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "dat_hang_ncc_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   }
+  ],
+  "ncc_bang_gia": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ncc_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "vat_tu_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "don_gia",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ngay_hieu_luc",
+    "d": "date",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ngay_het_hieu_luc",
+    "d": "date",
+    "pk": false,
+    "fk": false,
+    "null": true
+   }
+  ],
+  "ncc_stk": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ncc_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "so_tk",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ten_ngan_hang",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "chu_tk",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "nha_cung_cap": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ten",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "dia_chi",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "ma_so_thue",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "trang_thai",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "created_at",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "nhat_ky_thay_doi": [
+   {
+    "c": "id",
+    "d": "bigint",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "bang",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ban_ghi",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "hanh_dong",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "du_lieu_cu",
+    "d": "jsonb",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "du_lieu_moi",
+    "d": "jsonb",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "nguoi_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "kenh",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "thoi_gian",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "phat_sinh_thi_cong": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "don_hang_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "thi_cong_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "loai",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "so_tien",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ly_do",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "nguoi_tao_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "created_at",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "phieu_thanh_toan": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "de_xuat_chi_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "ma_qr",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "so_tien",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ngay_thanh_toan",
+    "d": "date",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "nguoi_tao_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "noi_dung_ck",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "bill_anh",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   }
+  ],
+  "quyen": [
+   {
+    "c": "ma",
+    "d": "varchar",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ten",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "nhom",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "thu_tu",
+    "d": "smallint",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "chi_admin",
+    "d": "boolean",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "thanh_toan_khach": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "don_hang_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "loai",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "so_tien",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "hinh_thuc",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ngay_thu",
+    "d": "date",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "bill_anh",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "ghi_chu",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "trang_thai",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ly_do_tu_choi",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "nguoi_tao_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "nguoi_xac_nhan_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "xac_nhan_luc",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "created_at",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "giao_dich_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   }
+  ],
+  "thi_cong": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "don_hang_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "doi_tho_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "nguoi_phu_trach_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "ten_giai_doan",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "don_vi_cong",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "gia_cong",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "kl_du_kien",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "kl_thuc_te",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "ngay_du_kien",
+    "d": "date",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "ngay_thuc_hien",
+    "d": "date",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "ngay_hoan_thanh",
+    "d": "date",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "ghi_chu",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "trang_thai",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "thong_bao": [
+   {
+    "c": "id",
+    "d": "bigint",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "nguoi_nhan_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "nguoi_gay_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "loai",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "tieu_de",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "noi_dung",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "link",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "da_doc_luc",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "created_at",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "tro_ly_hoi_thoai": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "nguoi_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "loai_vat_tu_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "khach_hang_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "tieu_de",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "created_at",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "cap_nhat_luc",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "loai",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "tro_ly_san_pham": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "loai_vat_tu_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "kien_thuc",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "cap_nhat_luc",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "nguoi_cap_nhat_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   }
+  ],
+  "tro_ly_tin_nhan": [
+   {
+    "c": "id",
+    "d": "bigint",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "hoi_thoai_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "vai_tro",
+    "d": "varchar",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "noi_dung",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "so_anh",
+    "d": "smallint",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "created_at",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "noi_dung_ai",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "ma_tien",
+    "d": "jsonb",
+    "pk": false,
+    "fk": false,
+    "null": true
+   }
+  ],
+  "ty_le_chia_so": [
+   {
+    "c": "sale_id",
+    "d": "integer",
+    "pk": true,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "ty_le",
+    "d": "smallint",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "nguoi_cap_nhat_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "cap_nhat_luc",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "users": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ho_ten",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "username",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "password_hash",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "vai_tro",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "trang_thai",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "phien_ban_token",
+    "d": "integer",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "doi_mat_khau_luc",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "created_at",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "totp_khoa",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "totp_bat_luc",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "totp_buoc_cuoi",
+    "d": "bigint",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "totp_ma_du_phong",
+    "d": "ARRAY",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "telegram_username",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   }
+  ],
+  "v_don_hang_tien": [
+   {
+    "c": "don_hang_id",
+    "d": "integer",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "tong_vat_tu",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "tien_chiet_khau",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "tong_don",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "con_phai_thu",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "phat_sinh_rong",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "tho_thu_ho",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "da_thu_khach",
+    "d": "numeric",
+    "pk": false,
+    "fk": false,
+    "null": true
+   }
+  ],
+  "vai_tro_quyen": [
+   {
+    "c": "vai_tro",
+    "d": "enum",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ma_quyen",
+    "d": "varchar",
+    "pk": true,
+    "fk": true,
+    "null": false
+   }
+  ],
+  "vat_tu": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "ten",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "loai_vat_tu_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": false
+   },
+   {
+    "c": "don_vi_tinh",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "quy_cach",
+    "d": "text",
+    "pk": false,
+    "fk": false,
+    "null": true
+   },
+   {
+    "c": "trang_thai",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ],
+  "xac_thuc_vai_tro": [
+   {
+    "c": "id",
+    "d": "integer",
+    "pk": true,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "vai_tro",
+    "d": "enum",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "bat_2fa",
+    "d": "boolean",
+    "pk": false,
+    "fk": false,
+    "null": false
+   },
+   {
+    "c": "nguoi_cap_nhat_id",
+    "d": "integer",
+    "pk": false,
+    "fk": true,
+    "null": true
+   },
+   {
+    "c": "cap_nhat_luc",
+    "d": "timestamptz",
+    "pk": false,
+    "fk": false,
+    "null": false
+   }
+  ]
+ },
+ "fk": [
+  {
+   "bang": "khach_hang",
+   "cot": "sale_phu_trach_id",
+   "den": "users"
+  },
+  {
+   "bang": "khach_hang",
+   "cot": "nguoi_nhap_id",
+   "den": "users"
+  },
+  {
+   "bang": "khach_hang_cham_soc",
+   "cot": "khach_hang_id",
+   "den": "khach_hang"
+  },
+  {
+   "bang": "khach_hang_cham_soc",
+   "cot": "sale_id",
+   "den": "users"
+  },
+  {
+   "bang": "don_hang_giai_doan_log",
+   "cot": "nguoi_id",
+   "den": "users"
+  },
+  {
+   "bang": "don_hang_phan_cong_log",
+   "cot": "don_hang_id",
+   "den": "don_hang"
+  },
+  {
+   "bang": "don_hang",
+   "cot": "khach_hang_id",
+   "den": "khach_hang"
+  },
+  {
+   "bang": "don_hang",
+   "cot": "sale_id",
+   "den": "users"
+  },
+  {
+   "bang": "don_hang",
+   "cot": "vanhanh_phu_trach_id",
+   "den": "users"
+  },
+  {
+   "bang": "don_hang",
+   "cot": "nguoi_nghiem_thu_id",
+   "den": "users"
+  },
+  {
+   "bang": "don_hang",
+   "cot": "nguoi_quyet_toan_id",
+   "den": "users"
+  },
+  {
+   "bang": "don_hang_giai_doan_log",
+   "cot": "don_hang_id",
+   "den": "don_hang"
+  },
+  {
+   "bang": "don_hang_phan_cong_log",
+   "cot": "tu_van_hanh_id",
+   "den": "users"
+  },
+  {
+   "bang": "don_hang_phan_cong_log",
+   "cot": "den_van_hanh_id",
+   "den": "users"
+  },
+  {
+   "bang": "don_hang_phan_cong_log",
+   "cot": "nguoi_id",
+   "den": "users"
+  },
+  {
+   "bang": "don_hang_hinh_anh",
+   "cot": "don_hang_id",
+   "den": "don_hang"
+  },
+  {
+   "bang": "don_hang_yeu_cau_sua",
+   "cot": "don_hang_id",
+   "den": "don_hang"
+  },
+  {
+   "bang": "don_hang_yeu_cau_sua",
+   "cot": "sale_id",
+   "den": "users"
+  },
+  {
+   "bang": "vat_tu",
+   "cot": "loai_vat_tu_id",
+   "den": "loai_vat_tu"
+  },
+  {
+   "bang": "don_hang_vat_tu",
+   "cot": "don_hang_id",
+   "den": "don_hang"
+  },
+  {
+   "bang": "don_hang_vat_tu",
+   "cot": "vat_tu_id",
+   "den": "vat_tu"
+  },
+  {
+   "bang": "ncc_stk",
+   "cot": "ncc_id",
+   "den": "nha_cung_cap"
+  },
+  {
+   "bang": "ncc_bang_gia",
+   "cot": "ncc_id",
+   "den": "nha_cung_cap"
+  },
+  {
+   "bang": "ncc_bang_gia",
+   "cot": "vat_tu_id",
+   "den": "vat_tu"
+  },
+  {
+   "bang": "mua_hang_dong",
+   "cot": "don_hang_vat_tu_id",
+   "den": "don_hang_vat_tu"
+  },
+  {
+   "bang": "mua_hang_dong",
+   "cot": "ncc_id",
+   "den": "nha_cung_cap"
+  },
+  {
+   "bang": "mua_hang_dong",
+   "cot": "nguoi_cap_nhat_id",
+   "den": "users"
+  },
+  {
+   "bang": "mua_bo_sung",
+   "cot": "don_hang_id",
+   "den": "don_hang"
+  },
+  {
+   "bang": "mua_bo_sung",
+   "cot": "ncc_id",
+   "den": "nha_cung_cap"
+  },
+  {
+   "bang": "mua_bo_sung",
+   "cot": "nguoi_tao_id",
+   "den": "users"
+  },
+  {
+   "bang": "mua_bo_sung_dong",
+   "cot": "mua_bo_sung_id",
+   "den": "mua_bo_sung"
+  },
+  {
+   "bang": "mua_bo_sung_dong",
+   "cot": "vat_tu_id",
+   "den": "vat_tu"
+  },
+  {
+   "bang": "mua_bo_sung_trach_nhiem",
+   "cot": "mua_bo_sung_id",
+   "den": "mua_bo_sung"
+  },
+  {
+   "bang": "thi_cong",
+   "cot": "don_hang_id",
+   "den": "don_hang"
+  },
+  {
+   "bang": "thi_cong",
+   "cot": "doi_tho_id",
+   "den": "doi_tho"
+  },
+  {
+   "bang": "thi_cong",
+   "cot": "nguoi_phu_trach_id",
+   "den": "users"
+  },
+  {
+   "bang": "phat_sinh_thi_cong",
+   "cot": "don_hang_id",
+   "den": "don_hang"
+  },
+  {
+   "bang": "phat_sinh_thi_cong",
+   "cot": "thi_cong_id",
+   "den": "thi_cong"
+  },
+  {
+   "bang": "phat_sinh_thi_cong",
+   "cot": "nguoi_tao_id",
+   "den": "users"
+  },
+  {
+   "bang": "de_xuat_chi",
+   "cot": "ncc_id",
+   "den": "nha_cung_cap"
+  },
+  {
+   "bang": "de_xuat_chi",
+   "cot": "doi_tho_id",
+   "den": "doi_tho"
+  },
+  {
+   "bang": "de_xuat_chi",
+   "cot": "don_hang_id",
+   "den": "don_hang"
+  },
+  {
+   "bang": "de_xuat_chi",
+   "cot": "mua_bo_sung_id",
+   "den": "mua_bo_sung"
+  },
+  {
+   "bang": "de_xuat_chi",
+   "cot": "nguoi_tao_id",
+   "den": "users"
+  },
+  {
+   "bang": "de_xuat_chi_dong",
+   "cot": "de_xuat_chi_id",
+   "den": "de_xuat_chi"
+  },
+  {
+   "bang": "de_xuat_chi_dong",
+   "cot": "mua_hang_dong_id",
+   "den": "mua_hang_dong"
+  },
+  {
+   "bang": "de_xuat_chi_duyet_log",
+   "cot": "de_xuat_chi_id",
+   "den": "de_xuat_chi"
+  },
+  {
+   "bang": "de_xuat_chi_duyet_log",
+   "cot": "nguoi_id",
+   "den": "users"
+  },
+  {
+   "bang": "phieu_thanh_toan",
+   "cot": "de_xuat_chi_id",
+   "den": "de_xuat_chi"
+  },
+  {
+   "bang": "phieu_thanh_toan",
+   "cot": "nguoi_tao_id",
+   "den": "users"
+  },
+  {
+   "bang": "giao_dich_tho",
+   "cot": "doi_tho_id",
+   "den": "doi_tho"
+  },
+  {
+   "bang": "giao_dich_tho",
+   "cot": "don_hang_id",
+   "den": "don_hang"
+  },
+  {
+   "bang": "giao_dich_tho",
+   "cot": "thi_cong_id",
+   "den": "thi_cong"
+  },
+  {
+   "bang": "giao_dich_tho",
+   "cot": "de_xuat_chi_id",
+   "den": "de_xuat_chi"
+  },
+  {
+   "bang": "giao_dich_tho",
+   "cot": "phat_sinh_id",
+   "den": "phat_sinh_thi_cong"
+  },
+  {
+   "bang": "thanh_toan_khach",
+   "cot": "don_hang_id",
+   "den": "don_hang"
+  },
+  {
+   "bang": "thanh_toan_khach",
+   "cot": "nguoi_tao_id",
+   "den": "users"
+  },
+  {
+   "bang": "thanh_toan_khach",
+   "cot": "nguoi_xac_nhan_id",
+   "den": "users"
+  },
+  {
+   "bang": "don_hang",
+   "cot": "nguoi_boc_khoi_luong_id",
+   "den": "users"
+  },
+  {
+   "bang": "thong_bao",
+   "cot": "nguoi_nhan_id",
+   "den": "users"
+  },
+  {
+   "bang": "thong_bao",
+   "cot": "nguoi_gay_id",
+   "den": "users"
+  },
+  {
+   "bang": "khach_hang_san_pham",
+   "cot": "loai_vat_tu_id",
+   "den": "loai_vat_tu"
+  },
+  {
+   "bang": "dat_hang_ncc",
+   "cot": "don_hang_id",
+   "den": "don_hang"
+  },
+  {
+   "bang": "dat_hang_ncc",
+   "cot": "ncc_id",
+   "den": "nha_cung_cap"
+  },
+  {
+   "bang": "dat_hang_ncc",
+   "cot": "nguoi_dat_id",
+   "den": "users"
+  },
+  {
+   "bang": "dat_hang_ncc",
+   "cot": "de_xuat_chi_id",
+   "den": "de_xuat_chi"
+  },
+  {
+   "bang": "mua_hang_dong",
+   "cot": "dat_hang_ncc_id",
+   "den": "dat_hang_ncc"
+  },
+  {
+   "bang": "ty_le_chia_so",
+   "cot": "sale_id",
+   "den": "users"
+  },
+  {
+   "bang": "ty_le_chia_so",
+   "cot": "nguoi_cap_nhat_id",
+   "den": "users"
+  },
+  {
+   "bang": "don_hang",
+   "cot": "san_pham_id",
+   "den": "loai_vat_tu"
+  },
+  {
+   "bang": "chia_so_log",
+   "cot": "khach_hang_id",
+   "den": "khach_hang"
+  },
+  {
+   "bang": "chia_so_log",
+   "cot": "sale_id",
+   "den": "users"
+  },
+  {
+   "bang": "chia_so_log",
+   "cot": "nguoi_nhap_id",
+   "den": "users"
+  },
+  {
+   "bang": "chia_so_log",
+   "cot": "tu_sale_id",
+   "den": "users"
+  },
+  {
+   "bang": "cau_hinh",
+   "cot": "nguoi_cap_nhat_id",
+   "den": "users"
+  },
+  {
+   "bang": "nhat_ky_thay_doi",
+   "cot": "nguoi_id",
+   "den": "users"
+  },
+  {
+   "bang": "vai_tro_quyen",
+   "cot": "ma_quyen",
+   "den": "quyen"
+  },
+  {
+   "bang": "ai_nhan_xet_cham_soc",
+   "cot": "nguoi_tao_id",
+   "den": "users"
+  },
+  {
+   "bang": "khach_hang_san_pham",
+   "cot": "khach_hang_id",
+   "den": "khach_hang"
+  },
+  {
+   "bang": "giao_dich_ngan_hang",
+   "cot": "don_hang_id",
+   "den": "don_hang"
+  },
+  {
+   "bang": "giao_dich_ngan_hang",
+   "cot": "thanh_toan_khach_id",
+   "den": "thanh_toan_khach"
+  },
+  {
+   "bang": "giao_dich_ngan_hang",
+   "cot": "de_xuat_chi_id",
+   "den": "de_xuat_chi"
+  },
+  {
+   "bang": "giao_dich_ngan_hang",
+   "cot": "nguoi_xu_ly_id",
+   "den": "users"
+  },
+  {
+   "bang": "thanh_toan_khach",
+   "cot": "giao_dich_id",
+   "den": "giao_dich_ngan_hang"
+  },
+  {
+   "bang": "tro_ly_san_pham",
+   "cot": "loai_vat_tu_id",
+   "den": "loai_vat_tu"
+  },
+  {
+   "bang": "tro_ly_san_pham",
+   "cot": "nguoi_cap_nhat_id",
+   "den": "users"
+  },
+  {
+   "bang": "tro_ly_hoi_thoai",
+   "cot": "nguoi_id",
+   "den": "users"
+  },
+  {
+   "bang": "tro_ly_hoi_thoai",
+   "cot": "loai_vat_tu_id",
+   "den": "loai_vat_tu"
+  },
+  {
+   "bang": "tro_ly_hoi_thoai",
+   "cot": "khach_hang_id",
+   "den": "khach_hang"
+  },
+  {
+   "bang": "tro_ly_tin_nhan",
+   "cot": "hoi_thoai_id",
+   "den": "tro_ly_hoi_thoai"
+  },
+  {
+   "bang": "xac_thuc_vai_tro",
+   "cot": "nguoi_cap_nhat_id",
+   "den": "users"
+  }
+ ],
+ "ph": {
+  "erd_1_khach_hang": [
+   "users",
+   "thong_bao",
+   "ty_le_chia_so",
+   "chia_so_log",
+   "khach_hang",
+   "khach_hang_cham_soc",
+   "khach_hang_san_pham",
+   "ai_nhan_xet_cham_soc"
+  ],
+  "erd_2_don_hang_thi_cong": [
+   "don_hang",
+   "don_hang_vat_tu",
+   "don_hang_giai_doan_log",
+   "don_hang_phan_cong_log",
+   "don_hang_yeu_cau_sua",
+   "don_hang_hinh_anh",
+   "thi_cong",
+   "doi_tho",
+   "phat_sinh_thi_cong",
+   "giao_dich_tho"
+  ],
+  "erd_3_vat_tu_mua_hang": [
+   "loai_vat_tu",
+   "vat_tu",
+   "nha_cung_cap",
+   "ncc_stk",
+   "ncc_bang_gia",
+   "mua_hang_dong",
+   "dat_hang_ncc",
+   "mua_bo_sung",
+   "mua_bo_sung_dong",
+   "mua_bo_sung_trach_nhiem"
+  ],
+  "erd_4_tien_quan_tri": [
+   "de_xuat_chi",
+   "de_xuat_chi_dong",
+   "de_xuat_chi_duyet_log",
+   "phieu_thanh_toan",
+   "thanh_toan_khach",
+   "giao_dich_ngan_hang",
+   "quyen",
+   "vai_tro_quyen",
+   "xac_thuc_vai_tro",
+   "cau_hinh",
+   "nhat_ky_thay_doi"
+  ],
+  "erd_5_tro_ly_ai": [
+   "tro_ly_san_pham",
+   "tro_ly_hoi_thoai",
+   "tro_ly_tin_nhan"
+  ]
+ }
+}

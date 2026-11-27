@@ -6,10 +6,55 @@ import { NHOM_KHACH, TRANG_THAI_CHAM_SOC, TRANG_THAI_DON, ngay, ngayGio } from '
 import { ChuyenSale, KIEU_GIAO, NGUON_SO, useDsSale } from './NhapSo.jsx';
 import Icon from '../components/Icon.jsx';
 import CapNhatChamSoc from '../components/CapNhatChamSoc.jsx';
+import { ChonSanPham, NhanSanPham, useDsSanPham } from '../components/SanPham.jsx';
+import { useTroLyStore } from '../store/troLyStore.js';
+
+// Xem / sua san pham khach quan tam (tick chip roi Luu).
+function SanPhamQuanTam({ kh, choSua, onXong }) {
+  const dsSanPham = useDsSanPham();
+  const [dangSua, setDangSua] = useState(false);
+  const [chon, setChon] = useState([]);
+  const [loi, setLoi] = useState('');
+  const [dangGui, setDangGui] = useState(false);
+
+  const moSua = () => { setChon(kh.san_pham.map((s) => s.id)); setLoi(''); setDangSua(true); };
+  const luu = async () => {
+    setDangGui(true); setLoi('');
+    try {
+      await api.put(`/khach-hang/${kh.id}/san-pham`, { san_pham_ids: chon });
+      setDangSua(false);
+      onXong();
+    } catch (e) { setLoi(loiCua(e)); }
+    finally { setDangGui(false); }
+  };
+
+  if (!dangSua) {
+    return (
+      <>
+        <NhanSanPham ds={kh.san_pham} trong={<span className="muted">Chưa ghi nhận</span>} />
+        {choSua && <> <button type="button" className="link small" onClick={moSua}>Sửa</button></>}
+      </>
+    );
+  }
+  return (
+    <>
+      <ChonSanPham dsSanPham={dsSanPham} giaTri={chon} onChange={setChon} disabled={dangGui} />
+      {loi && <div className="error mt">{loi}</div>}
+      <div className="actions">
+        <button type="button" className="btn sec" onClick={() => setDangSua(false)} disabled={dangGui}>Huỷ</button>
+        <button type="button" className="btn" onClick={luu} disabled={dangGui}>Lưu</button>
+      </div>
+    </>
+  );
+}
 
 export default function KhachHangChiTiet() {
   const { id } = useParams();
   const vaiTro = useAuthStore((s) => s.user.vai_tro);
+  const quyen = useAuthStore((s) => s.user.quyen);
+  const choSua = quyen ? quyen.includes('khach_hang.sua') : vaiTro === 'sale';
+  const coTroLy = quyen ? quyen.includes('tro_ly.ai') : vaiTro === 'sale';
+  const moTroLy = useTroLyStore((s) => s.moTroLy);
   const [kh, setKh] = useState(null);
   const [loi, setLoi] = useState('');
   const [daChep, setDaChep] = useState(false);
@@ -49,14 +94,17 @@ export default function KhachHangChiTiet() {
             <dt>Địa chỉ</dt><dd>{kh.dia_chi || '—'}</dd>
             <dt>Sale phụ trách</dt><dd>{kh.sale}{vaiTro === 'admin' && <div className="mt"><ChuyenSale khachId={kh.id} saleHienTai={kh.sale} dsSale={dsSale} onXong={tai} /></div>}</dd>
             {kh.nguon && <><dt>Nguồn số</dt><dd>{NGUON_SO[kh.nguon] || kh.nguon}{kh.chia_luc && <span className="muted small"> · nhận {ngayGio(kh.chia_luc)}</span>}</dd></>}
+            <dt>Sản phẩm quan tâm</dt><dd><SanPhamQuanTam kh={kh} choSua={choSua} onXong={tai} /></dd>
             {kh.nhu_cau && <><dt>Nhu cầu</dt><dd>{kh.nhu_cau}</dd></>}
           </dl>
-          {vaiTro === 'sale' && kh.trang_thai_cham_soc === 'chot' && (
-            <div className="actions">
-              <Link className="btn sec" to={`/don-hang/tao?khach_hang_id=${kh.id}&che_do=tay`}>Nhập đơn thủ công</Link>
-              <Link className="btn" to={`/don-hang/tao?khach_hang_id=${kh.id}&che_do=ai`}><Icon n="sparkles" /> Lên đơn nhanh bằng AI</Link>
-            </div>
-          )}
+          <div className="actions">
+            {coTroLy && (
+              <button type="button" className="btn sec" onClick={() => moTroLy({ sanPhamId: kh.san_pham[0]?.id, khachHangId: kh.id })}>
+                <Icon n="sparkles" /> Hỏi trợ lý sản phẩm
+              </button>
+            )}
+            {vaiTro === 'sale' && kh.trang_thai_cham_soc === 'chot' && <Link className="btn" to={`/don-hang/tao?khach_hang_id=${kh.id}`}>Lên đơn</Link>}
+          </div>
         </div>
         <div className="card">
           <h3>Đơn hàng ({kh.don_hang.length})</h3>
@@ -65,6 +113,7 @@ export default function KhachHangChiTiet() {
               {kh.don_hang.map((d) => (
                 <li key={d.id}>
                   <Link to={`/don-hang/${d.id}`}>{d.ma_don}</Link>
+                  {d.san_pham && <span className="muted small">{d.san_pham}</span>}
                   <span className={`pill ${TRANG_THAI_DON[d.trang_thai].lop}`}>{TRANG_THAI_DON[d.trang_thai].nhan}</span>
                   <span className="muted small">{ngay(d.created_at)}</span>
                 </li>

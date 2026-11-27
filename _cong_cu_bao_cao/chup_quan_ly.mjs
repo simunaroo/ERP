@@ -1,0 +1,34 @@
+// Chup khung chat tro ly quan ly (Admin) voi Gemini that.
+import puppeteer from 'puppeteer-core';
+import { maTai, buocHienTai } from 'file:///F:/DATN/backend/src/utils/totp.js';
+import { createRequire } from 'module';
+const require = createRequire('F:/DATN/backend/package.json');
+require('dotenv').config({ path: 'F:/DATN/backend/.env', quiet: true });
+const pg = require('pg');
+const c = new pg.Client({ host: process.env.PG_HOST, port: +process.env.PG_PORT, user: process.env.PG_USER, password: process.env.PG_PASSWORD, database: 'datn_erp_test' });
+await c.connect(); await c.query(`UPDATE users SET totp_khoa = NULL, totp_bat_luc = NULL, totp_buoc_cuoi = NULL, totp_ma_du_phong = NULL WHERE username = 'ngocson'`); await c.end();
+const B = 'http://localhost:3999/api', F = 'http://localhost:5199';
+const h = async (m, u, b) => (await fetch(B + u, { method: m, headers: { 'Content-Type': 'application/json' }, body: b ? JSON.stringify(b) : undefined })).json();
+let r = await h('POST', '/auth/login', { username: 'ngocson', password: 'ngocson123456' });
+if (r.buoc === 'cai_2fa') { const k = await h('POST', '/auth/2fa/khoi-tao', { ma_tam: r.ma_tam }); r = await h('POST', '/auth/2fa/kich-hoat', { ma_tam: k.ma_tam, ma: maTai(k.khoa, buocHienTai()) }); }
+const cho = (ms) => new Promise((x) => setTimeout(x, ms));
+const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true });
+const p = await browser.newPage();
+await p.setViewport({ width: 1366, height: 820, deviceScaleFactor: 1.5 });
+await p.goto(`${F}/login`, { waitUntil: 'networkidle0' });
+await p.evaluate((s) => { localStorage.setItem('erp-auth', JSON.stringify({ state: { token: s.token, user: s.user }, version: 0 })); sessionStorage.clear(); }, r);
+await p.goto(`${F}/khach-hang/bao-cao`, { waitUntil: 'networkidle0' }); await cho(1200);
+await p.click('.chat-noi-nut'); await p.waitForSelector('.chat-noi'); await cho(800);
+const [ql] = await p.$$("xpath/.//div[contains(@class,'chat-noi-sp')]//button[normalize-space(.)='Quản lý']");
+await ql.click(); await cho(600);
+await p.screenshot({ path: 'F:/DATN/_cong_cu_bao_cao/anh/33_tro_ly_quan_ly_trong.png' });
+const [goiY] = await p.$$("xpath/.//div[contains(@class,'chat-goi-y-nut')]//button[contains(., 'Lan đang tư vấn')]");
+const t0 = Date.now();
+await goiY.click(); await cho(1500);
+await p.waitForFunction(() => !document.body.innerText.includes('Đang trả lời...'), { timeout: 240000 });
+console.log('tra loi sau', Date.now() - t0, 'ms');
+await cho(600);
+await p.evaluate(() => document.querySelector('.chat-tn.toi')?.scrollIntoView({ block: 'start' })); await cho(300);
+await p.screenshot({ path: 'F:/DATN/_cong_cu_bao_cao/anh/34_tro_ly_quan_ly_tra_loi.png' });
+console.log(await p.$eval('.chat-noi', (e) => (e.querySelector('.chat-noi-loi')?.innerText || '') + ' | ' + (e.querySelector('.chat-nguon')?.innerText || '')));
+await browser.close();

@@ -1,0 +1,45 @@
+@startuml seq_doi_soat
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+autonumber
+participant "Ngân hàng\n(SePay)" as NH
+control "NganHangRoutes" as R
+control "NganHangService" as S
+control "CongNoService" as CN
+control "ThongBaoService" as TB
+database "PostgreSQL" as DB
+NH -> R : POST /api/ngan-hang/webhook (Authorization: Apikey)
+R -> R : kiểm tra khoá webhook
+R -> S : xuLyGiaoDich(payload)
+S -> S : tuSepay(): chuẩn hoá dữ liệu
+S -> DB : mã giao dịch đã xử lý? (UNIQUE nguon, ma_gd_ngoai)
+alt tiền vào
+  S -> DB : BEGIN; INSERT giao_dich_ngan_hang
+  S -> S : timMaDon(nội dung chuyển khoản)
+  alt có phiếu chờ đúng số tiền
+    S -> DB : UPDATE phiếu -> "Đã xác nhận"
+  else không có phiếu chờ
+    S -> DB : INSERT phiếu thu đã xác nhận
+  end
+  S -> TB : thông báo Sale, Kế toán
+  S -> DB : COMMIT
+else tiền ra
+  S -> DB : tìm đề xuất đã duyệt khớp nội dung + số tiền
+  S -> CN : daChi(null, id, { giaoDichId })
+end
+alt không khớp
+  S -> DB : giao dịch "Chưa khớp"; báo Kế toán (khớp tay / bỏ qua)
+end
+R --> NH : { success: true }
+@enduml

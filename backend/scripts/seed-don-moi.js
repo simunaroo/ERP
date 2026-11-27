@@ -18,6 +18,7 @@ try {
   await db.query(`SET app.bo_qua_nhat_ky = '1'`); // du lieu gia lap: khong ghi nhat ky thay doi
   await db.query('BEGIN');
   const kq = await sinhDon(db, await napNguCanh(db), { tu, homNay, soDon, themVao: true });
+  await db.query('SELECT fn_suy_san_pham_quan_tam()'); // san pham cho cac don vua sinh
   await db.query('COMMIT');
   console.log(kq);
 } catch (e) {

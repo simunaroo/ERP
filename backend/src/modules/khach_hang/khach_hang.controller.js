@@ -12,6 +12,10 @@ export async function create(req, res) {
   res.status(201).json(await service.taoKhach(req.user, req.body));
 }
 
+export async function sanPham(req, res) {
+  res.json(await service.capNhatSanPham(req.user, Number(req.params.id), req.body));
+}
+
 export async function chamSoc(req, res) {
   res.status(201).json(await service.ghiChamSoc(req.user, Number(req.params.id), req.body));
 }

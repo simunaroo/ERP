@@ -1,0 +1,58 @@
+@startuml seq_cham_soc
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+autonumber
+hide footbox
+actor "Sale" as U
+boundary "ChamSocKhachUI" as UI
+control "ChamSocController" as C
+entity "khach_hang" as KH
+entity "khach_hang_cham_soc" as CS
+U -> UI : Kich nut "Khach hang"()
+UI -> C : Lay danh sach khach()
+C -> KH : Lay khach cua Sale()
+KH --> C : return danh sach khach
+C --> UI : return ket qua
+UI -> UI : Hien thi danh sach khach va ghi chu lan goi truoc()
+U -> UI : Bam so dien thoai de goi
+U -> UI : Kich nut "Cap nhat"()
+UI -> UI : Hien thi form cap nhat cham soc()
+U -> UI : Chon trang thai, nhap ghi chu va kich nut "Luu"
+UI -> C : Ghi nhan cham soc()
+C -> C : Kiem tra du lieu hop le()
+note right of C
+Hen goi lai: bat buoc chon gio hen
+Khong quan tam, Sai so: bat buoc ghi chu
+end note
+C -> CS : Them lan cham soc()
+C -> KH : Cap nhat trang thai cham soc()
+C --> UI : return ket qua
+UI -> UI : Hien thi lai danh sach khach()
+note right of UI
+Neu trang thai "Chot don":
+hoi "Len don ngay?" va mo form tao don
+end note
+UI -> UI : Hien thi hop thoai "Len don ngay?"()
+@enduml

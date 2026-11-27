@@ -1,0 +1,61 @@
+@startuml uc_admin
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+left to right direction
+actor "Admin" as AD
+actor "Người duyệt chi\n(Telegram)" as DC
+actor "Website /\nkênh quảng cáo" as WEB
+actor "Gemini AI" as AI
+rectangle "Phân hệ quản lý" {
+  usecase "Quản lý người dùng" as ND
+  usecase "Đặt lại xác thực hai lớp" as DL2
+  usecase "Nhập số khách tiềm năng" as NS
+  usecase "Chia số theo tỷ lệ" as CHIA
+  usecase "Quản lý tỷ lệ chia số" as TL
+  usecase "Chuyển số sang Sale khác" as CHUYEN
+  usecase "Xem báo cáo chăm sóc\nkhách hàng" as BCCS
+  usecase "AI nhận xét Sale" as AINX
+  usecase "Duyệt / từ chối đề xuất chi" as DUYET
+  usecase "Thu hồi đề xuất đã duyệt" as THU
+  usecase "Chuyển vận hành phụ trách" as PT
+  usecase "Ghi lý do" as LD
+  usecase "Phân quyền theo chức năng" as PQ
+  usecase "Xem nhật ký thay đổi" as NK
+  usecase "Sao lưu dữ liệu" as SL
+  usecase "Cấu hình tham số" as CH
+  usecase "Xem tổng quan,\nbáo cáo lãi/lỗ" as TQ
+}
+AD --> ND
+AD --> NS
+AD --> TL
+AD --> CHUYEN
+AD --> BCCS
+AD --> DUYET
+AD --> THU
+AD --> PT
+AD --> PQ
+AD --> NK
+AD --> SL
+AD --> CH
+AD --> TQ
+DL2 ..> ND : <<extend>>
+NS ..> CHIA : <<include>>
+CHUYEN ..> LD : <<include>>
+PT ..> LD : <<include>>
+CHUYEN ..> BCCS : <<extend>>
+AINX ..> BCCS : <<extend>>
+AINX -- AI
+DC --> DUYET
+WEB --> NS
+@enduml

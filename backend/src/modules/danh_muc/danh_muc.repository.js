@@ -2,9 +2,11 @@ import { query } from '../../config/db.js';
 
 export async function khachHang(saleId) {
   const { rows } = await query(
-    `SELECT id, ten, sdt, dia_chi, nhom_khach_hang, trang_thai_cham_soc FROM khach_hang
-      WHERE ($1::int IS NULL OR sale_phu_trach_id = $1)
-      ORDER BY ten`,
+    `SELECT kh.id, kh.ten, kh.sdt, kh.dia_chi, kh.nhom_khach_hang, kh.trang_thai_cham_soc,
+            ARRAY(SELECT ks.loai_vat_tu_id FROM khach_hang_san_pham ks WHERE ks.khach_hang_id = kh.id ORDER BY ks.loai_vat_tu_id) AS san_pham_ids
+       FROM khach_hang kh
+      WHERE ($1::int IS NULL OR kh.sale_phu_trach_id = $1)
+      ORDER BY kh.ten`,
     [saleId],
   );
   return rows;

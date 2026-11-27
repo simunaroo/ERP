@@ -1,0 +1,59 @@
+@startuml seq_xac_nhan_chi
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+autonumber
+hide footbox
+actor "Ke toan" as U
+boundary "DeXuatChiUI" as UI
+control "DeXuatChiController" as C
+entity "de_xuat_chi" as DX
+entity "phieu_thanh_toan" as PTT
+entity "mua_hang_dong" as MH
+entity "thong_bao" as TB
+U -> UI : Chon de xuat "Da duyet"
+UI -> UI : Hien thi ma QR chuyen khoan()
+note right of U
+Ke toan quet QR bang ung dung ngan hang
+va chuyen khoan
+end note
+U -> UI : Kich nut "Da chi" va tai anh bill
+UI -> C : Xac nhan da chi()
+C -> C : Kiem tra anh bill()
+C -> PTT : Them phieu thanh toan()
+C -> DX : Cap nhat trang thai "Da chi"()
+note right of C
+Neu la tien coc: vat tu chuyen "San hang"
+va tu lap de xuat quyet toan phan con lai
+end note
+C -> MH : Chuyen trang thai "San hang"()
+C -> DX : Tao de xuat quyet toan con lai()
+C -> TB : Gui thong bao cho nguoi lap()
+C --> UI : return ket qua
+UI -> UI : Hien thi trang thai "Da chi"()
+note right of UI
+Cung co the xac nhan tren Telegram
+bang cach tra loi tin nhan bang anh bill
+end note
+@enduml

@@ -1,0 +1,58 @@
+@startuml cls_duyet_chi
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+hide empty members
+skinparam classAttributeIconSize 0
+
+class TelegramRouter {
++xuLyUpdate(update)
+}
+class TelegramClient {
++guiDeXuatChi(dx)
++capNhatTinNhan(id, noiDung)
++nutDaChi(id)
+}
+class CongNoService {
++taoDeXuat(user, data)
++xuLyDuyet(id, hanhDong, nguoi)
++thuHoi(user, id)
++guiLai(user, id)
++suaTinDuyet(dx)
+}
+class CongNoRepository
+class ThongBaoService {
++deXuatChi(client, id, suKien)
+}
+class DeXuatChi <<entity>> {
+id : SERIAL
+loai_chi : enum
+so_tien : NUMERIC
+trang_thai : enum
+noi_dung_ck : TEXT
+telegram_message_id : BIGINT
+}
+class DeXuatChiDuyetLog <<entity>> {
+de_xuat_chi_id : INTEGER
+hanh_dong : VARCHAR
+telegram_user : TEXT
+nguoi_id : INTEGER
+thoi_gian : TIMESTAMPTZ
+}
+TelegramRouter --> CongNoService
+CongNoService --> TelegramClient
+CongNoService --> CongNoRepository
+CongNoService --> ThongBaoService
+CongNoRepository ..> DeXuatChi
+DeXuatChi "1" -- "n" DeXuatChiDuyetLog
+@enduml

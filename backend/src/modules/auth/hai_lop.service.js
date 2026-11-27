@@ -9,9 +9,55 @@ import { maHoa, giaiMa } from '../../utils/maHoa.js';
 
 // Xac thuc 2 lop (TOTP). Buoc 1 (mat khau dung) chi cap "ma tam" 10 phut, ky bang khoa RIENG -> khong dung lam token dang nhap duoc.
 // Buoc 2: nhap ma 6 so tu ung dung Authenticator (hoac 1 ma du phong) moi cap token that.
-export const VAI_TRO_BAT_BUOC = ['admin', 'ke_toan'];
 const khoaTam = () => `${process.env.JWT_SECRET}:2fa`;
-export const batBuoc = (user) => process.env.BAT_BUOC_2FA !== 'false' && VAI_TRO_BAT_BUOC.includes(user.vai_tro);
+const VAI_TRO = ['admin', 'ke_toan', 'van_hanh', 'sale'];
+
+// Vai tro co bat 2FA khong: Admin cau hinh trong bang xac_thuc_vai_tro (tab "Xác thực 2 lớp").
+// BAT_BUOC_2FA=false trong .env = tat 2FA toan he thong (chi dung khi phat trien).
+export async function canXacThuc(vaiTro) {
+  if (process.env.BAT_BUOC_2FA === 'false') return false;
+  const { rows } = await query('SELECT bat_2fa FROM xac_thuc_vai_tro WHERE vai_tro = $1', [vaiTro]);
+  return rows[0]?.bat_2fa === true;
+}
+
+// Bang cau hinh cho Admin: moi vai tro bat/tat + so tai khoan dang hoat dong / da cai ung dung xac thuc.
+export async function dsCauHinh() {
+  const { rows } = await query(
+    `SELECT v.vai_tro, COALESCE(x.bat_2fa, false) AS bat_2fa, x.cap_nhat_luc, n.ho_ten AS nguoi_cap_nhat,
+            count(u.id) FILTER (WHERE u.trang_thai = 'active')::int AS so_tai_khoan,
+            count(u.id) FILTER (WHERE u.trang_thai = 'active' AND u.totp_khoa IS NOT NULL)::int AS so_da_cai
+       FROM unnest($1::vai_tro_enum[]) WITH ORDINALITY AS v(vai_tro, thu_tu)
+       LEFT JOIN xac_thuc_vai_tro x ON x.vai_tro = v.vai_tro
+       LEFT JOIN users n ON n.id = x.nguoi_cap_nhat_id
+       LEFT JOIN users u ON u.vai_tro = v.vai_tro
+      GROUP BY v.vai_tro, v.thu_tu, x.bat_2fa, x.cap_nhat_luc, n.ho_ten
+      ORDER BY v.thu_tu`,
+    [VAI_TRO],
+  );
+  return { tat_toan_he_thong: process.env.BAT_BUOC_2FA === 'false', vai_tro: rows };
+}
+
+// Bat/tat cho mot vai tro. dang_xuat_ngay (khi bat): dang xuat ngay nhung tai khoan vai tro do CHUA cai 2FA
+// (tru chinh nguoi thao tac) -> lan dang nhap ke tiep bi bat cai, thay vi doi phien cu het han.
+export async function datCauHinh(user, vaiTro, { bat_2fa, dang_xuat_ngay = false }) {
+  if (!VAI_TRO.includes(vaiTro)) throw new AppError(400, 'Vai trò không hợp lệ');
+  if (typeof bat_2fa !== 'boolean') throw new AppError(400, 'Giá trị bật/tắt không hợp lệ');
+  await query(
+    `INSERT INTO xac_thuc_vai_tro (vai_tro, bat_2fa, nguoi_cap_nhat_id) VALUES ($1, $2, $3)
+     ON CONFLICT (vai_tro) DO UPDATE SET bat_2fa = EXCLUDED.bat_2fa, nguoi_cap_nhat_id = EXCLUDED.nguoi_cap_nhat_id, cap_nhat_luc = now()
+     WHERE xac_thuc_vai_tro.bat_2fa IS DISTINCT FROM EXCLUDED.bat_2fa`,
+    [vaiTro, bat_2fa, user.id],
+  );
+  let soDangXuat = 0;
+  if (bat_2fa && dang_xuat_ngay) {
+    ({ rowCount: soDangXuat } = await query(
+      `UPDATE users SET phien_ban_token = phien_ban_token + 1
+        WHERE vai_tro = $1 AND trang_thai = 'active' AND totp_khoa IS NULL AND id <> $2`,
+      [vaiTro, user.id],
+    ));
+  }
+  return { ...(await dsCauHinh()), so_dang_xuat: soDangXuat };
+}
 
 export const kyMaTam = (user, muc, them = {}) =>
   jwt.sign({ id: user.id, muc, pv: user.phien_ban_token ?? 0, ...them }, khoaTam(), { expiresIn: '10m' });

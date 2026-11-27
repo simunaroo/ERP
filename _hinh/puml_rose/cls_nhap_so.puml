@@ -1,0 +1,99 @@
+@startuml cls_nhap_so
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+hide circle
+skinparam classAttributeIconSize 0
+class "NhapSoUI" as UI <<boundary>> {
+  --
+  +Kich nut 'Nhap so'()
+  +Hien thi form nhap so()
+  +Dan danh sach so hoac tai tep Excel, CSV, TXT()
+  +Hien thi danh sach xem truoc()
+  +Kich nut 'Nhap'()
+  +Hien thi ket qua nhap so()
+}
+class "NhapSoController" as C <<control>> {
+  --
+  +Doc tep so dien thoai()
+  +Nhap so()
+  +Chuan hoa so dien thoai()
+  +Chon Sale thieu nhieu nhat so voi ty le()
+}
+class "khach_hang" as KH <<entity>> {
+  -id
+  -ten
+  -sdt
+  -dia_chi
+  -sale_phu_trach_id
+  -nhom_khach_hang
+  -trang_thai_cham_soc
+  -created_at
+  -nguon
+  -...
+  --
+  +Kiem tra trung so()
+  +Them khach hang moi()
+}
+class "ty_le_chia_so" as TL <<entity>> {
+  -sale_id
+  -ty_le
+  -nguoi_cap_nhat_id
+  -cap_nhat_luc
+  --
+  +Lay ty le chia()
+}
+class "chia_so_log" as LOG <<entity>> {
+  -id
+  -khach_hang_id
+  -sale_id
+  -kieu
+  -kenh
+  -nguoi_nhap_id
+  -created_at
+  -tu_sale_id
+  -ly_do
+  --
+  +Ghi nhat ky chia so()
+}
+class "thong_bao" as TB <<entity>> {
+  -id
+  -nguoi_nhan_id
+  -nguoi_gay_id
+  -loai
+  -tieu_de
+  -noi_dung
+  -link
+  -da_doc_luc
+  -created_at
+  --
+  +Gui thong bao cho Sale()
+}
+UI "1" -- "1" C
+C "1" -- "*" KH
+C "1" -- "*" TL
+C "1" -- "*" LOG
+C "1" -- "*" TB
+KH "1" -- "*" LOG
+@enduml

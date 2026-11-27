@@ -110,6 +110,7 @@ export default function DonHangChiTiet() {
       <h1>
         Đơn hàng {don.ma_don} <span className={`pill ${tt.lop}`}>{tt.nhan}</span>
         <span className="pill p-gray">{HINH_THUC[don.hinh_thuc].nhan}</span>
+        {don.san_pham && <span className="pill p-new">{don.san_pham}</span>}
       </h1>
       {laNhap && vaiTro === 'sale' && (
         <div className="banner">
@@ -192,6 +193,7 @@ export default function DonHangChiTiet() {
             <dt>Khách hàng</dt><dd><Link to={`/khach-hang/${don.khach_hang_id}`}>{don.khach_hang}</Link> — {don.khach_hang_sdt || '—'} <span className="muted small">({NHOM_KHACH[don.nhom_khach_hang]})</span></dd>
             <dt>Công trình</dt><dd>{diaChi || '—'}</dd>
             {don.ma_hop_dong && <><dt>Mã hợp đồng</dt><dd>{don.ma_hop_dong}</dd></>}
+            <dt>Sản phẩm</dt><dd>{don.san_pham ? <span className="pill p-new">{don.san_pham}</span> : '—'}</dd>
             <dt>Ngày chốt</dt><dd>{don.ngay_chot ? ngay(don.ngay_chot) : 'Chưa chốt'}</dd>
             <dt>{hoanThien ? 'YC lắp đặt' : 'YC giao hàng'}</dt><dd>{don.ngay_yc_lap_dat ? ngay(don.ngay_yc_lap_dat) : '—'}</dd>
             <dt>Sale</dt><dd>{don.sale}</dd>
@@ -287,7 +289,7 @@ export default function DonHangChiTiet() {
       {don.giai_doan === 'boc_khoi_luong' && (
         <div className="card">
           <div className="tien-do-dau">
-            <h3>Bóc khối lượng</h3>
+            <h3>Tính KLVT (khối lượng vật tư)</h3>
             {don.boc_khoi_luong_luc ? <span className="pill p-done">Đã xác nhận {ngayGio(don.boc_khoi_luong_luc)}</span> : <span className="pill p-wip">Chưa xác nhận</span>}
           </div>
           <p className="muted small">Đo thực tế tại công trình, sửa số lượng nếu khác lúc chốt (Sale được thông báo khi tổng đơn đổi). Phải xác nhận mới sang Mua hàng được.</p>

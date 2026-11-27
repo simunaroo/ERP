@@ -1,0 +1,361 @@
+@startuml erd
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+hide circle
+left to right direction
+skinparam defaultFontSize 12
+entity ai_nhan_xet_cham_soc {
+  * id <<PK>>
+  --
+  nguoi_tao_id <<FK>>
+}
+entity cau_hinh {
+  * khoa <<PK>>
+  --
+  nguoi_cap_nhat_id <<FK>>
+}
+entity chia_so_log {
+  * id <<PK>>
+  --
+  khach_hang_id <<FK>>
+  nguoi_nhap_id <<FK>>
+  sale_id <<FK>>
+  tu_sale_id <<FK>>
+}
+entity dat_hang_ncc {
+  * id <<PK>>
+  --
+  de_xuat_chi_id <<FK>>
+  don_hang_id <<FK>>
+  ncc_id <<FK>>
+  nguoi_dat_id <<FK>>
+}
+entity de_xuat_chi {
+  * id <<PK>>
+  --
+  doi_tho_id <<FK>>
+  don_hang_id <<FK>>
+  mua_bo_sung_id <<FK>>
+  ncc_id <<FK>>
+  nguoi_tao_id <<FK>>
+}
+entity de_xuat_chi_dong {
+  * id <<PK>>
+  --
+  de_xuat_chi_id <<FK>>
+  mua_hang_dong_id <<FK>>
+}
+entity de_xuat_chi_duyet_log {
+  * id <<PK>>
+  --
+  de_xuat_chi_id <<FK>>
+  nguoi_id <<FK>>
+}
+entity doi_tho {
+  * id <<PK>>
+  --
+
+}
+entity don_hang {
+  * id <<PK>>
+  --
+  khach_hang_id <<FK>>
+  nguoi_boc_khoi_luong_id <<FK>>
+  nguoi_nghiem_thu_id <<FK>>
+  nguoi_quyet_toan_id <<FK>>
+  sale_id <<FK>>
+  san_pham_id <<FK>>
+  vanhanh_phu_trach_id <<FK>>
+}
+entity don_hang_giai_doan_log {
+  * id <<PK>>
+  --
+  don_hang_id <<FK>>
+  nguoi_id <<FK>>
+}
+entity don_hang_hinh_anh {
+  * id <<PK>>
+  --
+  don_hang_id <<FK>>
+}
+entity don_hang_phan_cong_log {
+  * id <<PK>>
+  --
+  den_van_hanh_id <<FK>>
+  don_hang_id <<FK>>
+  nguoi_id <<FK>>
+  tu_van_hanh_id <<FK>>
+}
+entity don_hang_vat_tu {
+  * id <<PK>>
+  --
+  don_hang_id <<FK>>
+  vat_tu_id <<FK>>
+}
+entity don_hang_yeu_cau_sua {
+  * id <<PK>>
+  --
+  don_hang_id <<FK>>
+  sale_id <<FK>>
+}
+entity giao_dich_ngan_hang {
+  * id <<PK>>
+  --
+  de_xuat_chi_id <<FK>>
+  don_hang_id <<FK>>
+  nguoi_xu_ly_id <<FK>>
+  thanh_toan_khach_id <<FK>>
+}
+entity giao_dich_tho {
+  * id <<PK>>
+  --
+  de_xuat_chi_id <<FK>>
+  doi_tho_id <<FK>>
+  don_hang_id <<FK>>
+  phat_sinh_id <<FK>>
+  thi_cong_id <<FK>>
+}
+entity khach_hang {
+  * id <<PK>>
+  --
+  nguoi_nhap_id <<FK>>
+  sale_phu_trach_id <<FK>>
+}
+entity khach_hang_cham_soc {
+  * id <<PK>>
+  --
+  khach_hang_id <<FK>>
+  sale_id <<FK>>
+}
+entity khach_hang_san_pham {
+  * khach_hang_id <<PK>>
+  * loai_vat_tu_id <<PK>>
+  --
+
+}
+entity loai_vat_tu {
+  * id <<PK>>
+  --
+
+}
+entity mua_bo_sung {
+  * id <<PK>>
+  --
+  don_hang_id <<FK>>
+  ncc_id <<FK>>
+  nguoi_tao_id <<FK>>
+}
+entity mua_bo_sung_dong {
+  * id <<PK>>
+  --
+  mua_bo_sung_id <<FK>>
+  vat_tu_id <<FK>>
+}
+entity mua_bo_sung_trach_nhiem {
+  * id <<PK>>
+  --
+  mua_bo_sung_id <<FK>>
+}
+entity mua_hang_dong {
+  * id <<PK>>
+  --
+  dat_hang_ncc_id <<FK>>
+  don_hang_vat_tu_id <<FK>>
+  ncc_id <<FK>>
+  nguoi_cap_nhat_id <<FK>>
+}
+entity ncc_bang_gia {
+  * id <<PK>>
+  --
+  ncc_id <<FK>>
+  vat_tu_id <<FK>>
+}
+entity ncc_stk {
+  * id <<PK>>
+  --
+  ncc_id <<FK>>
+}
+entity nha_cung_cap {
+  * id <<PK>>
+  --
+
+}
+entity nhat_ky_thay_doi {
+  * id <<PK>>
+  --
+  nguoi_id <<FK>>
+}
+entity phat_sinh_thi_cong {
+  * id <<PK>>
+  --
+  don_hang_id <<FK>>
+  nguoi_tao_id <<FK>>
+  thi_cong_id <<FK>>
+}
+entity phieu_thanh_toan {
+  * id <<PK>>
+  --
+  de_xuat_chi_id <<FK>>
+  nguoi_tao_id <<FK>>
+}
+entity quyen {
+  * ma <<PK>>
+  --
+
+}
+entity thanh_toan_khach {
+  * id <<PK>>
+  --
+  don_hang_id <<FK>>
+  giao_dich_id <<FK>>
+  nguoi_tao_id <<FK>>
+  nguoi_xac_nhan_id <<FK>>
+}
+entity thi_cong {
+  * id <<PK>>
+  --
+  doi_tho_id <<FK>>
+  don_hang_id <<FK>>
+  nguoi_phu_trach_id <<FK>>
+}
+entity thong_bao {
+  * id <<PK>>
+  --
+  nguoi_gay_id <<FK>>
+  nguoi_nhan_id <<FK>>
+}
+entity tro_ly_hoi_thoai {
+  * id <<PK>>
+  --
+  khach_hang_id <<FK>>
+  loai_vat_tu_id <<FK>>
+  nguoi_id <<FK>>
+}
+entity tro_ly_san_pham {
+  * id <<PK>>
+  --
+  loai_vat_tu_id <<FK>>
+  nguoi_cap_nhat_id <<FK>>
+}
+entity tro_ly_tin_nhan {
+  * id <<PK>>
+  --
+  hoi_thoai_id <<FK>>
+}
+entity ty_le_chia_so {
+  * sale_id <<PK>>
+  --
+  nguoi_cap_nhat_id <<FK>>
+}
+entity users {
+  * id <<PK>>
+  --
+
+}
+entity vai_tro_quyen {
+  * vai_tro <<PK>>
+  * ma_quyen <<PK>>
+  --
+
+}
+entity vat_tu {
+  * id <<PK>>
+  --
+  loai_vat_tu_id <<FK>>
+}
+entity xac_thuc_vai_tro {
+  * id <<PK>>
+  --
+  nguoi_cap_nhat_id <<FK>>
+}
+users ||--o{ ai_nhan_xet_cham_soc
+users ||--o{ cau_hinh
+khach_hang ||--o{ chia_so_log
+users ||--o{ chia_so_log
+de_xuat_chi ||--o{ dat_hang_ncc
+don_hang ||--o{ dat_hang_ncc
+nha_cung_cap ||--o{ dat_hang_ncc
+users ||--o{ dat_hang_ncc
+doi_tho ||--o{ de_xuat_chi
+don_hang ||--o{ de_xuat_chi
+mua_bo_sung ||--o{ de_xuat_chi
+nha_cung_cap ||--o{ de_xuat_chi
+users ||--o{ de_xuat_chi
+de_xuat_chi ||--o{ de_xuat_chi_dong
+mua_hang_dong ||--o{ de_xuat_chi_dong
+de_xuat_chi ||--o{ de_xuat_chi_duyet_log
+users ||--o{ de_xuat_chi_duyet_log
+khach_hang ||--o{ don_hang
+users ||--o{ don_hang
+loai_vat_tu ||--o{ don_hang
+don_hang ||--o{ don_hang_giai_doan_log
+users ||--o{ don_hang_giai_doan_log
+don_hang ||--o{ don_hang_hinh_anh
+users ||--o{ don_hang_phan_cong_log
+don_hang ||--o{ don_hang_phan_cong_log
+don_hang ||--o{ don_hang_vat_tu
+vat_tu ||--o{ don_hang_vat_tu
+don_hang ||--o{ don_hang_yeu_cau_sua
+users ||--o{ don_hang_yeu_cau_sua
+de_xuat_chi ||--o{ giao_dich_ngan_hang
+don_hang ||--o{ giao_dich_ngan_hang
+users ||--o{ giao_dich_ngan_hang
+thanh_toan_khach ||--o{ giao_dich_ngan_hang
+de_xuat_chi ||--o{ giao_dich_tho
+doi_tho ||--o{ giao_dich_tho
+don_hang ||--o{ giao_dich_tho
+phat_sinh_thi_cong ||--o{ giao_dich_tho
+thi_cong ||--o{ giao_dich_tho
+users ||--o{ khach_hang
+khach_hang ||--o{ khach_hang_cham_soc
+users ||--o{ khach_hang_cham_soc
+khach_hang ||--o{ khach_hang_san_pham
+loai_vat_tu ||--o{ khach_hang_san_pham
+don_hang ||--o{ mua_bo_sung
+nha_cung_cap ||--o{ mua_bo_sung
+users ||--o{ mua_bo_sung
+mua_bo_sung ||--o{ mua_bo_sung_dong
+vat_tu ||--o{ mua_bo_sung_dong
+mua_bo_sung ||--o{ mua_bo_sung_trach_nhiem
+dat_hang_ncc ||--o{ mua_hang_dong
+don_hang_vat_tu ||--o{ mua_hang_dong
+nha_cung_cap ||--o{ mua_hang_dong
+users ||--o{ mua_hang_dong
+nha_cung_cap ||--o{ ncc_bang_gia
+vat_tu ||--o{ ncc_bang_gia
+nha_cung_cap ||--o{ ncc_stk
+users ||--o{ nhat_ky_thay_doi
+don_hang ||--o{ phat_sinh_thi_cong
+users ||--o{ phat_sinh_thi_cong
+thi_cong ||--o{ phat_sinh_thi_cong
+de_xuat_chi ||--o{ phieu_thanh_toan
+users ||--o{ phieu_thanh_toan
+don_hang ||--o{ thanh_toan_khach
+giao_dich_ngan_hang ||--o{ thanh_toan_khach
+users ||--o{ thanh_toan_khach
+doi_tho ||--o{ thi_cong
+don_hang ||--o{ thi_cong
+users ||--o{ thi_cong
+users ||--o{ thong_bao
+khach_hang ||--o{ tro_ly_hoi_thoai
+loai_vat_tu ||--o{ tro_ly_hoi_thoai
+users ||--o{ tro_ly_hoi_thoai
+loai_vat_tu ||--o{ tro_ly_san_pham
+users ||--o{ tro_ly_san_pham
+tro_ly_hoi_thoai ||--o{ tro_ly_tin_nhan
+users ||--o{ ty_le_chia_so
+quyen ||--o{ vai_tro_quyen
+loai_vat_tu ||--o{ vat_tu
+users ||--o{ xac_thuc_vai_tro
+@enduml

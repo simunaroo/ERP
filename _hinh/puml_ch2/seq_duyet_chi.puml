@@ -1,0 +1,38 @@
+@startuml seq_duyet_chi
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+autonumber
+actor "Người duyệt chi" as U
+participant "Telegram\nBot API" as TG
+control "TelegramRouter" as R
+control "CongNoService" as S
+control "ThongBaoService" as TB
+database "PostgreSQL" as DB
+U -> TG : Bấm "Duyệt" trên tin đề xuất (ảnh QR)
+TG -> R : callback_query (webhook có secret token / long polling)
+R -> R : xuLyUpdate(): kiểm tra đúng nhóm duyệt, đúng tin nhắn
+R -> S : xuLyDuyet(deXuatId, nguoiBam)
+S -> S : kiểm tra người bấm có quyền duyệt
+S -> DB : BEGIN
+S -> DB : UPDATE de_xuat_chi SET trang_thai = 'da_duyet' WHERE trang_thai = 'cho_duyet'
+alt đã được xử lý trước đó
+  S --> R : bỏ qua, báo "Đề xuất đã được xử lý"
+else cập nhật thành công
+  S -> DB : INSERT de_xuat_chi_duyet_log
+  S -> TB : deXuatChi(... 'da_duyet') -> thông báo Kế toán
+  S -> DB : COMMIT
+  S -> TG : editMessageCaption("Đã duyệt") + nút "Đã chi"
+end
+R -> TG : answerCallbackQuery
+@enduml

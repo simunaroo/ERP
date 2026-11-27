@@ -1,0 +1,50 @@
+@startuml cls_thi_cong
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+hide empty members
+skinparam classAttributeIconSize 0
+
+class ThiCongController
+class ThiCongService {
++lapGiaiDoan(user, data)
++batDau(user, id)
++baoXong(user, id)
++luuNghiemThu(user, donId, ds)
++xacNhanNghiemThu(user, donId)
++themPhatSinh(user, data)
++chotQuyetToan(user, donId)
+}
+class ThiCongRepository
+class DonHangService {
++tuDongChuyenBuoc(client, donId, tu, den)
+}
+class ThiCong <<entity>> {
+don_hang_id : INTEGER
+doi_tho_id : INTEGER
+ten_giai_doan : TEXT
+kl_du_kien : NUMERIC
+gia_cong : NUMERIC
+trang_thai : enum
+}
+class DoiTho <<entity>>
+class PhatSinhThiCong <<entity>>
+class GiaoDichTho <<entity>>
+ThiCongController --> ThiCongService
+ThiCongService --> ThiCongRepository
+ThiCongService --> DonHangService
+ThiCongRepository ..> ThiCong
+DoiTho "1" -- "n" ThiCong
+DoiTho "1" -- "n" GiaoDichTho
+ThiCong "1" -- "n" PhatSinhThiCong
+@enduml

@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { api, loiCua, taiFile } from '../api/client.js';
 import Icon from '../components/Icon.jsx';
 import { useAuthStore } from '../store/authStore.js';
+import { useDsSanPham } from '../components/SanPham.jsx';
 import BoLoc, { khoaCua } from '../components/BoLoc.jsx';
 import { GIAI_DOAN, tinhTienDo, HINH_THUC, NGHIEM_THU, NHOM_KHACH, TINH_THANH, TRANG_THAI_DON, ngay, tien } from '../utils.js';
 
@@ -12,8 +13,9 @@ const SAP_XEP = {
 };
 
 // Cac dieu kien trong nut "Loc". Khoa = ten tham so tren URL va tren API.
-function truongLoc(vaiTro, dsSale, dsVanHanh) {
+function truongLoc(vaiTro, dsSale, dsVanHanh, dsSanPham) {
   return [
+    { k: 'san_pham', nhan: 'Sản phẩm', kieu: 'chon', lua_chon: dsSanPham.map((x) => [String(x.id), x.ten]) },
     { k: 'giai_doan', nhan: 'Tiến độ', kieu: 'chon', lua_chon: Object.entries(GIAI_DOAN).filter(([v]) => v !== 'chot').map(([v, g]) => [v, g.nhan]) },
     { k: 'hinh_thuc', nhan: 'Hình thức', kieu: 'chon', lua_chon: Object.entries(HINH_THUC).map(([v, h]) => [v, h.nhan]) },
     { k: 'nhom_khach', nhan: 'Nhóm khách hàng', kieu: 'chon', lua_chon: Object.entries(NHOM_KHACH) },
@@ -60,7 +62,8 @@ export default function DonHangList() {
   const sapXep = params.get('sap_xep') || 'moi_nhat';
   const [dsSale, setDsSale] = useState([]);
   const [dsVanHanh, setDsVanHanh] = useState([]);
-  const truong = truongLoc(vaiTro, dsSale, dsVanHanh);
+  const dsSanPham = useDsSanPham();
+  const truong = truongLoc(vaiTro, dsSale, dsVanHanh, dsSanPham);
   const cacKhoa = truong.flatMap(khoaCua);
   const giaTriLoc = Object.fromEntries(cacKhoa.map((k) => [k, params.get(k) || '']));
   const chuoiLoc = cacKhoa.map((k) => `${k}=${giaTriLoc[k]}`).join('&'); // de useEffect so sanh
@@ -110,7 +113,7 @@ export default function DonHangList() {
       {vaiTro === 'van_hanh' && <p className="muted">Các đơn bạn phụ trách.</p>}
       <div className="card">
         <div className="toolbar">
-          <input className="search" placeholder="Tìm theo mã đơn, khách hàng..." value={oTim} onChange={(e) => setOTim(e.target.value)} />
+          <input className="search" placeholder="Tìm theo mã đơn, mã hợp đồng, khách, SĐT..." value={oTim} onChange={(e) => setOTim(e.target.value)} />
           <select value={trangThai} onChange={(e) => capNhat({ trang_thai: e.target.value })}>
             <option value="">Tất cả trạng thái</option>
             {Object.entries(TRANG_THAI_DON).filter(([v]) => v !== 'nhap' || vaiTro === 'sale').map(([v, t]) => <option key={v} value={v}>{t.nhan}</option>)}
@@ -138,13 +141,15 @@ export default function DonHangList() {
         <div className={`table-wrap ${dangTai ? 'loading' : ''}`}>
           <table>
             <thead>
-              <tr><th>Mã đơn</th><th>Khách hàng</th><th>Tỉnh/Thành</th><th>Hình thức</th><th className="num">Tổng đơn</th><th className="num">Còn phải thu</th><th>Sale</th><th>Vận hành</th><th>Tiến độ</th><th>Ngày tạo</th></tr>
+              <tr><th>Mã đơn</th><th>Khách hàng</th><th>Sản phẩm</th><th>Tỉnh/Thành</th><th>Hình thức</th><th className="num">Tổng đơn</th><th className="num">Còn phải thu</th><th>Sale</th><th>Vận hành</th><th>Tiến độ</th><th>Ngày tạo</th></tr>
             </thead>
             <tbody>
               {items.map((d) => (
                 <tr key={d.id}>
-                  <td className="nowrap"><Link to={`/don-hang/${d.id}`}>{d.ma_don}</Link></td>
+                  <td className="nowrap"><Link to={`/don-hang/${d.id}`}>{d.ma_don}</Link>
+                    {d.ma_hop_dong && <div className="muted small" title="Mã hợp đồng">{d.ma_hop_dong}</div>}</td>
                   <td>{d.khach_hang}</td>
+                  <td className="nowrap">{d.san_pham || '—'}</td>
                   <td>{d.tinh_thanh || '—'}</td>
                   <td>{HINH_THUC[d.hinh_thuc].nhan}</td>
                   <td className="num nowrap">{tien(d.tong_don)}</td>
@@ -155,7 +160,7 @@ export default function DonHangList() {
                   <td className="nowrap">{ngay(d.created_at)}</td>
                 </tr>
               ))}
-              {kq && items.length === 0 && <tr><td colSpan="10" className="muted center">Không có đơn hàng nào</td></tr>}
+              {kq && items.length === 0 && <tr><td colSpan="11" className="muted center">Không có đơn hàng nào</td></tr>}
             </tbody>
           </table>
         </div>

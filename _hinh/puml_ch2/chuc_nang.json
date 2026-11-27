@@ -1,0 +1,46 @@
+[
+ [
+  "dang_nhap",
+  "Đăng nhập"
+ ],
+ [
+  "nhap_so",
+  "Nhập và chia số"
+ ],
+ [
+  "cham_soc",
+  "Chăm sóc khách hàng"
+ ],
+ [
+  "tao_don",
+  "Tạo và chốt đơn hàng"
+ ],
+ [
+  "dat_hang",
+  "Đặt hàng nhà cung cấp"
+ ],
+ [
+  "duyet_chi",
+  "Duyệt đề xuất chi"
+ ],
+ [
+  "xac_nhan_chi",
+  "Xác nhận đã chi"
+ ],
+ [
+  "thi_cong",
+  "Thi công, nghiệm thu và quyết toán"
+ ],
+ [
+  "thu_tien",
+  "Ghi nhận thanh toán của khách"
+ ],
+ [
+  "doi_soat",
+  "Đối soát giao dịch ngân hàng"
+ ],
+ [
+  "bao_cao_cs",
+  "Báo cáo chăm sóc khách hàng"
+ ]
+]

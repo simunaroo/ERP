@@ -1,0 +1,38 @@
+@startuml seq_xac_nhan_chi
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+autonumber
+actor "Kế toán" as U
+participant "Telegram Bot API\n/ Giao diện Công nợ" as TG
+control "CongNoService" as S
+control "LuuAnh" as A
+database "PostgreSQL" as DB
+U -> TG : Bấm "Đã chi – gửi ảnh bill"
+TG -> U : hỏi ảnh bill (ForceReply)
+U -> TG : trả lời bằng ảnh bill
+TG -> S : xuLyAnhBill(): kiểm tra người gửi là Kế toán đã gắn Telegram
+S -> TG : getFile, tải ảnh
+S -> A : luuAnhBase64() (kiểm tra magic bytes, <= 4 MB)
+S -> DB : BEGIN
+S -> DB : INSERT phieu_thanh_toan; đề xuất -> "Đã chi"
+alt đề xuất là tiền cọc
+  S -> DB : dòng "Chờ cọc" -> "Sẵn hàng"
+  S -> S : taoQuyetToanNcc() phần còn lại
+else trả công thợ
+  S -> DB : INSERT giao_dich_tho
+end
+S -> DB : COMMIT
+S -> TG : sửa tin "Đã chi", bỏ nút; báo nhóm NCC (nếu cọc)
+note over S : Tiền ra khớp sao kê ngân hàng:\nNganHangService gọi daChi(null, id, { giaoDichId })\nkhông cần ảnh bill
+@enduml

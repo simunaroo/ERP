@@ -1,0 +1,50 @@
+@startuml seq_dang_nhap
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+autonumber
+actor "Người dùng" as U
+boundary "Giao diện\nĐăng nhập" as FE
+control "AuthController" as C
+control "AuthService" as S
+control "HaiLopService" as H
+entity "AuthRepository" as R
+database "PostgreSQL" as DB
+U -> FE : Nhập tên đăng nhập, mật khẩu
+FE -> C : POST /api/auth/login
+C -> S : dangNhap(username, matKhau, ip)
+S -> S : kiểm tra số lần sai (chặn nếu >= 5 lần / 15 phút)
+S -> R : findByUsername(username)
+R -> DB : SELECT ... FROM users
+DB --> R : bản ghi người dùng
+R --> S : user
+alt sai mật khẩu hoặc tài khoản khoá
+  S --> C : lỗi 401 / 403 (tăng bộ đếm sai)
+  C --> FE : thông báo lỗi
+else Sale, Vận hành
+  S -> S : kyToken(id, vai trò, phiên bản token)
+  S --> C : { token, user }
+else Admin, Kế toán (bắt buộc 2FA)
+  S -> H : kyMaTam(user)
+  H --> FE : { buoc: nhap_ma_2fa, ma_tam }
+  U -> FE : Nhập mã 6 số từ ứng dụng xác thực
+  FE -> C : POST /api/auth/2fa/xac-minh
+  C -> H : xacMinh(ma_tam, ma)
+  H -> R : đọc totp_khoa, totp_buoc_cuoi
+  H -> H : giaiMa(khoá) và kiemTra(mã TOTP, lệch ±1 bước)
+  H -> DB : UPDATE users SET totp_buoc_cuoi (chống dùng lại mã)
+  H --> C : { token, user }
+end
+C --> FE : 200 OK + token
+FE -> FE : lưu token (Zustand), chuyển trang Tổng quan
+@enduml

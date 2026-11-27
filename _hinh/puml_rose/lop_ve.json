@@ -1,0 +1,2111 @@
+[
+ {
+  "ten": "cls_dang_nhap",
+  "lop": [
+   {
+    "k": "UI",
+    "loai": "boundary",
+    "ten": "DangNhapUI",
+    "thuoc": [],
+    "thao": [
+     "+Dieu huong den man hinh dang nhap()",
+     "+Hien thi form dang nhap()",
+     "+Nhap ten dang nhap, mat khau va kich nut 'Dang nhap'()",
+     "+Hien thi form nhap ma 6 so()",
+     "+Nhap ma 6 so tu ung dung xac thuc()",
+     "+Hien thi trang Tong quan theo vai tro()"
+    ]
+   },
+   {
+    "k": "C",
+    "loai": "control",
+    "ten": "DangNhapController",
+    "thuoc": [],
+    "thao": [
+     "+Kiem tra thong tin dang nhap()",
+     "+Kiem tra so lan nhap sai()",
+     "+So sanh mat khau (bcrypt)()",
+     "+Xac minh ma hai lop()",
+     "+Cap token dang nhap()"
+    ]
+   },
+   {
+    "k": "US",
+    "loai": "entity",
+    "ten": "users",
+    "thuoc": [
+     "-id",
+     "-ho_ten",
+     "-username",
+     "-password_hash",
+     "-vai_tro",
+     "-trang_thai",
+     "-phien_ban_token",
+     "-doi_mat_khau_luc",
+     "-created_at",
+     "-..."
+    ],
+    "thao": [
+     "+Tim tai khoan theo ten dang nhap()",
+     "+Kiem tra ma TOTP()",
+     "+Cap nhat buoc ma da dung()"
+    ]
+   },
+   {
+    "k": "XT",
+    "loai": "entity",
+    "ten": "xac_thuc_vai_tro",
+    "thuoc": [
+     "-id",
+     "-vai_tro",
+     "-bat_2fa",
+     "-nguoi_cap_nhat_id",
+     "-cap_nhat_luc"
+    ],
+    "thao": [
+     "+Kiem tra vai tro co bat xac thuc hai lop()"
+    ]
+   }
+  ],
+  "lien": [
+   [
+    "UI",
+    "C",
+    "1",
+    "1"
+   ],
+   [
+    "C",
+    "US",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "XT",
+    "1",
+    "*"
+   ],
+   [
+    "US",
+    "XT",
+    "1",
+    "*"
+   ]
+  ]
+ },
+ {
+  "ten": "cls_nhap_so",
+  "lop": [
+   {
+    "k": "UI",
+    "loai": "boundary",
+    "ten": "NhapSoUI",
+    "thuoc": [],
+    "thao": [
+     "+Kich nut 'Nhap so'()",
+     "+Hien thi form nhap so()",
+     "+Dan danh sach so hoac tai tep Excel, CSV, TXT()",
+     "+Hien thi danh sach xem truoc()",
+     "+Kich nut 'Nhap'()",
+     "+Hien thi ket qua nhap so()"
+    ]
+   },
+   {
+    "k": "C",
+    "loai": "control",
+    "ten": "NhapSoController",
+    "thuoc": [],
+    "thao": [
+     "+Doc tep so dien thoai()",
+     "+Nhap so()",
+     "+Chuan hoa so dien thoai()",
+     "+Chon Sale thieu nhieu nhat so voi ty le()"
+    ]
+   },
+   {
+    "k": "KH",
+    "loai": "entity",
+    "ten": "khach_hang",
+    "thuoc": [
+     "-id",
+     "-ten",
+     "-sdt",
+     "-dia_chi",
+     "-sale_phu_trach_id",
+     "-nhom_khach_hang",
+     "-trang_thai_cham_soc",
+     "-created_at",
+     "-nguon",
+     "-..."
+    ],
+    "thao": [
+     "+Kiem tra trung so()",
+     "+Them khach hang moi()"
+    ]
+   },
+   {
+    "k": "TL",
+    "loai": "entity",
+    "ten": "ty_le_chia_so",
+    "thuoc": [
+     "-sale_id",
+     "-ty_le",
+     "-nguoi_cap_nhat_id",
+     "-cap_nhat_luc"
+    ],
+    "thao": [
+     "+Lay ty le chia()"
+    ]
+   },
+   {
+    "k": "LOG",
+    "loai": "entity",
+    "ten": "chia_so_log",
+    "thuoc": [
+     "-id",
+     "-khach_hang_id",
+     "-sale_id",
+     "-kieu",
+     "-kenh",
+     "-nguoi_nhap_id",
+     "-created_at",
+     "-tu_sale_id",
+     "-ly_do"
+    ],
+    "thao": [
+     "+Ghi nhat ky chia so()"
+    ]
+   },
+   {
+    "k": "TB",
+    "loai": "entity",
+    "ten": "thong_bao",
+    "thuoc": [
+     "-id",
+     "-nguoi_nhan_id",
+     "-nguoi_gay_id",
+     "-loai",
+     "-tieu_de",
+     "-noi_dung",
+     "-link",
+     "-da_doc_luc",
+     "-created_at"
+    ],
+    "thao": [
+     "+Gui thong bao cho Sale()"
+    ]
+   }
+  ],
+  "lien": [
+   [
+    "UI",
+    "C",
+    "1",
+    "1"
+   ],
+   [
+    "C",
+    "KH",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "TL",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "LOG",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "TB",
+    "1",
+    "*"
+   ],
+   [
+    "KH",
+    "LOG",
+    "1",
+    "*"
+   ]
+  ]
+ },
+ {
+  "ten": "cls_cham_soc",
+  "lop": [
+   {
+    "k": "UI",
+    "loai": "boundary",
+    "ten": "ChamSocKhachUI",
+    "thuoc": [],
+    "thao": [
+     "+Kich nut 'Khach hang'()",
+     "+Hien thi danh sach khach va ghi chu lan goi truoc()",
+     "+Bam so dien thoai de goi()",
+     "+Kich nut 'Cap nhat'()",
+     "+Hien thi form cap nhat cham soc()",
+     "+Chon trang thai, nhap ghi chu va kich nut 'Luu'()",
+     "+Hien thi lai danh sach khach()",
+     "+Hien thi hop thoai 'Len don ngay?'()"
+    ]
+   },
+   {
+    "k": "C",
+    "loai": "control",
+    "ten": "ChamSocController",
+    "thuoc": [],
+    "thao": [
+     "+Lay danh sach khach()",
+     "+Ghi nhan cham soc()",
+     "+Kiem tra du lieu hop le()"
+    ]
+   },
+   {
+    "k": "KH",
+    "loai": "entity",
+    "ten": "khach_hang",
+    "thuoc": [
+     "-id",
+     "-ten",
+     "-sdt",
+     "-dia_chi",
+     "-sale_phu_trach_id",
+     "-nhom_khach_hang",
+     "-trang_thai_cham_soc",
+     "-created_at",
+     "-nguon",
+     "-..."
+    ],
+    "thao": [
+     "+Lay khach cua Sale()",
+     "+Cap nhat trang thai cham soc()"
+    ]
+   },
+   {
+    "k": "CS",
+    "loai": "entity",
+    "ten": "khach_hang_cham_soc",
+    "thuoc": [
+     "-id",
+     "-khach_hang_id",
+     "-sale_id",
+     "-trang_thai",
+     "-noi_dung",
+     "-created_at",
+     "-hen_goi_lai_luc"
+    ],
+    "thao": [
+     "+Them lan cham soc()"
+    ]
+   }
+  ],
+  "lien": [
+   [
+    "UI",
+    "C",
+    "1",
+    "1"
+   ],
+   [
+    "C",
+    "KH",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "CS",
+    "1",
+    "*"
+   ],
+   [
+    "KH",
+    "CS",
+    "1",
+    "*"
+   ]
+  ]
+ },
+ {
+  "ten": "cls_tao_don",
+  "lop": [
+   {
+    "k": "UI",
+    "loai": "boundary",
+    "ten": "TaoDonUI",
+    "thuoc": [],
+    "thao": [
+     "+Kich nut 'Nhap don'()",
+     "+Hien thi form tao don()",
+     "+Nhap thong tin don, chon san pham va vat tu()",
+     "+Kich nut 'Chot don'()",
+     "+Hien thi chi tiet don hang()"
+    ]
+   },
+   {
+    "k": "C",
+    "loai": "control",
+    "ten": "DonHangController",
+    "thuoc": [],
+    "thao": [
+     "+Lay danh sach khach va vat tu()",
+     "+Tao va chot don hang()",
+     "+Kiem tra du thong tin de chot()"
+    ]
+   },
+   {
+    "k": "KH",
+    "loai": "entity",
+    "ten": "khach_hang",
+    "thuoc": [
+     "-id",
+     "-ten",
+     "-sdt",
+     "-dia_chi",
+     "-sale_phu_trach_id",
+     "-nhom_khach_hang",
+     "-trang_thai_cham_soc",
+     "-created_at",
+     "-nguon",
+     "-..."
+    ],
+    "thao": [
+     "+Lay khach cua Sale()"
+    ]
+   },
+   {
+    "k": "DH",
+    "loai": "entity",
+    "ten": "don_hang",
+    "thuoc": [
+     "-id",
+     "-ma_don",
+     "-khach_hang_id",
+     "-sale_id",
+     "-vanhanh_phu_trach_id",
+     "-trang_thai",
+     "-giai_doan",
+     "-hinh_thuc",
+     "-ma_hop_dong",
+     "-..."
+    ],
+    "thao": [
+     "+Them don hang()",
+     "+Sinh ma hop dong SDT_STT()"
+    ]
+   },
+   {
+    "k": "VT",
+    "loai": "entity",
+    "ten": "don_hang_vat_tu",
+    "thuoc": [
+     "-id",
+     "-don_hang_id",
+     "-vat_tu_id",
+     "-so_luong_can",
+     "-don_gia",
+     "-loai_thi_cong",
+     "-dai_mm",
+     "-rong_mm",
+     "-so_luong_thuc_te",
+     "-..."
+    ],
+    "thao": [
+     "+Them vat tu cua don()"
+    ]
+   },
+   {
+    "k": "SP",
+    "loai": "entity",
+    "ten": "khach_hang_san_pham",
+    "thuoc": [
+     "-khach_hang_id",
+     "-loai_vat_tu_id",
+     "-created_at"
+    ],
+    "thao": [
+     "+Them san pham quan tam cua khach()"
+    ]
+   },
+   {
+    "k": "US",
+    "loai": "entity",
+    "ten": "users",
+    "thuoc": [
+     "-id",
+     "-ho_ten",
+     "-username",
+     "-password_hash",
+     "-vai_tro",
+     "-trang_thai",
+     "-phien_ban_token",
+     "-doi_mat_khau_luc",
+     "-created_at",
+     "-..."
+    ],
+    "thao": [
+     "+Chon van hanh it viec nhat()"
+    ]
+   },
+   {
+    "k": "PC",
+    "loai": "entity",
+    "ten": "don_hang_phan_cong_log",
+    "thuoc": [
+     "-id",
+     "-don_hang_id",
+     "-tu_van_hanh_id",
+     "-den_van_hanh_id",
+     "-nguoi_id",
+     "-ly_do",
+     "-created_at"
+    ],
+    "thao": [
+     "+Ghi lich su phan cong()"
+    ]
+   },
+   {
+    "k": "TB",
+    "loai": "entity",
+    "ten": "thong_bao",
+    "thuoc": [
+     "-id",
+     "-nguoi_nhan_id",
+     "-nguoi_gay_id",
+     "-loai",
+     "-tieu_de",
+     "-noi_dung",
+     "-link",
+     "-da_doc_luc",
+     "-created_at"
+    ],
+    "thao": [
+     "+Gui thong bao cho van hanh()"
+    ]
+   }
+  ],
+  "lien": [
+   [
+    "UI",
+    "C",
+    "1",
+    "1"
+   ],
+   [
+    "C",
+    "KH",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "DH",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "VT",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "SP",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "US",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "PC",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "TB",
+    "1",
+    "*"
+   ],
+   [
+    "US",
+    "KH",
+    "1",
+    "*"
+   ],
+   [
+    "DH",
+    "PC",
+    "1",
+    "*"
+   ],
+   [
+    "KH",
+    "DH",
+    "1",
+    "*"
+   ],
+   [
+    "US",
+    "DH",
+    "1",
+    "*"
+   ],
+   [
+    "US",
+    "PC",
+    "1",
+    "*"
+   ],
+   [
+    "DH",
+    "VT",
+    "1",
+    "*"
+   ],
+   [
+    "US",
+    "TB",
+    "1",
+    "*"
+   ],
+   [
+    "KH",
+    "SP",
+    "1",
+    "*"
+   ]
+  ]
+ },
+ {
+  "ten": "cls_dat_hang",
+  "lop": [
+   {
+    "k": "UI",
+    "loai": "boundary",
+    "ten": "MuaHangUI",
+    "thuoc": [],
+    "thao": [
+     "+Kich nut 'Mua hang'()",
+     "+Hien thi danh sach vat tu can mua()",
+     "+Chon nha cung cap cho tung vat tu()",
+     "+Kich nut 'Dat hang'()",
+     "+Hien thi trang thai dat hang()"
+    ]
+   },
+   {
+    "k": "C",
+    "loai": "control",
+    "ten": "MuaHangController",
+    "thuoc": [],
+    "thao": [
+     "+Lay chi tiet mua hang cua don()",
+     "+Cap nhat nha cung cap()",
+     "+Dat hang nha cung cap()",
+     "+Ghi nhan phan hoi nha cung cap()"
+    ]
+   },
+   {
+    "k": "TG",
+    "loai": "boundary",
+    "ten": "TelegramBot",
+    "thuoc": [],
+    "thao": [
+     "+Gui don dat hang vao nhom NCC()",
+     "+Kich nut 'Cho xuat hang'()"
+    ]
+   },
+   {
+    "k": "MH",
+    "loai": "entity",
+    "ten": "mua_hang_dong",
+    "thuoc": [
+     "-id",
+     "-don_hang_vat_tu_id",
+     "-ncc_id",
+     "-gia_chot",
+     "-vat_pct",
+     "-trang_thai",
+     "-ghi_chu",
+     "-nguoi_cap_nhat_id",
+     "-cap_nhat_luc",
+     "-..."
+    ],
+    "thao": [
+     "+Lay dong vat tu can mua()",
+     "+Cap nhat NCC va gia chot()",
+     "+Chuyen trang thai 'Da dat'()",
+     "+Chuyen trang thai 'San hang'()"
+    ]
+   },
+   {
+    "k": "BG",
+    "loai": "entity",
+    "ten": "ncc_bang_gia",
+    "thuoc": [
+     "-id",
+     "-ncc_id",
+     "-vat_tu_id",
+     "-don_gia",
+     "-ngay_hieu_luc",
+     "-ngay_het_hieu_luc"
+    ],
+    "thao": [
+     "+Lay gia hieu luc cua cac NCC()"
+    ]
+   },
+   {
+    "k": "DAT",
+    "loai": "entity",
+    "ten": "dat_hang_ncc",
+    "thuoc": [
+     "-id",
+     "-don_hang_id",
+     "-ncc_id",
+     "-nguoi_dat_id",
+     "-noi_dung",
+     "-tong_tien",
+     "-trang_thai",
+     "-so_tien_coc",
+     "-de_xuat_chi_id",
+     "-..."
+    ],
+    "thao": [
+     "+Them don dat hang()"
+    ]
+   },
+   {
+    "k": "DX",
+    "loai": "entity",
+    "ten": "de_xuat_chi",
+    "thuoc": [
+     "-id",
+     "-loai_chi",
+     "-ncc_id",
+     "-doi_tho_id",
+     "-don_hang_id",
+     "-mua_bo_sung_id",
+     "-nguoi_tao_id",
+     "-gia_tri_hang",
+     "-coc_da_tru",
+     "-..."
+    ],
+    "thao": [
+     "+Tao de xuat quyet toan NCC()"
+    ]
+   }
+  ],
+  "lien": [
+   [
+    "UI",
+    "C",
+    "1",
+    "1"
+   ],
+   [
+    "TG",
+    "C",
+    "1",
+    "1"
+   ],
+   [
+    "C",
+    "MH",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "BG",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "DAT",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "DX",
+    "1",
+    "*"
+   ],
+   [
+    "DX",
+    "DAT",
+    "1",
+    "*"
+   ],
+   [
+    "DAT",
+    "MH",
+    "1",
+    "*"
+   ]
+  ]
+ },
+ {
+  "ten": "cls_duyet_chi",
+  "lop": [
+   {
+    "k": "UI",
+    "loai": "boundary",
+    "ten": "DeXuatChiUI",
+    "thuoc": [],
+    "thao": [
+     "+Kich nut 'Chi & cong no'()",
+     "+Chon de xuat()",
+     "+Hien thi chi tiet de xuat kem ma QR()",
+     "+Kich nut 'Duyet'()",
+     "+Kich nut 'Da chi' va tai anh bill()",
+     "+Hien thi trang thai 'Da chi'()"
+    ]
+   },
+   {
+    "k": "C",
+    "loai": "control",
+    "ten": "DeXuatChiController",
+    "thuoc": [],
+    "thao": [
+     "+Lay danh sach de xuat()",
+     "+Duyet de xuat chi()",
+     "+Xac nhan da chi()",
+     "+Kiem tra anh bill()"
+    ]
+   },
+   {
+    "k": "TG",
+    "loai": "boundary",
+    "ten": "TelegramBot",
+    "thuoc": [],
+    "thao": [
+     "+Sua tin nhan thanh 'Da duyet'()"
+    ]
+   },
+   {
+    "k": "DX",
+    "loai": "entity",
+    "ten": "de_xuat_chi",
+    "thuoc": [
+     "-id",
+     "-loai_chi",
+     "-ncc_id",
+     "-doi_tho_id",
+     "-don_hang_id",
+     "-mua_bo_sung_id",
+     "-nguoi_tao_id",
+     "-gia_tri_hang",
+     "-coc_da_tru",
+     "-..."
+    ],
+    "thao": [
+     "+Lay de xuat cho duyet()",
+     "+Cap nhat trang thai 'Da duyet'()",
+     "+Cap nhat trang thai 'Da chi'()",
+     "+Tao de xuat quyet toan con lai()"
+    ]
+   },
+   {
+    "k": "LOG",
+    "loai": "entity",
+    "ten": "de_xuat_chi_duyet_log",
+    "thuoc": [
+     "-id",
+     "-de_xuat_chi_id",
+     "-telegram_user",
+     "-nguoi_id",
+     "-hanh_dong",
+     "-ghi_chu",
+     "-thoi_gian"
+    ],
+    "thao": [
+     "+Ghi nguoi duyet()"
+    ]
+   },
+   {
+    "k": "PTT",
+    "loai": "entity",
+    "ten": "phieu_thanh_toan",
+    "thuoc": [
+     "-id",
+     "-de_xuat_chi_id",
+     "-ma_qr",
+     "-so_tien",
+     "-ngay_thanh_toan",
+     "-nguoi_tao_id",
+     "-noi_dung_ck",
+     "-bill_anh"
+    ],
+    "thao": [
+     "+Them phieu thanh toan()"
+    ]
+   },
+   {
+    "k": "MH",
+    "loai": "entity",
+    "ten": "mua_hang_dong",
+    "thuoc": [
+     "-id",
+     "-don_hang_vat_tu_id",
+     "-ncc_id",
+     "-gia_chot",
+     "-vat_pct",
+     "-trang_thai",
+     "-ghi_chu",
+     "-nguoi_cap_nhat_id",
+     "-cap_nhat_luc",
+     "-..."
+    ],
+    "thao": [
+     "+Chuyen trang thai 'San hang'()"
+    ]
+   },
+   {
+    "k": "TB",
+    "loai": "entity",
+    "ten": "thong_bao",
+    "thuoc": [
+     "-id",
+     "-nguoi_nhan_id",
+     "-nguoi_gay_id",
+     "-loai",
+     "-tieu_de",
+     "-noi_dung",
+     "-link",
+     "-da_doc_luc",
+     "-created_at"
+    ],
+    "thao": [
+     "+Gui thong bao cho Ke toan()",
+     "+Gui thong bao cho nguoi lap()"
+    ]
+   }
+  ],
+  "lien": [
+   [
+    "UI",
+    "C",
+    "1",
+    "1"
+   ],
+   [
+    "TG",
+    "C",
+    "1",
+    "1"
+   ],
+   [
+    "C",
+    "DX",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "LOG",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "PTT",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "MH",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "TB",
+    "1",
+    "*"
+   ],
+   [
+    "DX",
+    "LOG",
+    "1",
+    "*"
+   ],
+   [
+    "DX",
+    "PTT",
+    "1",
+    "*"
+   ]
+  ]
+ },
+ {
+  "ten": "cls_xac_nhan_chi",
+  "lop": [
+   {
+    "k": "UI",
+    "loai": "boundary",
+    "ten": "DeXuatChiUI",
+    "thuoc": [],
+    "thao": [
+     "+Chon de xuat 'Da duyet'()",
+     "+Hien thi ma QR chuyen khoan()",
+     "+Kich nut 'Da chi' va tai anh bill()",
+     "+Hien thi trang thai 'Da chi'()"
+    ]
+   },
+   {
+    "k": "C",
+    "loai": "control",
+    "ten": "DeXuatChiController",
+    "thuoc": [],
+    "thao": [
+     "+Xac nhan da chi()",
+     "+Kiem tra anh bill()"
+    ]
+   },
+   {
+    "k": "DX",
+    "loai": "entity",
+    "ten": "de_xuat_chi",
+    "thuoc": [
+     "-id",
+     "-loai_chi",
+     "-ncc_id",
+     "-doi_tho_id",
+     "-don_hang_id",
+     "-mua_bo_sung_id",
+     "-nguoi_tao_id",
+     "-gia_tri_hang",
+     "-coc_da_tru",
+     "-..."
+    ],
+    "thao": [
+     "+Cap nhat trang thai 'Da chi'()",
+     "+Tao de xuat quyet toan con lai()"
+    ]
+   },
+   {
+    "k": "PTT",
+    "loai": "entity",
+    "ten": "phieu_thanh_toan",
+    "thuoc": [
+     "-id",
+     "-de_xuat_chi_id",
+     "-ma_qr",
+     "-so_tien",
+     "-ngay_thanh_toan",
+     "-nguoi_tao_id",
+     "-noi_dung_ck",
+     "-bill_anh"
+    ],
+    "thao": [
+     "+Them phieu thanh toan()"
+    ]
+   },
+   {
+    "k": "MH",
+    "loai": "entity",
+    "ten": "mua_hang_dong",
+    "thuoc": [
+     "-id",
+     "-don_hang_vat_tu_id",
+     "-ncc_id",
+     "-gia_chot",
+     "-vat_pct",
+     "-trang_thai",
+     "-ghi_chu",
+     "-nguoi_cap_nhat_id",
+     "-cap_nhat_luc",
+     "-..."
+    ],
+    "thao": [
+     "+Chuyen trang thai 'San hang'()"
+    ]
+   },
+   {
+    "k": "TB",
+    "loai": "entity",
+    "ten": "thong_bao",
+    "thuoc": [
+     "-id",
+     "-nguoi_nhan_id",
+     "-nguoi_gay_id",
+     "-loai",
+     "-tieu_de",
+     "-noi_dung",
+     "-link",
+     "-da_doc_luc",
+     "-created_at"
+    ],
+    "thao": [
+     "+Gui thong bao cho nguoi lap()"
+    ]
+   }
+  ],
+  "lien": [
+   [
+    "UI",
+    "C",
+    "1",
+    "1"
+   ],
+   [
+    "C",
+    "DX",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "PTT",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "MH",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "TB",
+    "1",
+    "*"
+   ],
+   [
+    "DX",
+    "PTT",
+    "1",
+    "*"
+   ]
+  ]
+ },
+ {
+  "ten": "cls_thi_cong",
+  "lop": [
+   {
+    "k": "UI",
+    "loai": "boundary",
+    "ten": "ThiCongUI",
+    "thuoc": [],
+    "thao": [
+     "+Kich nut 'Thi cong'()",
+     "+Hien thi form lap giai doan()",
+     "+Nhap giai doan, chon doi tho va kich nut 'Luu'()",
+     "+Kich nut 'Bat dau' / 'Bao xong'()",
+     "+Nhap so luong thuc te va kich nut 'Xac nhan nghiem thu'()",
+     "+Kich nut 'Chot quyet toan'()",
+     "+Hien thi don 'Hoan tat'()"
+    ]
+   },
+   {
+    "k": "C",
+    "loai": "control",
+    "ten": "ThiCongController",
+    "thuoc": [],
+    "thao": [
+     "+Lap giai doan thi cong()",
+     "+Cap nhat giai doan()",
+     "+Xac nhan nghiem thu()",
+     "+Chot quyet toan()"
+    ]
+   },
+   {
+    "k": "TC",
+    "loai": "entity",
+    "ten": "thi_cong",
+    "thuoc": [
+     "-id",
+     "-don_hang_id",
+     "-doi_tho_id",
+     "-nguoi_phu_trach_id",
+     "-ten_giai_doan",
+     "-don_vi_cong",
+     "-gia_cong",
+     "-kl_du_kien",
+     "-kl_thuc_te",
+     "-..."
+    ],
+    "thao": [
+     "+Kiem tra trung lich doi tho()",
+     "+Them giai doan()",
+     "+Cap nhat trang thai giai doan()"
+    ]
+   },
+   {
+    "k": "DH",
+    "loai": "entity",
+    "ten": "don_hang",
+    "thuoc": [
+     "-id",
+     "-ma_don",
+     "-khach_hang_id",
+     "-sale_id",
+     "-vanhanh_phu_trach_id",
+     "-trang_thai",
+     "-giai_doan",
+     "-hinh_thuc",
+     "-ma_hop_dong",
+     "-..."
+    ],
+    "thao": [
+     "+Tu dong chuyen buoc tien do()",
+     "+Chuyen buoc 'Quyet toan'()",
+     "+Luu gia tri quyet toan()"
+    ]
+   },
+   {
+    "k": "VT",
+    "loai": "entity",
+    "ten": "don_hang_vat_tu",
+    "thuoc": [
+     "-id",
+     "-don_hang_id",
+     "-vat_tu_id",
+     "-so_luong_can",
+     "-don_gia",
+     "-loai_thi_cong",
+     "-dai_mm",
+     "-rong_mm",
+     "-so_luong_thuc_te",
+     "-..."
+    ],
+    "thao": [
+     "+Cap nhat so luong thuc te()"
+    ]
+   },
+   {
+    "k": "GDT",
+    "loai": "entity",
+    "ten": "giao_dich_tho",
+    "thuoc": [
+     "-id",
+     "-doi_tho_id",
+     "-don_hang_id",
+     "-thi_cong_id",
+     "-loai",
+     "-so_tien",
+     "-de_xuat_chi_id",
+     "-phat_sinh_id",
+     "-ghi_chu",
+     "-..."
+    ],
+    "thao": [
+     "+Ghi cong tho phai tra()"
+    ]
+   }
+  ],
+  "lien": [
+   [
+    "UI",
+    "C",
+    "1",
+    "1"
+   ],
+   [
+    "C",
+    "TC",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "DH",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "VT",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "GDT",
+    "1",
+    "*"
+   ],
+   [
+    "DH",
+    "VT",
+    "1",
+    "*"
+   ],
+   [
+    "DH",
+    "TC",
+    "1",
+    "*"
+   ],
+   [
+    "DH",
+    "GDT",
+    "1",
+    "*"
+   ],
+   [
+    "TC",
+    "GDT",
+    "1",
+    "*"
+   ]
+  ]
+ },
+ {
+  "ten": "cls_thu_tien",
+  "lop": [
+   {
+    "k": "UI",
+    "loai": "boundary",
+    "ten": "ThuTienUI",
+    "thuoc": [],
+    "thao": [
+     "+Kich nut 'Thu tien'()",
+     "+Hien thi ma QR thu tien()",
+     "+Nhap so tien, tai anh bill va kich nut 'Luu'()",
+     "+Doi chieu sao ke, kich nut 'Da nhan tien'()",
+     "+Cap nhat so con phai thu()"
+    ]
+   },
+   {
+    "k": "C",
+    "loai": "control",
+    "ten": "ThuTienController",
+    "thuoc": [],
+    "thao": [
+     "+Lay ma QR thu tien()",
+     "+Ghi nhan thanh toan()",
+     "+Kiem tra khong vuot so con phai thu()",
+     "+Xac nhan tien ve()"
+    ]
+   },
+   {
+    "k": "DH",
+    "loai": "entity",
+    "ten": "don_hang",
+    "thuoc": [
+     "-id",
+     "-ma_don",
+     "-khach_hang_id",
+     "-sale_id",
+     "-vanhanh_phu_trach_id",
+     "-trang_thai",
+     "-giai_doan",
+     "-hinh_thuc",
+     "-ma_hop_dong",
+     "-..."
+    ],
+    "thao": [
+     "+Tinh so con phai thu()"
+    ]
+   },
+   {
+    "k": "TT",
+    "loai": "entity",
+    "ten": "thanh_toan_khach",
+    "thuoc": [
+     "-id",
+     "-don_hang_id",
+     "-loai",
+     "-so_tien",
+     "-hinh_thuc",
+     "-ngay_thu",
+     "-bill_anh",
+     "-ghi_chu",
+     "-trang_thai",
+     "-..."
+    ],
+    "thao": [
+     "+Them phieu 'Cho xac nhan'()",
+     "+Cap nhat trang thai 'Da xac nhan'()"
+    ]
+   },
+   {
+    "k": "TB",
+    "loai": "entity",
+    "ten": "thong_bao",
+    "thuoc": [
+     "-id",
+     "-nguoi_nhan_id",
+     "-nguoi_gay_id",
+     "-loai",
+     "-tieu_de",
+     "-noi_dung",
+     "-link",
+     "-da_doc_luc",
+     "-created_at"
+    ],
+    "thao": [
+     "+Gui thong bao cho Ke toan()",
+     "+Gui thong bao cho Sale()"
+    ]
+   }
+  ],
+  "lien": [
+   [
+    "UI",
+    "C",
+    "1",
+    "1"
+   ],
+   [
+    "C",
+    "DH",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "TT",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "TB",
+    "1",
+    "*"
+   ],
+   [
+    "DH",
+    "TT",
+    "1",
+    "*"
+   ]
+  ]
+ },
+ {
+  "ten": "cls_doi_soat",
+  "lop": [
+   {
+    "k": "UI",
+    "loai": "boundary",
+    "ten": "ThuTienUI",
+    "thuoc": [],
+    "thao": [
+     "+Kich nut 'Thu tien'()",
+     "+Nhap so tien, tai anh bill va kich nut 'Luu'()"
+    ]
+   },
+   {
+    "k": "WH",
+    "loai": "boundary",
+    "ten": "NganHangWebhook",
+    "thuoc": [],
+    "thao": [
+     "+Gui giao dich (so tien, noi dung chuyen khoan)"
+    ]
+   },
+   {
+    "k": "DS",
+    "loai": "boundary",
+    "ten": "DoiSoatUI",
+    "thuoc": [],
+    "thao": [
+     "+Kich nut 'Doi soat ngan hang'()",
+     "+Chon don va kich nut 'Khop tay'()",
+     "+Hien thi ket qua doi soat()"
+    ]
+   },
+   {
+    "k": "C",
+    "loai": "control",
+    "ten": "ThuTienController",
+    "thuoc": [],
+    "thao": [
+     "+Lay ma QR thu tien()",
+     "+Ghi nhan thanh toan()",
+     "+Xu ly giao dich()",
+     "+Kiem tra khoa API()",
+     "+Tim ma don trong noi dung chuyen khoan()",
+     "+Lay giao dich chua khop()",
+     "+Khop tay giao dich()"
+    ]
+   },
+   {
+    "k": "DH",
+    "loai": "entity",
+    "ten": "don_hang",
+    "thuoc": [
+     "-id",
+     "-ma_don",
+     "-khach_hang_id",
+     "-sale_id",
+     "-vanhanh_phu_trach_id",
+     "-trang_thai",
+     "-giai_doan",
+     "-hinh_thuc",
+     "-ma_hop_dong",
+     "-..."
+    ],
+    "thao": [
+     "+Tinh so con phai thu()"
+    ]
+   },
+   {
+    "k": "TT",
+    "loai": "entity",
+    "ten": "thanh_toan_khach",
+    "thuoc": [
+     "-id",
+     "-don_hang_id",
+     "-loai",
+     "-so_tien",
+     "-hinh_thuc",
+     "-ngay_thu",
+     "-bill_anh",
+     "-ghi_chu",
+     "-trang_thai",
+     "-..."
+    ],
+    "thao": [
+     "+Them phieu 'Cho xac nhan'()",
+     "+Xac nhan phieu thu()"
+    ]
+   },
+   {
+    "k": "GD",
+    "loai": "entity",
+    "ten": "giao_dich_ngan_hang",
+    "thuoc": [
+     "-id",
+     "-nguon",
+     "-ma_gd_ngoai",
+     "-ngan_hang",
+     "-so_tk",
+     "-loai",
+     "-so_tien",
+     "-noi_dung",
+     "-ma_tham_chieu",
+     "-..."
+    ],
+    "thao": [
+     "+Kiem tra giao dich da xu ly()",
+     "+Them giao dich()",
+     "+Lay giao dich chua khop()",
+     "+Cap nhat trang thai 'Da khop'()"
+    ]
+   },
+   {
+    "k": "DX",
+    "loai": "entity",
+    "ten": "de_xuat_chi",
+    "thuoc": [
+     "-id",
+     "-loai_chi",
+     "-ncc_id",
+     "-doi_tho_id",
+     "-don_hang_id",
+     "-mua_bo_sung_id",
+     "-nguoi_tao_id",
+     "-gia_tri_hang",
+     "-coc_da_tru",
+     "-..."
+    ],
+    "thao": [
+     "+Ghi 'Da chi'()"
+    ]
+   },
+   {
+    "k": "TB",
+    "loai": "entity",
+    "ten": "thong_bao",
+    "thuoc": [
+     "-id",
+     "-nguoi_nhan_id",
+     "-nguoi_gay_id",
+     "-loai",
+     "-tieu_de",
+     "-noi_dung",
+     "-link",
+     "-da_doc_luc",
+     "-created_at"
+    ],
+    "thao": [
+     "+Gui thong bao cho Ke toan()",
+     "+Gui thong bao()"
+    ]
+   }
+  ],
+  "lien": [
+   [
+    "UI",
+    "C",
+    "1",
+    "1"
+   ],
+   [
+    "WH",
+    "C",
+    "1",
+    "1"
+   ],
+   [
+    "DS",
+    "C",
+    "1",
+    "1"
+   ],
+   [
+    "C",
+    "DH",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "TT",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "GD",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "DX",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "TB",
+    "1",
+    "*"
+   ],
+   [
+    "DH",
+    "DX",
+    "1",
+    "*"
+   ],
+   [
+    "DH",
+    "TT",
+    "1",
+    "*"
+   ],
+   [
+    "DH",
+    "GD",
+    "1",
+    "*"
+   ],
+   [
+    "TT",
+    "GD",
+    "1",
+    "*"
+   ],
+   [
+    "DX",
+    "GD",
+    "1",
+    "*"
+   ],
+   [
+    "GD",
+    "TT",
+    "1",
+    "*"
+   ]
+  ]
+ },
+ {
+  "ten": "cls_bao_cao_cs",
+  "lop": [
+   {
+    "k": "UI",
+    "loai": "boundary",
+    "ten": "BaoCaoChamSocUI",
+    "thuoc": [],
+    "thao": [
+     "+Kich tab 'Bao cao cham soc'()",
+     "+Chon ky bao cao()",
+     "+Hien thi bang theo Sale va so ton dong()",
+     "+Chon khach ton dong, Sale nhan, nhap ly do va kich nut 'Chuyen khach'()",
+     "+Kich nut 'Phan tich bang AI'()",
+     "+Hien thi nhan xet AI va lich su phan tich()"
+    ]
+   },
+   {
+    "k": "C",
+    "loai": "control",
+    "ten": "BaoCaoChamSocController",
+    "thuoc": [],
+    "thao": [
+     "+Tong hop bao cao theo Sale()",
+     "+Chuyen nhieu khach()",
+     "+Nhan xet bang AI()",
+     "+Kiem tra lai ten Sale va con so()"
+    ]
+   },
+   {
+    "k": "AI",
+    "loai": "boundary",
+    "ten": "GeminiAPI",
+    "thuoc": [],
+    "thao": [
+     "+Gui so lieu tong hop theo Sale()"
+    ]
+   },
+   {
+    "k": "KH",
+    "loai": "entity",
+    "ten": "khach_hang",
+    "thuoc": [
+     "-id",
+     "-ten",
+     "-sdt",
+     "-dia_chi",
+     "-sale_phu_trach_id",
+     "-nhom_khach_hang",
+     "-trang_thai_cham_soc",
+     "-created_at",
+     "-nguon",
+     "-..."
+    ],
+    "thao": [
+     "+Thong ke so duoc chia, so ton dong()",
+     "+Cap nhat Sale phu trach()"
+    ]
+   },
+   {
+    "k": "CS",
+    "loai": "entity",
+    "ten": "khach_hang_cham_soc",
+    "thuoc": [
+     "-id",
+     "-khach_hang_id",
+     "-sale_id",
+     "-trang_thai",
+     "-noi_dung",
+     "-created_at",
+     "-hen_goi_lai_luc"
+    ],
+    "thao": [
+     "+Thong ke lan goi, ty le chot()"
+    ]
+   },
+   {
+    "k": "LOG",
+    "loai": "entity",
+    "ten": "chia_so_log",
+    "thuoc": [
+     "-id",
+     "-khach_hang_id",
+     "-sale_id",
+     "-kieu",
+     "-kenh",
+     "-nguoi_nhap_id",
+     "-created_at",
+     "-tu_sale_id",
+     "-ly_do"
+    ],
+    "thao": [
+     "+Ghi nhat ky chuyen so()"
+    ]
+   },
+   {
+    "k": "NX",
+    "loai": "entity",
+    "ten": "ai_nhan_xet_cham_soc",
+    "thuoc": [
+     "-id",
+     "-tu_ngay",
+     "-den_ngay",
+     "-ket_qua",
+     "-so_lieu",
+     "-nguoi_tao_id",
+     "-created_at"
+    ],
+    "thao": [
+     "+Luu ban phan tich()"
+    ]
+   }
+  ],
+  "lien": [
+   [
+    "UI",
+    "C",
+    "1",
+    "1"
+   ],
+   [
+    "AI",
+    "C",
+    "1",
+    "1"
+   ],
+   [
+    "C",
+    "KH",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "CS",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "LOG",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "NX",
+    "1",
+    "*"
+   ],
+   [
+    "KH",
+    "CS",
+    "1",
+    "*"
+   ],
+   [
+    "KH",
+    "LOG",
+    "1",
+    "*"
+   ]
+  ]
+ },
+ {
+  "ten": "cls_tro_ly",
+  "lop": [
+   {
+    "k": "UI",
+    "loai": "boundary",
+    "ten": "TroLyChatUI",
+    "thuoc": [],
+    "thao": [
+     "+Kich nut 'Tro ly AI' va chon san pham()",
+     "+Hien thi khung chat()",
+     "+Nhap cau hoi, dinh kem anh (neu co) va kich nut 'Gui'()",
+     "+Hien thi cau tra loi va nut 'Chep tin nhan gui khach'()"
+    ]
+   },
+   {
+    "k": "C",
+    "loai": "control",
+    "ten": "TroLyController",
+    "thuoc": [],
+    "thao": [
+     "+Hoi tro ly()",
+     "+Kiem tra cau hoi va anh hop le()"
+    ]
+   },
+   {
+    "k": "AI",
+    "loai": "boundary",
+    "ten": "GeminiAPI",
+    "thuoc": [],
+    "thao": [
+     "+Gui huong dan, kien thuc, lich su, cau hoi va anh()"
+    ]
+   },
+   {
+    "k": "TL",
+    "loai": "entity",
+    "ten": "tro_ly_san_pham",
+    "thuoc": [
+     "-id",
+     "-loai_vat_tu_id",
+     "-kien_thuc",
+     "-cap_nhat_luc",
+     "-nguoi_cap_nhat_id"
+    ],
+    "thao": [
+     "+Lay kien thuc san pham()"
+    ]
+   },
+   {
+    "k": "VT",
+    "loai": "entity",
+    "ten": "vat_tu",
+    "thuoc": [
+     "-id",
+     "-ten",
+     "-loai_vat_tu_id",
+     "-don_vi_tinh",
+     "-quy_cach",
+     "-trang_thai"
+    ],
+    "thao": [
+     "+Lay danh muc vat tu dang ban()"
+    ]
+   },
+   {
+    "k": "KH",
+    "loai": "entity",
+    "ten": "khach_hang",
+    "thuoc": [
+     "-id",
+     "-ten",
+     "-sdt",
+     "-dia_chi",
+     "-sale_phu_trach_id",
+     "-nhom_khach_hang",
+     "-trang_thai_cham_soc",
+     "-created_at",
+     "-nguon",
+     "-..."
+    ],
+    "thao": [
+     "+Lay nhom khach va nhu cau()"
+    ]
+   },
+   {
+    "k": "HT",
+    "loai": "entity",
+    "ten": "tro_ly_hoi_thoai",
+    "thuoc": [
+     "-id",
+     "-nguoi_id",
+     "-loai_vat_tu_id",
+     "-khach_hang_id",
+     "-tieu_de",
+     "-created_at",
+     "-cap_nhat_luc",
+     "-loai"
+    ],
+    "thao": [
+     "+Tao cuoc tro chuyen (lan hoi dau)()"
+    ]
+   },
+   {
+    "k": "TN",
+    "loai": "entity",
+    "ten": "tro_ly_tin_nhan",
+    "thuoc": [
+     "-id",
+     "-hoi_thoai_id",
+     "-vai_tro",
+     "-noi_dung",
+     "-so_anh",
+     "-created_at",
+     "-noi_dung_ai",
+     "-ma_tien"
+    ],
+    "thao": [
+     "+Lay 10 luot hoi dap gan nhat()",
+     "+Luu cau hoi va cau tra loi()"
+    ]
+   }
+  ],
+  "lien": [
+   [
+    "UI",
+    "C",
+    "1",
+    "1"
+   ],
+   [
+    "AI",
+    "C",
+    "1",
+    "1"
+   ],
+   [
+    "C",
+    "TL",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "VT",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "KH",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "HT",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "TN",
+    "1",
+    "*"
+   ],
+   [
+    "KH",
+    "HT",
+    "1",
+    "*"
+   ],
+   [
+    "HT",
+    "TN",
+    "1",
+    "*"
+   ]
+  ]
+ },
+ {
+  "ten": "cls_tro_ly_ncc",
+  "lop": [
+   {
+    "k": "UI",
+    "loai": "boundary",
+    "ten": "TroLyChatUI",
+    "thuoc": [],
+    "thao": [
+     "+Chon tro ly 'NCC', nhap cau hoi va kich nut 'Gui'()",
+     "+Hien thi cau tra loi()"
+    ]
+   },
+   {
+    "k": "C",
+    "loai": "control",
+    "ten": "TroLyCongCuController",
+    "thuoc": [],
+    "thao": [
+     "+Hoi tro ly co cong cu()"
+    ]
+   },
+   {
+    "k": "BD",
+    "loai": "control",
+    "ten": "BiDanh",
+    "thuoc": [],
+    "thao": [
+     "+Thay ten NCC trong cau hoi bang ma NCC-id()",
+     "+Doi so tien thanh ma T1, T2..., NCC thanh NCC-id, kem ty le %()",
+     "+Doi ma ve ten NCC va so tien that()"
+    ]
+   },
+   {
+    "k": "AI",
+    "loai": "boundary",
+    "ten": "GeminiAPI",
+    "thuoc": [],
+    "thao": [
+     "+Gui cau hoi, lich su va danh sach ham tra cuu()",
+     "+Gui ket qua ham()"
+    ]
+   },
+   {
+    "k": "NCC",
+    "loai": "entity",
+    "ten": "nha_cung_cap",
+    "thuoc": [
+     "-id",
+     "-ten",
+     "-dia_chi",
+     "-ma_so_thue",
+     "-trang_thai",
+     "-created_at"
+    ],
+    "thao": [
+     "+Lay danh sach NCC()"
+    ]
+   },
+   {
+    "k": "BG",
+    "loai": "entity",
+    "ten": "ncc_bang_gia",
+    "thuoc": [
+     "-id",
+     "-ncc_id",
+     "-vat_tu_id",
+     "-don_gia",
+     "-ngay_hieu_luc",
+     "-ngay_het_hieu_luc"
+    ],
+    "thao": [
+     "+Truy van chi doc (so sanh gia, lich su gia, cong no)()"
+    ]
+   },
+   {
+    "k": "TN",
+    "loai": "entity",
+    "ten": "tro_ly_tin_nhan",
+    "thuoc": [
+     "-id",
+     "-hoi_thoai_id",
+     "-vai_tro",
+     "-noi_dung",
+     "-so_anh",
+     "-created_at",
+     "-noi_dung_ai",
+     "-ma_tien"
+    ],
+    "thao": [
+     "+Lay lich su ban da ma hoa va bang ma tien()",
+     "+Luu ban hien thi va ban da ma hoa()"
+    ]
+   }
+  ],
+  "lien": [
+   [
+    "UI",
+    "C",
+    "1",
+    "1"
+   ],
+   [
+    "AI",
+    "C",
+    "1",
+    "1"
+   ],
+   [
+    "C",
+    "NCC",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "BG",
+    "1",
+    "*"
+   ],
+   [
+    "C",
+    "TN",
+    "1",
+    "*"
+   ],
+   [
+    "NCC",
+    "BG",
+    "1",
+    "*"
+   ]
+  ]
+ }
+]

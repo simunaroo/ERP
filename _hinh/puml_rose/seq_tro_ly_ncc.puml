@@ -1,0 +1,57 @@
+@startuml seq_tro_ly_ncc
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+autonumber
+hide footbox
+actor "Admin" as U
+boundary "TroLyChatUI" as UI
+control "TroLyCongCuController" as C
+control "BiDanh" as BD
+boundary "GeminiAPI" as AI
+entity "nha_cung_cap" as NCC
+entity "ncc_bang_gia" as BG
+entity "tro_ly_tin_nhan" as TN
+U -> UI : Chon tro ly "NCC", nhap cau hoi va kich nut "Gui"
+UI -> C : Hoi tro ly co cong cu()
+C -> TN : Lay lich su ban da ma hoa va bang ma tien()
+TN --> C : return lich su
+C -> NCC : Lay danh sach NCC()
+C -> BD : Thay ten NCC trong cau hoi bang ma NCC-id()
+C -> AI : Gui cau hoi, lich su va danh sach ham tra cuu()
+AI --> C : return yeu cau goi ham (ten ham, tham so)
+C -> BG : Truy van chi doc (so sanh gia, lich su gia, cong no)()
+BG --> C : return ket qua
+C -> BD : Doi so tien thanh ma T1, T2..., NCC thanh NCC-id, kem ty le %()
+C -> AI : Gui ket qua ham()
+AI --> C : return cau tra loi (chi chua ma)
+note right of C
+Lap lai toi da 6 buoc goi ham;
+AI khong biet ten NCC va so tien that
+end note
+C -> BD : Doi ma ve ten NCC va so tien that()
+C -> TN : Luu ban hien thi va ban da ma hoa()
+C --> UI : return cau tra loi va nguon da tra
+UI -> UI : Hien thi cau tra loi()
+@enduml

@@ -69,7 +69,9 @@ await h(tk.thihong, 'POST', '/ngan-hang/gia-lap', { loai: 'vao', so_tien: 250000
 // Thay doi de nhat ky co du lieu + 1 ban sao luu
 await h(tk.ngocson, 'PUT', '/cau-hinh/ty_le_gia_von_tu_sx', { gia_tri: 60 });
 await h(tk.ngocson, 'POST', '/sao-luu/ngay');
-console.log({ donMua, dxc: dxc?.id, donNt: donNt?.id });
+// Khach cua Sale da co lich su cham soc (cho man chi tiet khach)
+const khachDaCs = (await h(tk.thilan, 'GET', '/khach-hang?limit=50')).items.find((k) => k.lan_cham_soc_cuoi)?.id;
+console.log({ donMua, dxc: dxc?.id, donNt: donNt?.id, khachDaCs });
 
 const KICH = [
   ['01_dang_nhap', null, '/login'],
@@ -95,6 +97,8 @@ const KICH = [
   ['22_phan_quyen', 'ngocson', '/phan-quyen'],
   ['23_nhat_ky', 'ngocson', '/nhat-ky'],
   ['24_sao_luu', 'ngocson', '/sao-luu'],
+  ['27_chi_tiet_khach', 'thilan', `/khach-hang/${khachDaCs}`],
+  ['28_bao_cao_cham_soc', 'ngocson', '/khach-hang/bao-cao'],
 ];
 const browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true });
 async function trang(user, vp = { width: 1366, height: 820, deviceScaleFactor: 1.5 }) {
@@ -123,6 +127,29 @@ for (const [ten, user, url, cuonToi] of KICH) {
   await p.waitForSelector('.qr-2fa'); await new Promise((r) => setTimeout(r, 500));
   await p.screenshot({ path: path.join(OUT, '17_xac_thuc_2_lop.png') });
   console.log('chup 17_xac_thuc_2_lop');
+}
+// 26: danh sach khach cua Sale, mo o "Cap nhat" nhanh o dong thu 2
+{
+  const p = ctxs.thilan;
+  await p.goto(F + '/khach-hang', { waitUntil: 'networkidle0' }); await new Promise((r) => setTimeout(r, 800));
+  const nut = await p.$$("xpath/.//button[normalize-space(.)='Cập nhật']");
+  if (nut[1]) { await nut[1].click(); await new Promise((r) => setTimeout(r, 600)); }
+  await p.screenshot({ path: path.join(OUT, '26_cap_nhat_cham_soc.png') });
+  console.log('chup 26_cap_nhat_cham_soc');
+}
+// 29: bao cao cham soc - phan AI nhan xet (chay AI that, can GEMINI_API_KEY)
+{
+  const p = ctxs.ngocson;
+  await p.goto(F + '/khach-hang/bao-cao', { waitUntil: 'networkidle0' });
+  const [n] = await p.$$("xpath/.//button[contains(., 'Phân tích bằng AI')]");
+  if (n) {
+    await n.click(); await new Promise((r) => setTimeout(r, 500));
+    await p.waitForFunction(() => !document.body.innerText.includes('AI đang phân tích'), { timeout: 90000 }).catch(() => {});
+    await p.evaluate(() => document.getElementById('ai-nhan-xet')?.scrollIntoView({ block: 'start' }));
+    await new Promise((r) => setTimeout(r, 500));
+    await p.screenshot({ path: path.join(OUT, '29_ai_nhan_xet_cham_soc.png') });
+    console.log('chup 29_ai_nhan_xet_cham_soc');
+  }
 }
 // 25: 3 man dien thoai ghep canh nhau
 {

@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { api, loiCua } from '../api/client.js';
 import { useAuthStore } from '../store/authStore.js';
-import { VAI_TRO, ngay } from '../utils.js';
+import { VAI_TRO, ngay, ngayGio } from '../utils.js';
+import Icon from '../components/Icon.jsx';
 
 // Mat khau tam hien 1 lan (server khong luu ban ro) -> Admin chep gui cho nguoi dung.
 function HopMatKhau({ tk, onDong }) {
@@ -15,6 +16,92 @@ function HopMatKhau({ tk, onDong }) {
         <button className="link" onClick={onDong}>Đóng</button>
       </span>
     </div>
+  );
+}
+
+function TabNguoiDung() {
+  return (
+    <div className="tabs" role="tablist">
+      <NavLink end to="/nguoi-dung" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}><Icon n="user" /> Tài khoản</NavLink>
+      <NavLink to="/nguoi-dung/xac-thuc" className={({ isActive }) => (isActive ? 'tab on' : 'tab')}><Icon n="lock" /> Xác thực 2 lớp</NavLink>
+    </div>
+  );
+}
+
+const MO_TA_VAI_TRO = {
+  admin: 'Quản trị toàn hệ thống, duyệt chi — nên luôn bật',
+  ke_toan: 'Xác nhận thu tiền, chi tiền — nên bật',
+  van_hanh: 'Điều phối đơn, mua hàng, thi công',
+  sale: 'Chăm sóc khách, lên đơn',
+};
+
+// Admin bat/tat xac thuc 2 lop (ma 6 so tu ung dung Authenticator) cho tung vai tro.
+export function XacThucHaiLop() {
+  const toi = useAuthStore((s) => s.user);
+  const [kq, setKq] = useState(null);
+  const [loi, setLoi] = useState('');
+  const [thongBao, setThongBao] = useState('');
+  const [dangLuu, setDangLuu] = useState('');
+
+  useEffect(() => { api.get('/nguoi-dung/xac-thuc').then((r) => setKq(r.data)).catch((e) => setLoi(loiCua(e))); }, []);
+
+  const doi = async (v) => {
+    const bat = !v.bat_2fa;
+    const ten = VAI_TRO[v.vai_tro];
+    let dangXuatNgay = false;
+    if (bat) {
+      const chuaCai = v.so_tai_khoan - v.so_da_cai;
+      if (!window.confirm(`Bật xác thực 2 lớp cho ${ten}? Từ lần đăng nhập tới, mọi tài khoản ${ten} phải nhập mã 6 số từ ứng dụng Authenticator${chuaCai ? ` (${chuaCai} tài khoản chưa cài sẽ được yêu cầu quét QR)` : ''}.`)) return;
+      if (chuaCai > 0) dangXuatNgay = window.confirm(`Đăng xuất NGAY các tài khoản ${ten} chưa cài để họ phải cài khi đăng nhập lại?
+(Bấm Huỷ = để họ dùng tiếp đến khi phiên hiện tại hết hạn.)`);
+    } else {
+      const canhBao = ['admin', 'ke_toan'].includes(v.vai_tro)
+        ? `\n\nCẢNH BÁO: ${ten} có quyền ${v.vai_tro === 'admin' ? 'quản trị toàn hệ thống' : 'xác nhận thu/chi tiền'} — lộ mật khẩu là mất kiểm soát.` : '';
+      if (!window.confirm(`Tắt xác thực 2 lớp cho ${ten}? Tài khoản ${ten} sẽ đăng nhập chỉ bằng mật khẩu. Khoá đã cài vẫn được giữ, bật lại không phải quét QR lại.${canhBao}`)) return;
+    }
+    setLoi(''); setThongBao(''); setDangLuu(v.vai_tro);
+    try {
+      const { data } = await api.put(`/nguoi-dung/xac-thuc/${v.vai_tro}`, { bat_2fa: bat, dang_xuat_ngay: dangXuatNgay });
+      setKq(data);
+      setThongBao(`Đã ${bat ? 'bật' : 'tắt'} xác thực 2 lớp cho ${ten}${data.so_dang_xuat ? ` — đã đăng xuất ${data.so_dang_xuat} tài khoản chưa cài` : ''}.`);
+    } catch (e) { setLoi(loiCua(e)); }
+    finally { setDangLuu(''); }
+  };
+
+  return (
+    <>
+      <h1>Người dùng</h1>
+      <TabNguoiDung />
+      {loi && <div className="error">{loi}</div>}
+      {thongBao && <div className="success">{thongBao}</div>}
+      {kq?.tat_toan_he_thong && <div className="banner">Đang tắt xác thực 2 lớp toàn hệ thống bằng <code>BAT_BUOC_2FA=false</code> trong file <code>.env</code> — các công tắc dưới đây chưa có hiệu lực.</div>}
+      <div className="card">
+        <p className="muted">Bật cho vai trò nào thì mọi tài khoản vai trò đó phải nhập thêm <b>mã 6 số</b> từ ứng dụng Google Authenticator / Microsoft Authenticator khi đăng nhập; người chưa cài sẽ được yêu cầu quét mã QR ở lần đăng nhập tới. Tắt thì đăng nhập chỉ cần mật khẩu.</p>
+        <div className="table-wrap">
+          <table>
+            <thead><tr><th>Vai trò</th><th>Xác thực 2 lớp</th><th className="num">Đã cài / tài khoản</th><th>Cập nhật</th></tr></thead>
+            <tbody>
+              {(kq?.vai_tro || []).map((v) => (
+                <tr key={v.vai_tro}>
+                  <td><b>{VAI_TRO[v.vai_tro]}</b>{v.vai_tro === toi.vai_tro && <span className="muted small"> (vai trò của bạn)</span>}<div className="muted small">{MO_TA_VAI_TRO[v.vai_tro]}</div></td>
+                  <td>
+                    <label className="cong-tac">
+                      <input type="checkbox" role="switch" checked={v.bat_2fa} disabled={dangLuu === v.vai_tro} onChange={() => doi(v)}
+                        aria-label={`Xác thực 2 lớp cho ${VAI_TRO[v.vai_tro]}`} />
+                      <span>{v.bat_2fa ? 'Đang bật' : 'Đang tắt'}</span>
+                    </label>
+                    {v.bat_2fa && v.so_da_cai < v.so_tai_khoan && <div className="small muted">{v.so_tai_khoan - v.so_da_cai} tài khoản sẽ cài ở lần đăng nhập tới</div>}
+                  </td>
+                  <td className="num">{v.so_da_cai} / {v.so_tai_khoan}</td>
+                  <td className="small muted">{v.cap_nhat_luc ? <>{ngayGio(v.cap_nhat_luc)}{v.nguoi_cap_nhat && <> · {v.nguoi_cap_nhat}</>}</> : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="muted small mt">Nhân viên mất điện thoại: vào tab “Tài khoản”, bấm “Đặt lại” ở cột Xác thực 2 lớp. Mọi lần bật/tắt được ghi vào Nhật ký thay đổi.</p>
+      </div>
+    </>
   );
 }
 
@@ -36,6 +123,7 @@ export function NguoiDung() {
   return (
     <>
       <h1>Người dùng</h1>
+      <TabNguoiDung />
       {loi && <div className="error">{loi}</div>}
       {thongBao && <div className="success">{thongBao}</div>}
       {mk && <HopMatKhau tk={mk} onDong={() => setMk(null)} />}
@@ -76,7 +164,7 @@ export function NguoiDung() {
                       <button className="link small" onClick={() => {
                         if (window.confirm(`Đặt lại xác thực 2 lớp của ${u.ho_ten}? (dùng khi nhân viên mất điện thoại — lần đăng nhập sau phải quét QR cài lại)`)) lam(() => api.post(`/nguoi-dung/${u.id}/dat-lai-2fa`), `Đã đặt lại 2FA của ${u.username}`);
                       }}>Đặt lại</button></>
-                      : ['admin', 'ke_toan'].includes(u.vai_tro) ? <span className="muted">bắt buộc — cài ở lần đăng nhập tới</span> : <span className="muted">không bắt buộc</span>}
+                      : u.vai_tro_bat_2fa ? <span className="muted">bắt buộc — cài ở lần đăng nhập tới</span> : <span className="muted">vai trò đang tắt</span>}
                   </td>
                   <td className="small">{u.doi_mat_khau_luc ? ngay(u.doi_mat_khau_luc) : <span className="muted">chưa đổi</span>}</td>
                   <td className="num small">{u.so_khach} / {u.so_don_sale}</td>

@@ -2,6 +2,7 @@
 // Moi ten nguoi, cong ty, so dien thoai, so tai khoan deu la ngau nhien, khong lay tu nguon that.
 import pg from 'pg';
 import bcrypt from 'bcryptjs';
+import { DANH_LAI_SQL } from '../src/modules/don_hang/ma_hop_dong.js';
 
 // Tai khoan demo: ten dem + ten, bo dau (Lê Minh Tuấn -> minhtuan); mat khau = tai khoan + 123456.
 const nguoiDung = (hoTen, username, vaiTro) => [hoTen, username, bcrypt.hashSync(`${username}123456`, 10), vaiTro];
@@ -209,7 +210,8 @@ export async function sinhDon(db, { sales, vanHanh, keToan, khachHang, vatTu, gi
       // giai_doan tam (CHECK bat buoc co khi da chot); tinh lai chinh xac sau khi co mua hang + thi cong.
       d.maDon, d.kh.id, d.kh.sale_phu_trach_id, d.vanHanh, d.trangThai,
       { moi: 'len_phuong_an', hoan_tat: 'hoan_tat', huy: 'huy' }[d.trangThai] || 'giao_hang', d.hinhThuc,
-      chance(0.6) ? `HĐ-${int(1000, 9999)}` : null, isoDate(d.ngay), isoDate(addDays(d.ngay, int(5, 15))),
+      // ma hop dong danh sau (DANH_LAI_SQL); giu lan rut so ngau nhien de du lieu khac khong doi
+      chance(0.6) ? (int(1000, 9999), null) : null, isoDate(d.ngay), isoDate(addDays(d.ngay, int(5, 15))),
       tinh, diaChiCt,
       d.hinhThuc === 'vat_tu' ? pick([0, 300000, 500000, 800000]) : pick([0, 0, 500000]),
       chance(0.2) ? pick([200000, 500000, 1000000]) : 0,
@@ -320,7 +322,7 @@ export async function sinhDon(db, { sales, vanHanh, keToan, khachHang, vatTu, gi
   // ---- Mua bo sung (~6% don da qua thi cong): ghi ro nguon trach nhiem ----
   const LOAI_MBS = {
     hang_hong: ['van_chuyen', 'Hàng bị xước, vỡ góc khi vận chuyển.'], giao_thieu_sai: ['ncc', 'NCC giao thiếu so với phiếu đặt.'],
-    boc_khoi_luong_thieu: ['khao_sat', 'Bóc khối lượng thiếu diện tích ban công.'], tho_lam_hong: ['tho', 'Thợ cắt hỏng 2 tấm khi thi công.'],
+    boc_khoi_luong_thieu: ['khao_sat', 'Tính KLVT thiếu diện tích ban công.'], tho_lam_hong: ['tho', 'Thợ cắt hỏng 2 tấm khi thi công.'],
     khach_bo_sung: ['khach_hang', 'Khách bổ sung thêm phòng làm việc.'], mat_hang: ['van_chuyen', 'Thất lạc 1 kiện hàng khi bốc xếp.'],
   };
   const mbs = [];
@@ -598,6 +600,10 @@ export async function sinhDon(db, { sales, vanHanh, keToan, khachHang, vatTu, gi
     }
   });
   await insertMany(db, 'khach_hang_cham_soc', ['khach_hang_id', 'sale_id', 'trang_thai', 'noi_dung', 'created_at'], logRows);
+  // Ma hop dong "SĐT_STT" theo thu tu ngay chot. Xoa ma cu truoc: UNIQUE kiem tra tung dong nen
+  // danh lai trong 1 lenh UPDATE se va cham voi ma cu cua don seed.sql (vd 0901000001_1).
+  await db.query('UPDATE don_hang SET ma_hop_dong = NULL WHERE ma_hop_dong IS NOT NULL');
+  await db.query(DANH_LAI_SQL);
 
   return {
     don: soDon, lead: leads.length, dongMuaHang: mhd.length, muaBoSung: mbs.length, giaiDoanThiCong: tc.length,

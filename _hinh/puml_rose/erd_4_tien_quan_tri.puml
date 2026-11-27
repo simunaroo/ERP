@@ -1,0 +1,185 @@
+@startuml erd_4_tien_quan_tri
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+hide circle
+hide empty members
+skinparam linetype ortho
+skinparam ClassBackgroundColor #FFFFFF
+skinparam ClassHeaderBackgroundColor #1F5FAF
+skinparam ClassFontColor #FFFFFF
+entity de_xuat_chi {
+  * id : integer <<PK>>
+  loai_chi : enum
+  ncc_id : integer <<FK>>
+  doi_tho_id : integer <<FK>>
+  don_hang_id : integer <<FK>>
+  mua_bo_sung_id : integer <<FK>>
+  nguoi_tao_id : integer <<FK>>
+  gia_tri_hang : numeric
+  coc_da_tru : numeric
+  so_tien : numeric
+  trang_thai : enum
+  noi_dung_ck : text
+  ly_do_tu_choi : text
+  ghi_chu : text
+  telegram_message_id : text
+  telegram_chat_id : text
+  created_at : timestamptz
+  tg_hoi_bill_message_id : text
+}
+entity de_xuat_chi_dong {
+  * id : integer <<PK>>
+  de_xuat_chi_id : integer <<FK>>
+  mua_hang_dong_id : integer <<FK>>
+  so_luong : numeric
+  don_gia : numeric
+  vat_pct : numeric
+  thanh_tien : numeric
+}
+entity de_xuat_chi_duyet_log {
+  * id : integer <<PK>>
+  de_xuat_chi_id : integer <<FK>>
+  telegram_user : text
+  nguoi_id : integer <<FK>>
+  hanh_dong : enum
+  ghi_chu : text
+  thoi_gian : timestamptz
+}
+entity phieu_thanh_toan {
+  * id : integer <<PK>>
+  de_xuat_chi_id : integer <<FK>>
+  ma_qr : text
+  so_tien : numeric
+  ngay_thanh_toan : date
+  nguoi_tao_id : integer <<FK>>
+  noi_dung_ck : text
+  bill_anh : text
+}
+entity thanh_toan_khach {
+  * id : integer <<PK>>
+  don_hang_id : integer <<FK>>
+  loai : varchar
+  so_tien : numeric
+  hinh_thuc : varchar
+  ngay_thu : date
+  bill_anh : text
+  ghi_chu : text
+  trang_thai : varchar
+  ly_do_tu_choi : text
+  nguoi_tao_id : integer <<FK>>
+  nguoi_xac_nhan_id : integer <<FK>>
+  xac_nhan_luc : timestamptz
+  created_at : timestamptz
+  giao_dich_id : integer <<FK>>
+}
+entity giao_dich_ngan_hang {
+  * id : integer <<PK>>
+  nguon : varchar
+  ma_gd_ngoai : varchar
+  ngan_hang : varchar
+  so_tk : varchar
+  loai : varchar
+  so_tien : numeric
+  noi_dung : text
+  ma_tham_chieu : varchar
+  thoi_gian_gd : timestamptz
+  trang_thai : varchar
+  cach_khop : varchar
+  don_hang_id : integer <<FK>>
+  thanh_toan_khach_id : integer <<FK>>
+  de_xuat_chi_id : integer <<FK>>
+  ghi_chu : text
+  nguoi_xu_ly_id : integer <<FK>>
+  du_lieu_goc : jsonb
+  created_at : timestamptz
+}
+entity quyen {
+  * ma : varchar <<PK>>
+  ten : text
+  nhom : varchar
+  thu_tu : smallint
+  chi_admin : boolean
+}
+entity vai_tro_quyen {
+  * vai_tro : enum <<PK>>
+  * ma_quyen : varchar <<PK>>
+}
+entity xac_thuc_vai_tro {
+  * id : integer <<PK>>
+  vai_tro : enum
+  bat_2fa : boolean
+  nguoi_cap_nhat_id : integer <<FK>>
+  cap_nhat_luc : timestamptz
+}
+entity cau_hinh {
+  * khoa : varchar <<PK>>
+  gia_tri : numeric
+  mo_ta : text
+  don_vi : varchar
+  toi_thieu : numeric
+  toi_da : numeric
+  nguoi_cap_nhat_id : integer <<FK>>
+  cap_nhat_luc : timestamptz
+}
+entity nhat_ky_thay_doi {
+  * id : bigint <<PK>>
+  bang : varchar
+  ban_ghi : text
+  hanh_dong : varchar
+  du_lieu_cu : jsonb
+  du_lieu_moi : jsonb
+  nguoi_id : integer <<FK>>
+  kenh : varchar
+  thoi_gian : timestamptz
+}
+entity nha_cung_cap #EEEEEE;text:black
+entity doi_tho #EEEEEE;text:black
+entity don_hang #EEEEEE;text:black
+entity mua_bo_sung #EEEEEE;text:black
+entity users #EEEEEE;text:black
+entity mua_hang_dong #EEEEEE;text:black
+nha_cung_cap ||--o{ de_xuat_chi
+doi_tho ||--o{ de_xuat_chi
+don_hang ||--o{ de_xuat_chi
+mua_bo_sung ||--o{ de_xuat_chi
+users ||--o{ de_xuat_chi
+de_xuat_chi ||--o{ de_xuat_chi_dong
+mua_hang_dong ||--o{ de_xuat_chi_dong
+de_xuat_chi ||--o{ de_xuat_chi_duyet_log
+users ||--o{ de_xuat_chi_duyet_log
+de_xuat_chi ||--o{ phieu_thanh_toan
+users ||--o{ phieu_thanh_toan
+don_hang ||--o{ thanh_toan_khach
+users ||--o{ thanh_toan_khach
+users ||--o{ cau_hinh
+users ||--o{ nhat_ky_thay_doi
+quyen ||--o{ vai_tro_quyen
+don_hang ||--o{ giao_dich_ngan_hang
+thanh_toan_khach ||--o{ giao_dich_ngan_hang
+de_xuat_chi ||--o{ giao_dich_ngan_hang
+users ||--o{ giao_dich_ngan_hang
+giao_dich_ngan_hang ||--o{ thanh_toan_khach
+users ||--o{ xac_thuc_vai_tro
+@enduml

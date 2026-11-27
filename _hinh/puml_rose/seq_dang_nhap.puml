@@ -1,0 +1,62 @@
+@startuml seq_dang_nhap
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+autonumber
+hide footbox
+actor "Nguoi dung" as U
+boundary "DangNhapUI" as UI
+control "DangNhapController" as C
+entity "users" as US
+entity "xac_thuc_vai_tro" as XT
+U -> UI : Dieu huong den man hinh dang nhap()
+UI -> UI : Hien thi form dang nhap()
+U -> UI : Nhap ten dang nhap, mat khau va kich nut "Dang nhap"
+UI -> C : Kiem tra thong tin dang nhap()
+C -> C : Kiem tra so lan nhap sai()
+C -> US : Tim tai khoan theo ten dang nhap()
+US --> C : return thong tin tai khoan
+C -> C : So sanh mat khau (bcrypt)()
+note right of C
+Neu sai mat khau hoac tai khoan bi khoa:
+tra ve thong bao loi
+end note
+C -> XT : Kiem tra vai tro co bat xac thuc hai lop()
+XT --> C : return cau hinh
+C --> UI : return ket qua
+note right of UI
+Neu vai tro dang bat xac thuc hai lop
+(mac dinh Admin, Ke toan): yeu cau nhap ma.
+Vai tro khong bat: cap token ngay
+end note
+UI -> UI : Hien thi form nhap ma 6 so()
+U -> UI : Nhap ma 6 so tu ung dung xac thuc
+UI -> C : Xac minh ma hai lop()
+C -> US : Kiem tra ma TOTP()
+C -> US : Cap nhat buoc ma da dung()
+US --> C : return ket qua
+C -> C : Cap token dang nhap()
+C --> UI : return token
+UI -> UI : Hien thi trang Tong quan theo vai tro()
+@enduml

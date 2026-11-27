@@ -1,0 +1,60 @@
+@startuml uc_vanhanh
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+left to right direction
+actor "Vận hành" as VH
+actor "Nhà cung cấp\n(Telegram)" as NCC
+rectangle "Phân hệ nhân viên vận hành" {
+  usecase "Cập nhật phương án" as PA
+  usecase "Chuyển / lùi bước tiến độ" as CB
+  usecase "Ghi lý do" as LD
+  usecase "Huỷ đơn" as HUY
+  usecase "Xác nhận khối lượng" as KL
+  usecase "Chọn NCC cho vật tư" as CHON
+  usecase "Đặt hàng NCC" as DAT
+  usecase "Gửi đơn đặt hàng\nqua Telegram" as GUI
+  usecase "Phản hồi đơn đặt hàng" as PH
+  usecase "Huỷ đặt hàng" as HDAT
+  usecase "Đăng ký giao hàng" as GH
+  usecase "Bỏ qua tạm ứng có lý do" as BQ
+  usecase "Lập giai đoạn thi công" as GD
+  usecase "Bắt đầu / báo xong\ngiai đoạn" as BX
+  usecase "Ghi phát sinh thi công" as PS
+  usecase "Nghiệm thu" as NT
+  usecase "Chốt quyết toán" as QT
+  usecase "Lập phiếu mua bổ sung" as MBS
+  usecase "Xử lý yêu cầu sửa" as XL
+}
+VH --> PA
+VH --> CB
+VH --> HUY
+VH --> KL
+VH --> CHON
+VH --> DAT
+VH --> HDAT
+VH --> GH
+VH --> GD
+VH --> BX
+VH --> PS
+VH --> NT
+VH --> QT
+VH --> MBS
+VH --> XL
+CB ..> LD : <<include>>
+HUY ..> LD : <<include>>
+DAT ..> GUI : <<include>>
+GUI -- NCC
+NCC --> PH
+BQ ..> GH : <<extend>>
+@enduml

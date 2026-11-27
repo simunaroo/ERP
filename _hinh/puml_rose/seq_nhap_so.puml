@@ -1,0 +1,62 @@
+@startuml seq_nhap_so
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+autonumber
+hide footbox
+actor "Admin" as U
+boundary "NhapSoUI" as UI
+control "NhapSoController" as C
+entity "khach_hang" as KH
+entity "ty_le_chia_so" as TL
+entity "chia_so_log" as LOG
+entity "thong_bao" as TB
+U -> UI : Kich nut "Nhap so"()
+UI -> UI : Hien thi form nhap so()
+U -> UI : Dan danh sach so hoac tai tep Excel, CSV, TXT
+UI -> C : Doc tep so dien thoai()
+C --> UI : return danh sach xem truoc
+UI -> UI : Hien thi danh sach xem truoc()
+U -> UI : Kich nut "Nhap"()
+UI -> C : Nhap so()
+C -> C : Chuan hoa so dien thoai()
+C -> KH : Kiem tra trung so()
+KH --> C : return ket qua
+note right of C
+Neu so da ton tai: bo qua,
+bao Sale dang giu so
+end note
+C -> TL : Lay ty le chia()
+TL --> C : return ty le cua tung Sale
+C -> C : Chon Sale thieu nhieu nhat so voi ty le()
+C -> KH : Them khach hang moi()
+C -> LOG : Ghi nhat ky chia so()
+C -> TB : Gui thong bao cho Sale()
+C --> UI : return ket qua tung dong
+UI -> UI : Hien thi ket qua nhap so()
+note right of C
+Website quang cao goi API nhap so
+(kem khoa API) di cung luong tu buoc "Nhap so"
+end note
+@enduml

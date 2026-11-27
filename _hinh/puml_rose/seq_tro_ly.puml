@@ -1,0 +1,65 @@
+@startuml seq_tro_ly
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+autonumber
+hide footbox
+actor "Sale" as U
+boundary "TroLyChatUI" as UI
+control "TroLyController" as C
+boundary "GeminiAPI" as AI
+entity "tro_ly_san_pham" as TL
+entity "vat_tu" as VT
+entity "khach_hang" as KH
+entity "tro_ly_hoi_thoai" as HT
+entity "tro_ly_tin_nhan" as TN
+U -> UI : Kich nut "Tro ly AI" va chon san pham
+UI -> UI : Hien thi khung chat()
+U -> UI : Nhap cau hoi, dinh kem anh (neu co) va kich nut "Gui"
+UI -> C : Hoi tro ly()
+C -> C : Kiem tra cau hoi va anh hop le()
+C -> TL : Lay kien thuc san pham()
+TL --> C : return kien thuc
+note right of C
+Chua co kien thuc: bao "chua duoc nap
+kien thuc", khong goi AI
+end note
+C -> VT : Lay danh muc vat tu dang ban()
+C -> KH : Lay nhom khach va nhu cau()
+C -> TN : Lay 10 luot hoi dap gan nhat()
+note right of C
+Chi gui nhom khach va nhu cau;
+khong gui ten, SDT khach, gia nhap NCC
+end note
+C -> AI : Gui huong dan, kien thuc, lich su, cau hoi va anh()
+AI --> C : return cau tra loi
+note right of C
+Qua tai: thu lai, chuyen mo hinh du phong.
+Cau hoi ngoai pham vi: AI tu choi
+end note
+C -> HT : Tao cuoc tro chuyen (lan hoi dau)()
+C -> TN : Luu cau hoi va cau tra loi()
+C --> UI : return cau tra loi
+UI -> UI : Hien thi cau tra loi va nut "Chep tin nhan gui khach"()
+@enduml

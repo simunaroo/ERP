@@ -48,7 +48,8 @@ export async function giaThiTruong(den) {
      )
      SELECT vat_tu_id, percentile_cont(0.5) WITHIN GROUP (ORDER BY don_gia) AS trung_vi,
             min(don_gia) AS re_nhat, count(*)::int AS so_ncc,
-            (array_agg(ncc ORDER BY don_gia, ncc_id))[1] AS ncc_re_nhat
+            (array_agg(ncc ORDER BY don_gia, ncc_id))[1] AS ncc_re_nhat,
+            (array_agg(ncc_id ORDER BY don_gia, ncc_id))[1] AS ncc_re_nhat_id
        FROM gia GROUP BY vat_tu_id`,
     [den],
   );
@@ -68,7 +69,7 @@ export async function giaNcc({ tu, den }) {
               min(don_gia) AS re_nhat, count(*) AS so_ncc
          FROM gia GROUP BY vat_tu_id
      ), doi AS (
-       SELECT m.ncc_id, count(*)::int AS so_lan, avg((m.don_gia - c.don_gia) / c.don_gia * 100) AS tb_pct
+       SELECT m.ncc_id, count(*)::int AS so_lan, avg((m.don_gia - c.don_gia) / NULLIF(c.don_gia, 0) * 100) AS tb_pct
          FROM ncc_bang_gia m
          JOIN ncc_bang_gia c ON c.ncc_id = m.ncc_id AND c.vat_tu_id = m.vat_tu_id AND c.ngay_het_hieu_luc = m.ngay_hieu_luc - 1
         WHERE m.ngay_hieu_luc BETWEEN $1 AND $2
@@ -82,7 +83,7 @@ export async function giaNcc({ tu, den }) {
         GROUP BY c.ncc_id
      )
      SELECT n.id AS ncc_id, n.ten AS ncc, count(*)::int AS so_mat_hang,
-            round(avg(g.don_gia / tv.trung_vi) * 100)::int AS chi_so_gia,
+            round(avg(g.don_gia / NULLIF(tv.trung_vi, 0)) * 100)::int AS chi_so_gia,
             count(*) FILTER (WHERE g.don_gia = tv.re_nhat AND tv.so_ncc > 1)::int AS so_mat_hang_re_nhat,
             COALESCE(doi.so_lan, 0) AS so_lan_doi_gia, round(doi.tb_pct, 1) AS doi_gia_tb_pct,
             COALESCE(mua.tien, 0) AS tien_mua, COALESCE(mua.so_lan, 0) AS so_lan_mua

@@ -1,0 +1,42 @@
+@startuml seq_nhap_so
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+autonumber
+actor "Admin / Website (API)" as U
+boundary "Giao diện\nNhập số" as FE
+control "NhapSoRoutes" as C
+control "NhapSoService" as S
+control "ThongBaoService" as TB
+database "PostgreSQL" as DB
+U -> FE : Dán danh sách số / tải tệp Excel, CSV, TXT
+FE -> C : POST /api/nhap-so { ds }
+note right of C : API ngoài: POST /api/nhap-so/tu-dong\nkèm khoá API (so sánh thời gian hằng)
+C -> S : nhap(user, ds)
+S -> DB : BEGIN; pg_advisory_xact_lock('chia_so')
+loop mỗi dòng
+  S -> S : chuanHoaSdt() (+84 -> 0, bỏ dấu cách)
+  S -> DB : SELECT khách có cùng số
+  alt số đã có
+    S -> S : ghi kết quả "trùng", Sale đang giữ
+  else số mới
+    S -> DB : chonSale(): (đã chia trong tháng + 1) / tỷ lệ nhỏ nhất
+    S -> DB : INSERT khach_hang, chia_so_log
+    S -> TB : gui(Sale nhận số)
+  end
+end
+S -> DB : COMMIT
+S --> C : kết quả từng dòng
+C --> FE : 200 OK
+FE --> U : hiển thị đã chia cho ai / trùng / lỗi
+@enduml

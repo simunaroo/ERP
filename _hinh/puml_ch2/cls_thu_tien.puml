@@ -1,0 +1,55 @@
+@startuml cls_thu_tien
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+hide empty members
+skinparam classAttributeIconSize 0
+
+class ThuTienService {
++tomTat(donId)
++qrThuTien(donId)
++theoDon(user, donId)
++tao(user, data)
++xuLy(user, id)
++tuChoi(user, id, lyDo)
++choXacNhan()
++congNo(loc)
+}
+class LuuAnh {
++luuAnhBase64()
+}
+class ThongBaoService {
++gui()
+}
+class ThanhToanKhach <<entity>> {
+don_hang_id : INTEGER
+loai : enum
+so_tien : NUMERIC
+hinh_thuc : enum
+bill_anh : TEXT
+trang_thai : enum
+nguoi_xac_nhan_id : INTEGER
+}
+class DonHang <<entity>>
+class "v_don_hang_tien" as V <<view>> {
+tong_don
+da_thu
+con_phai_thu
+}
+ThuTienService --> LuuAnh
+ThuTienService --> ThongBaoService
+ThuTienService ..> ThanhToanKhach
+ThuTienService ..> V
+DonHang "1" -- "n" ThanhToanKhach
+V ..> DonHang
+@enduml

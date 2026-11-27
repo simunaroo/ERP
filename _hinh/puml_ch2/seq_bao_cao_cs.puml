@@ -1,0 +1,42 @@
+@startuml seq_bao_cao_cs
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+autonumber
+actor "Admin" as U
+boundary "Báo cáo\nchăm sóc" as FE
+control "ChamSocRoutes" as R
+control "ChamSocService" as S
+control "NhapSoService" as NS
+participant "Gemini API" as AI
+database "PostgreSQL" as DB
+U -> FE : Chọn kỳ (7 ngày / 30 ngày / tháng này)
+FE -> R : GET /api/cham-soc/bao-cao?tu&den
+R -> S : tongHop({ tu, den })
+S -> DB : tổng hợp theo Sale: được chia, đã gọi, gọi trong 2 giờ, chốt...; tồn đọng hiện tại
+S --> FE : bảng theo Sale + tổng
+U -> FE : Chọn khách tồn đọng, Sale nhận, lý do; bấm "Chuyển"
+FE -> R : POST /api/cham-soc/chuyen-nhieu
+R -> S : chuyenNhieu(user, { khach_ids, sale_id, ly_do })
+loop mỗi khách
+  S -> NS : chuyenSale(user, id, { sale_id, ly_do })
+end
+U -> FE : Bấm "Phân tích bằng AI"
+FE -> R : POST /api/cham-soc/ai-nhan-xet
+R -> S : nhanXetAi(user, { tu, den })
+S -> AI : sinhJson(số liệu tổng hợp theo Sale, không có tên/SĐT khách)
+AI --> S : nhận xét JSON
+S -> S : bỏ tên Sale không có; đánh dấu số không khớp dữ liệu
+S -> DB : INSERT ai_nhan_xet_cham_soc
+S --> FE : kết quả + mã bản lưu
+@enduml

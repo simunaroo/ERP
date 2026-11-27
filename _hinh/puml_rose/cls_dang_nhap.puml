@@ -1,0 +1,74 @@
+@startuml cls_dang_nhap
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+hide circle
+skinparam classAttributeIconSize 0
+class "DangNhapUI" as UI <<boundary>> {
+  --
+  +Dieu huong den man hinh dang nhap()
+  +Hien thi form dang nhap()
+  +Nhap ten dang nhap, mat khau va kich nut 'Dang nhap'()
+  +Hien thi form nhap ma 6 so()
+  +Nhap ma 6 so tu ung dung xac thuc()
+  +Hien thi trang Tong quan theo vai tro()
+}
+class "DangNhapController" as C <<control>> {
+  --
+  +Kiem tra thong tin dang nhap()
+  +Kiem tra so lan nhap sai()
+  +So sanh mat khau (bcrypt)()
+  +Xac minh ma hai lop()
+  +Cap token dang nhap()
+}
+class "users" as US <<entity>> {
+  -id
+  -ho_ten
+  -username
+  -password_hash
+  -vai_tro
+  -trang_thai
+  -phien_ban_token
+  -doi_mat_khau_luc
+  -created_at
+  -...
+  --
+  +Tim tai khoan theo ten dang nhap()
+  +Kiem tra ma TOTP()
+  +Cap nhat buoc ma da dung()
+}
+class "xac_thuc_vai_tro" as XT <<entity>> {
+  -id
+  -vai_tro
+  -bat_2fa
+  -nguoi_cap_nhat_id
+  -cap_nhat_luc
+  --
+  +Kiem tra vai tro co bat xac thuc hai lop()
+}
+UI "1" -- "1" C
+C "1" -- "*" US
+C "1" -- "*" XT
+US "1" -- "*" XT
+@enduml

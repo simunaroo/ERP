@@ -1,0 +1,87 @@
+@startuml cls_tro_ly_ncc
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+hide circle
+skinparam classAttributeIconSize 0
+class "TroLyChatUI" as UI <<boundary>> {
+  --
+  +Chon tro ly 'NCC', nhap cau hoi va kich nut 'Gui'()
+  +Hien thi cau tra loi()
+}
+class "TroLyCongCuController" as C <<control>> {
+  --
+  +Hoi tro ly co cong cu()
+}
+class "BiDanh" as BD <<control>> {
+  --
+  +Thay ten NCC trong cau hoi bang ma NCC-id()
+  +Doi so tien thanh ma T1, T2..., NCC thanh NCC-id, kem ty le %()
+  +Doi ma ve ten NCC va so tien that()
+}
+class "GeminiAPI" as AI <<boundary>> {
+  --
+  +Gui cau hoi, lich su va danh sach ham tra cuu()
+  +Gui ket qua ham()
+}
+class "nha_cung_cap" as NCC <<entity>> {
+  -id
+  -ten
+  -dia_chi
+  -ma_so_thue
+  -trang_thai
+  -created_at
+  --
+  +Lay danh sach NCC()
+}
+class "ncc_bang_gia" as BG <<entity>> {
+  -id
+  -ncc_id
+  -vat_tu_id
+  -don_gia
+  -ngay_hieu_luc
+  -ngay_het_hieu_luc
+  --
+  +Truy van chi doc (so sanh gia, lich su gia, cong no)()
+}
+class "tro_ly_tin_nhan" as TN <<entity>> {
+  -id
+  -hoi_thoai_id
+  -vai_tro
+  -noi_dung
+  -so_anh
+  -created_at
+  -noi_dung_ai
+  -ma_tien
+  --
+  +Lay lich su ban da ma hoa va bang ma tien()
+  +Luu ban hien thi va ban da ma hoa()
+}
+UI "1" -- "1" C
+AI "1" -- "1" C
+C "1" -- "*" NCC
+C "1" -- "*" BG
+C "1" -- "*" TN
+NCC "1" -- "*" BG
+@enduml

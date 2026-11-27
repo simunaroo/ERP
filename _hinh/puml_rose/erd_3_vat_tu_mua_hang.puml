@@ -1,0 +1,145 @@
+@startuml erd_3_vat_tu_mua_hang
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+hide circle
+hide empty members
+skinparam linetype ortho
+skinparam ClassBackgroundColor #FFFFFF
+skinparam ClassHeaderBackgroundColor #1F5FAF
+skinparam ClassFontColor #FFFFFF
+entity loai_vat_tu {
+  * id : integer <<PK>>
+  ten : text
+  nguon_goc : enum
+  tu_khoa : text
+}
+entity vat_tu {
+  * id : integer <<PK>>
+  ten : text
+  loai_vat_tu_id : integer <<FK>>
+  don_vi_tinh : text
+  quy_cach : text
+  trang_thai : enum
+}
+entity nha_cung_cap {
+  * id : integer <<PK>>
+  ten : text
+  dia_chi : text
+  ma_so_thue : text
+  trang_thai : enum
+  created_at : timestamptz
+}
+entity ncc_stk {
+  * id : integer <<PK>>
+  ncc_id : integer <<FK>>
+  so_tk : text
+  ten_ngan_hang : text
+  chu_tk : text
+}
+entity ncc_bang_gia {
+  * id : integer <<PK>>
+  ncc_id : integer <<FK>>
+  vat_tu_id : integer <<FK>>
+  don_gia : numeric
+  ngay_hieu_luc : date
+  ngay_het_hieu_luc : date
+}
+entity mua_hang_dong {
+  * id : integer <<PK>>
+  don_hang_vat_tu_id : integer <<FK>>
+  ncc_id : integer <<FK>>
+  gia_chot : numeric
+  vat_pct : numeric
+  trang_thai : enum
+  ghi_chu : text
+  nguoi_cap_nhat_id : integer <<FK>>
+  cap_nhat_luc : timestamptz
+  dat_hang_ncc_id : integer <<FK>>
+}
+entity dat_hang_ncc {
+  * id : integer <<PK>>
+  don_hang_id : integer <<FK>>
+  ncc_id : integer <<FK>>
+  nguoi_dat_id : integer <<FK>>
+  noi_dung : text
+  tong_tien : numeric
+  trang_thai : varchar
+  so_tien_coc : numeric
+  de_xuat_chi_id : integer <<FK>>
+  phan_hoi_qua : varchar
+  nguoi_phan_hoi : text
+  phan_hoi_luc : timestamptz
+  tg_chat_id : text
+  tg_message_id : text
+  tg_hoi_coc_message_id : text
+  created_at : timestamptz
+}
+entity mua_bo_sung {
+  * id : integer <<PK>>
+  don_hang_id : integer <<FK>>
+  loai_phat_sinh : enum
+  ly_do : text
+  trang_thai : enum
+  ncc_id : integer <<FK>>
+  ngay_mua : date
+  nguoi_tao_id : integer <<FK>>
+  created_at : timestamptz
+}
+entity mua_bo_sung_dong {
+  * id : integer <<PK>>
+  mua_bo_sung_id : integer <<FK>>
+  vat_tu_id : integer <<FK>>
+  so_luong : numeric
+  don_gia : numeric
+}
+entity mua_bo_sung_trach_nhiem {
+  * id : integer <<PK>>
+  mua_bo_sung_id : integer <<FK>>
+  nguon : enum
+  so_tien : numeric
+}
+entity don_hang_vat_tu #EEEEEE;text:black
+entity users #EEEEEE;text:black
+entity don_hang #EEEEEE;text:black
+entity de_xuat_chi #EEEEEE;text:black
+loai_vat_tu ||--o{ vat_tu
+nha_cung_cap ||--o{ ncc_stk
+nha_cung_cap ||--o{ ncc_bang_gia
+vat_tu ||--o{ ncc_bang_gia
+don_hang_vat_tu ||--o{ mua_hang_dong
+nha_cung_cap ||--o{ mua_hang_dong
+users ||--o{ mua_hang_dong
+don_hang ||--o{ mua_bo_sung
+nha_cung_cap ||--o{ mua_bo_sung
+users ||--o{ mua_bo_sung
+mua_bo_sung ||--o{ mua_bo_sung_dong
+vat_tu ||--o{ mua_bo_sung_dong
+mua_bo_sung ||--o{ mua_bo_sung_trach_nhiem
+don_hang ||--o{ dat_hang_ncc
+nha_cung_cap ||--o{ dat_hang_ncc
+users ||--o{ dat_hang_ncc
+de_xuat_chi ||--o{ dat_hang_ncc
+dat_hang_ncc ||--o{ mua_hang_dong
+@enduml

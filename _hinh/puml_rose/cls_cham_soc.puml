@@ -1,0 +1,75 @@
+@startuml cls_cham_soc
+!pragma layout smetana
+skinparam dpi 150
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam shadowing false
+skinparam ArrowColor #990033
+skinparam ActorBorderColor #990033
+skinparam ActorBackgroundColor #FFFFCC
+skinparam UsecaseBorderColor #990033
+skinparam UsecaseBackgroundColor #FFFFCC
+skinparam ClassBorderColor #990033
+skinparam ClassBackgroundColor #FFFFCC
+skinparam ParticipantBorderColor #990033
+skinparam ParticipantBackgroundColor #FFFFCC
+skinparam BoundaryBackgroundColor #FFFFCC
+skinparam BoundaryBorderColor #990033
+skinparam ControlBackgroundColor #FFFFCC
+skinparam ControlBorderColor #990033
+skinparam EntityBackgroundColor #FFFFCC
+skinparam EntityBorderColor #990033
+skinparam SequenceLifeLineBorderColor #444444
+skinparam NoteBackgroundColor #FFFFCC
+skinparam NoteBorderColor #990033
+skinparam packageStyle rectangle
+hide circle
+skinparam classAttributeIconSize 0
+class "ChamSocKhachUI" as UI <<boundary>> {
+  --
+  +Kich nut 'Khach hang'()
+  +Hien thi danh sach khach va ghi chu lan goi truoc()
+  +Bam so dien thoai de goi()
+  +Kich nut 'Cap nhat'()
+  +Hien thi form cap nhat cham soc()
+  +Chon trang thai, nhap ghi chu va kich nut 'Luu'()
+  +Hien thi lai danh sach khach()
+  +Hien thi hop thoai 'Len don ngay?'()
+}
+class "ChamSocController" as C <<control>> {
+  --
+  +Lay danh sach khach()
+  +Ghi nhan cham soc()
+  +Kiem tra du lieu hop le()
+}
+class "khach_hang" as KH <<entity>> {
+  -id
+  -ten
+  -sdt
+  -dia_chi
+  -sale_phu_trach_id
+  -nhom_khach_hang
+  -trang_thai_cham_soc
+  -created_at
+  -nguon
+  -...
+  --
+  +Lay khach cua Sale()
+  +Cap nhat trang thai cham soc()
+}
+class "khach_hang_cham_soc" as CS <<entity>> {
+  -id
+  -khach_hang_id
+  -sale_id
+  -trang_thai
+  -noi_dung
+  -created_at
+  -hen_goi_lai_luc
+  --
+  +Them lan cham soc()
+}
+UI "1" -- "1" C
+C "1" -- "*" KH
+C "1" -- "*" CS
+KH "1" -- "*" CS
+@enduml

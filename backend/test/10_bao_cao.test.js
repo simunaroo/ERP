@@ -62,7 +62,10 @@ describe('Báo cáo lãi/lỗ và xuất Excel', () => {
     const f = await taiExcel(tk.thilan, '/don-hang/excel');
     assert.equal(f.s, 200);
     const sales = new Set();
-    f.ws.eachRow((row, i) => { if (i > 4 && row.getCell(1).value !== 'Tổng') sales.add(row.getCell(7).value); });
+    // Tim cot "Sale" theo tieu de (dong 4) thay vi so cot co dinh: them cot moi khong lam hong test.
+    const cotSale = f.ws.getRow(4).values.indexOf('Sale');
+    assert.ok(cotSale > 0, 'file Excel phải có cột Sale');
+    f.ws.eachRow((row, i) => { if (i > 4 && row.getCell(1).value !== 'Tổng') sales.add(row.getCell(cotSale).value); });
     assert.deepEqual([...sales], ['Nguyễn Thị Lan']);
   });
 

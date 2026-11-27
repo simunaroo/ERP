@@ -1,0 +1,57 @@
+@startuml uc_sale
+!pragma layout smetana
+skinparam dpi 160
+skinparam defaultFontName "Times New Roman"
+skinparam defaultFontSize 13
+skinparam shadowing false
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam usecaseBackgroundColor white
+skinparam usecaseBorderColor black
+skinparam ArrowColor black
+skinparam sequenceMessageAlign left
+skinparam maxMessageSize 260
+hide footbox
+left to right direction
+actor "Sale" as SALE
+actor "Gemini AI" as AI
+actor "Khách hàng" as KH
+rectangle "Phân hệ nhân viên kinh doanh" {
+  usecase "Đăng nhập" as DN
+  usecase "Nhập số tự tìm" as NS
+  usecase "Kiểm tra trùng số" as TRUNG
+  usecase "Chăm sóc khách hàng" as CS
+  usecase "Hẹn gọi lại" as HEN
+  usecase "Quản lý khách hàng" as QLKH
+  usecase "Tạo đơn hàng" as TAO
+  usecase "Trích xuất đơn bằng AI" as TRICH
+  usecase "Chốt đơn" as CHOT
+  usecase "Kiểm tra đủ thông tin" as DU
+  usecase "Tạo link báo giá" as LINK
+  usecase "Xem báo giá" as XEM
+  usecase "Theo dõi tiến độ đơn" as TD
+  usecase "Gửi yêu cầu chỉnh sửa" as YC
+  usecase "Ghi nhận khách thanh toán" as THU
+  usecase "Tải ảnh bill" as BILL
+}
+SALE --> NS
+SALE --> CS
+SALE --> QLKH
+SALE --> TAO
+SALE --> CHOT
+SALE --> LINK
+SALE --> TD
+SALE --> THU
+NS ..> TRUNG : <<include>>
+HEN ..> CS : <<extend>>
+TRICH ..> TAO : <<extend>>
+CHOT ..> DU : <<include>>
+YC ..> TD : <<extend>>
+THU ..> BILL : <<include>>
+TRICH -- AI
+XEM -- KH
+LINK ..> XEM : <<include>>
+NS ..> DN : <<include>>
+CS ..> DN : <<include>>
+TAO ..> DN : <<include>>
+@enduml

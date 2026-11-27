@@ -1,96 +1,29 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { api, loiCua } from '../api/client.js';
-import { HINH_THUC, LOAI_THI_CONG, NGHIEM_THU, NHOM_KHACH, TINH_THANH, dieuKhoanThanhToan, thuNhoAnh, tien, tinhTien } from '../utils.js';
-import Icon from '../components/Icon.jsx';
+import { HINH_THUC, LOAI_THI_CONG, NGHIEM_THU, NHOM_KHACH, TINH_THANH, dieuKhoanThanhToan, tien, tinhTien } from '../utils.js';
+import { useDsSanPham } from '../components/SanPham.jsx';
 
-const SO_ANH_TOI_DA = 3;
-const dongTrong = () => ({ vat_tu_id: '', so_luong_can: '', don_gia: '', ghi_chu: '', loai_thi_cong: '', dai_mm: '', rong_mm: '', mo_ta_goc: '' });
+const dongTrong = () => ({ vat_tu_id: '', so_luong_can: '', don_gia: '', ghi_chu: '', loai_thi_cong: '', dai_mm: '', rong_mm: '' });
 // Goi y mac dinh: don vat tu nghiem thu theo vat tu tieu hao, don hoan thien theo so m2 thi cong.
 const NGHIEM_THU_MAC_DINH = { vat_tu: 'vat_tu_tieu_hao', hoan_thien: 'so_m2_thi_cong' };
 const DON_TRONG = {
   khach_hang_id: '', hinh_thuc: 'hoan_thien', ma_hop_dong: '', ngay_yc_lap_dat: '',
   tinh_thanh: '', phuong_xa: '', dia_chi_cong_trinh: '',
   phi_van_chuyen: '', phu_thu: '', chiet_khau_pct: '', tien_coc: '', ngay_coc: '',
-  ty_le_tam_ung: 80, dieu_khoan_nghiem_thu: NGHIEM_THU_MAC_DINH.hoan_thien, ghi_chu_van_chuyen: '',
+  ty_le_tam_ung: 80, dieu_khoan_nghiem_thu: NGHIEM_THU_MAC_DINH.hoan_thien, ghi_chu_van_chuyen: '', san_pham_id: '',
 };
 
-function KhungAI({ khachHangId, onKetQua, onLoi }) {
-  const [anh, setAnh] = useState([]);
-  const [ghiChu, setGhiChu] = useState('');
-  const [dangDoc, setDangDoc] = useState(false);
-  const [keoTha, setKeoTha] = useState(false);
-  const inputFile = useRef(null);
-
-  const themAnh = async (files) => {
-    const hinh = [...files].filter((f) => f.type.startsWith('image/'));
-    if (!hinh.length) return;
-    const conCho = SO_ANH_TOI_DA - anh.length;
-    if (conCho <= 0) return onLoi(`Tối đa ${SO_ANH_TOI_DA} ảnh mỗi lần`);
-    try {
-      const moi = await Promise.all(hinh.slice(0, conCho).map((f) => thuNhoAnh(f)));
-      setAnh((cu) => [...cu, ...moi]);
-      if (hinh.length > conCho) onLoi(`Chỉ nhận ${SO_ANH_TOI_DA} ảnh, đã bỏ bớt ${hinh.length - conCho} ảnh`);
-    } catch (e) { onLoi(e.message); }
-  };
-
-  // Cho phep dan anh chup man hinh bang Ctrl+V o bat ky dau tren trang.
-  useEffect(() => {
-    const dan = (e) => {
-      const files = [...(e.clipboardData?.files || [])];
-      if (files.some((f) => f.type.startsWith('image/'))) { e.preventDefault(); themAnh(files); }
-    };
-    document.addEventListener('paste', dan);
-    return () => document.removeEventListener('paste', dan);
-  });
-
-  const phanTich = async () => {
-    onLoi('');
-    setDangDoc(true);
-    try {
-      const { data } = await api.post('/tro-ly/trich-xuat-don', {
-        khach_hang_id: khachHangId ? Number(khachHangId) : undefined,
-        noi_dung: ghiChu,
-        anh: anh.map(({ mime, data: d }) => ({ mime, data: d })),
-      });
-      onKetQua(data);
-    } catch (err) { onLoi(loiCua(err)); }
-    finally { setDangDoc(false); }
-  };
-
-  return (
-    <div className="card">
-      <p className="muted small">Tải ảnh chụp tin nhắn với khách, phiếu ghi tay hoặc báo giá (tối đa {SO_ANH_TOI_DA} ảnh). AI điền sẵn vật tư, số lượng, đơn giá, địa chỉ bên dưới để bạn kiểm tra trước khi lưu. Ảnh được gửi tới dịch vụ AI của Google — tránh ảnh chứa thông tin không liên quan.</p>
-      <div
-        className={`dropzone ${keoTha ? 'over' : ''}`}
-        onDragOver={(e) => { e.preventDefault(); setKeoTha(true); }}
-        onDragLeave={() => setKeoTha(false)}
-        onDrop={(e) => { e.preventDefault(); setKeoTha(false); themAnh(e.dataTransfer.files); }}
-      >
-        {anh.map((a, i) => (
-          <div key={i} className="thumb">
-            <img src={a.xemTruoc} alt={`Ảnh ${i + 1}`} />
-            <button type="button" aria-label={`Bỏ ảnh ${i + 1}`} onClick={() => setAnh(anh.filter((_, j) => j !== i))}>×</button>
-          </div>
-        ))}
-        {anh.length < SO_ANH_TOI_DA && (
-          <button type="button" className="add-photo" onClick={() => inputFile.current.click()}>
-            <span>+ Thêm ảnh</span>
-            <small>Chọn file, kéo thả hoặc Ctrl+V</small>
-          </button>
-        )}
-        <input ref={inputFile} type="file" accept="image/jpeg,image/png,image/webp" multiple hidden
-          onChange={(e) => { themAnh(e.target.files); e.target.value = ''; }} />
-      </div>
-      <textarea rows="2" placeholder="Ghi chú thêm cho AI (không bắt buộc), VD: khách lấy thêm len chân tường cho phòng khách"
-        value={ghiChu} onChange={(e) => setGhiChu(e.target.value)} />
-      <div className="actions">
-        <button type="button" className="btn" disabled={dangDoc || (!anh.length && !ghiChu.trim())} onClick={phanTich}>
-          {dangDoc ? 'AI đang đọc...' : <><Icon n="sparkles" /> Phân tích & điền đơn</>}
-        </button>
-      </div>
-    </div>
-  );
+// Goi y san pham chinh khi Sale de "Tự động": loai vat tu chiem nhieu tien nhat (giong backend),
+// chua co vat tu thi lay san pham dau tien khach quan tam.
+function goiYSanPham(dong, vatTu, khach) {
+  const tien = new Map();
+  for (const d of dong) {
+    const vt = vatTu.find((v) => String(v.id) === String(d.vat_tu_id));
+    if (vt) tien.set(vt.loai_vat_tu_id, (tien.get(vt.loai_vat_tu_id) || 0) + (Number(d.so_luong_can) || 0) * (Number(d.don_gia) || 0));
+  }
+  const [dau] = [...tien].sort((a, b) => b[1] - a[1] || a[0] - b[0]);
+  return dau ? dau[0] : (khach?.san_pham_ids?.[0] ?? null);
 }
 
 function O({ id, label, children, className = '' }) {
@@ -102,16 +35,15 @@ export default function DonHangForm() {
   const { id } = useParams(); // co id = sua don nhap
   const [params] = useSearchParams();
   const khachTuHoSo = params.get('khach_hang_id') || '';
-  const [cheDo, setCheDo] = useState(params.get('che_do') === 'tay' || id ? 'tay' : 'ai');
 
   const [khachHang, setKhachHang] = useState([]);
   const [vatTu, setVatTu] = useState([]);
+  const dsSanPham = useDsSanPham();
   const [don, setDon] = useState({ ...DON_TRONG, khach_hang_id: khachTuHoSo });
   const [maDon, setMaDon] = useState('');
   const [dong, setDong] = useState([dongTrong()]);
   const [loi, setLoi] = useState('');
   const [dangGui, setDangGui] = useState(false);
-  const [ketQuaAI, setKetQuaAI] = useState(null);
   const [daTai, setDaTai] = useState(!id);
 
   const sua = (field) => (e) => setDon((d) => ({ ...d, [field]: e.target.value }));
@@ -139,7 +71,7 @@ export default function DonHangForm() {
         setMaDon(data.ma_don);
         setDong(data.vat_tu.length ? data.vat_tu.map((v) => ({
           vat_tu_id: String(v.vat_tu_id), so_luong_can: Number(v.so_luong_can), don_gia: Number(v.don_gia), ghi_chu: v.ghi_chu || '',
-          loai_thi_cong: v.loai_thi_cong || '', dai_mm: v.dai_mm ?? '', rong_mm: v.rong_mm ?? '', mo_ta_goc: '',
+          loai_thi_cong: v.loai_thi_cong || '', dai_mm: v.dai_mm ?? '', rong_mm: v.rong_mm ?? '',
         })) : [dongTrong()]);
         setDaTai(true);
       })
@@ -149,22 +81,6 @@ export default function DonHangForm() {
   const chonKhach = (e) => {
     const kh = khachHang.find((k) => String(k.id) === e.target.value);
     setDon((d) => ({ ...d, khach_hang_id: e.target.value, dia_chi_cong_trinh: d.dia_chi_cong_trinh || kh?.dia_chi || '' }));
-  };
-
-  const nhanKetQuaAI = (data) => {
-    setDon((d) => ({
-      ...d,
-      khach_hang_id: data.khach_hang_id ? String(data.khach_hang_id) : d.khach_hang_id,
-      dia_chi_cong_trinh: data.dia_chi_cong_trinh || d.dia_chi_cong_trinh,
-      ghi_chu_van_chuyen: data.ghi_chu ? [d.ghi_chu_van_chuyen, data.ghi_chu].filter(Boolean).join('\n') : d.ghi_chu_van_chuyen,
-    }));
-    if (data.vat_tu.length) {
-      setDong(data.vat_tu.map((v) => ({
-        vat_tu_id: v.vat_tu_id ? String(v.vat_tu_id) : '', so_luong_can: v.so_luong_can ?? '', don_gia: v.don_gia ?? '', ghi_chu: '',
-        loai_thi_cong: v.loai_thi_cong || '', dai_mm: v.dai_mm ?? '', rong_mm: v.rong_mm ?? '', mo_ta_goc: v.mo_ta_goc,
-      })));
-    }
-    setKetQuaAI(data);
   };
 
   // Doi hinh thuc: neu sale chua tu chon nghiem thu khac goi y cu thi doi theo goi y moi.
@@ -181,15 +97,15 @@ export default function DonHangForm() {
   const khachKhoa = Boolean(khachTuHoSo || id);
   const khachChon = khachHang.find((k) => String(k.id) === String(don.khach_hang_id));
   const so = tinhTien(dong, don);
+  const spGoiY = dsSanPham.find((sp) => sp.id === goiYSanPham(dong, vatTu, khachChon));
 
   const gui = async (chot) => {
     setLoi('');
-    const thieu = dong.filter((d) => !d.vat_tu_id && d.mo_ta_goc);
-    if (thieu.length) return setLoi(`Còn ${thieu.length} dòng vật tư AI chưa khớp được danh mục — chọn vật tư hoặc xoá dòng đó.`);
     setDangGui(true);
     const body = {
       ...don,
       khach_hang_id: Number(don.khach_hang_id),
+      san_pham_id: Number(don.san_pham_id) || spGoiY?.id || null,
       chot,
       vat_tu: dong.filter((d) => d.vat_tu_id).map((d) => ({
         vat_tu_id: Number(d.vat_tu_id), so_luong_can: Number(d.so_luong_can), don_gia: Number(d.don_gia) || 0, ghi_chu: d.ghi_chu,
@@ -217,19 +133,6 @@ export default function DonHangForm() {
   return (
     <form onSubmit={(e) => { e.preventDefault(); gui(false); }}>
       <h1>{id ? `Sửa đơn nháp ${maDon}` : 'Tạo đơn hàng'}</h1>
-      <div className="tabs" role="tablist">
-        <button type="button" role="tab" aria-selected={cheDo === 'ai'} className={cheDo === 'ai' ? 'tab on' : 'tab'} onClick={() => setCheDo('ai')}><Icon n="sparkles" /> Lên đơn nhanh bằng AI</button>
-        <button type="button" role="tab" aria-selected={cheDo === 'tay'} className={cheDo === 'tay' ? 'tab on' : 'tab'} onClick={() => setCheDo('tay')}>Nhập thủ công</button>
-      </div>
-
-      {cheDo === 'ai' && <KhungAI khachHangId={don.khach_hang_id} onKetQua={nhanKetQuaAI} onLoi={setLoi} />}
-
-      {ketQuaAI && (
-        ketQuaAI.canh_bao.length === 0
-          ? <div className="success">AI đã điền đơn hàng. Vui lòng kiểm tra lại trước khi lưu.</div>
-          : <ul className="ai-warn">{ketQuaAI.canh_bao.map((c, i) => <li key={i}><Icon n="alert" /> {c}</li>)}</ul>
-      )}
-
       <div className="form-layout">
         <div className="form-main">
           <div className="card">
@@ -243,7 +146,10 @@ export default function DonHangForm() {
                 {khachChon && <span className="muted small">Nhóm khách: {NHOM_KHACH[khachChon.nhom_khach_hang]}</span>}
               </O>
               <O id="hd" label="Mã hợp đồng">
-                <input id="hd" value={don.ma_hop_dong} onChange={sua('ma_hop_dong')} placeholder="Nếu có" />
+                {/* He thong tu sinh luc chot: "SĐT khach_STT don" (vd 0912345678_2 = lan dat thu 2) */}
+                <input id="hd" readOnly value={don.ma_hop_dong || (khachChon?.sdt ? `${khachChon.sdt.replace(/\D/g, '')}_…` : '')}
+                  placeholder="Tự sinh khi chốt đơn" title="Tự sinh khi chốt đơn: số điện thoại khách_số thứ tự đơn của khách" />
+                <span className="muted small">Tự sinh khi chốt: SĐT khách_lần đặt (vd …_1, …_2)</span>
               </O>
               <div className="field span2">
                 <label>Hình thức đơn *</label>
@@ -256,6 +162,15 @@ export default function DonHangForm() {
                   ))}
                 </div>
               </div>
+              <O id="sp" label="Sản phẩm *">
+                <select id="sp" value={don.san_pham_id} onChange={sua('san_pham_id')}>
+                  <option value="">{spGoiY ? `Tự động: ${spGoiY.ten}` : '— Tự động theo vật tư —'}</option>
+                  {dsSanPham.map((sp) => <option key={sp.id} value={sp.id}>{sp.ten}</option>)}
+                </select>
+                {khachChon?.san_pham_ids?.length > 0 && (
+                  <span className="muted small">Khách quan tâm: {dsSanPham.filter((sp) => khachChon.san_pham_ids.includes(sp.id)).map((sp) => sp.ten).join(', ')}</span>
+                )}
+              </O>
               <O id="lapdat" label={`Ngày yêu cầu ${don.hinh_thuc === 'hoan_thien' ? 'lắp đặt *' : 'giao hàng'}`}>
                 <input id="lapdat" type="date" value={don.ngay_yc_lap_dat} onChange={sua('ngay_yc_lap_dat')} />
               </O>
@@ -289,14 +204,13 @@ export default function DonHangForm() {
                   {dong.map((d, i) => {
                     const vt = vatTu.find((v) => String(v.id) === String(d.vat_tu_id));
                     return (
-                      <tr key={i} className={d.mo_ta_goc && !d.vat_tu_id ? 'row-warn' : ''}>
+                      <tr key={i}>
                         <td>
                           <select aria-label={`Vật tư dòng ${i + 1}`} value={d.vat_tu_id} onChange={(e) => suaDong(i, 'vat_tu_id', e.target.value)}>
                             <option value="">— Chọn vật tư —</option>
                             {vatTu.map((v) => <option key={v.id} value={v.id}>{v.ten}</option>)}
                           </select>
                           {vt && <div className="muted small">{vt.loai} · {vt.nguon_goc === 'mua_ngoai' ? 'mua ngoài' : 'tự sản xuất'}</div>}
-                          {d.mo_ta_goc && <div className="muted small">AI đọc được: “{d.mo_ta_goc}”</div>}
                         </td>
                         <td className="num"><input aria-label={`Số lượng dòng ${i + 1}`} type="number" min="0" step="0.01" value={d.so_luong_can} onChange={(e) => suaDong(i, 'so_luong_can', e.target.value)} /></td>
                         <td>{vt?.don_vi_tinh || '—'}</td>

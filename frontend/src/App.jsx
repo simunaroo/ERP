@@ -17,7 +17,7 @@ import { DoiTho, LichThiCong, NghiemThu, QuyetToan } from './pages/ThiCong.jsx';
 import { CongNoNcc, CongNoTho, DeXuatChi } from './pages/CongNo.jsx';
 import { CongNoKhach } from './pages/ThuTien.jsx';
 import TongQuan from './pages/TongQuan.jsx';
-import { DoiMatKhau, NguoiDung } from './pages/NguoiDung.jsx';
+import { DoiMatKhau, NguoiDung, XacThucHaiLop } from './pages/NguoiDung.jsx';
 import DanhMucVatTu from './pages/DanhMucVatTu.jsx';
 import { NhapSo, QuanLyChiaSo } from './pages/NhapSo.jsx';
 import BaoCao from './pages/BaoCao.jsx';
@@ -26,6 +26,7 @@ import PhanQuyen from './pages/PhanQuyen.jsx';
 import NganHang from './pages/NganHang.jsx';
 import SaoLuu from './pages/SaoLuu.jsx';
 import BaoCaoChamSoc from './pages/BaoCaoChamSoc.jsx';
+import TroLyKienThuc from './pages/TroLyKienThuc.jsx';
 
 function CanDangNhap({ children }) {
   const token = useAuthStore((s) => s.token);
@@ -41,6 +42,7 @@ export default function App() {
       <Route element={<CanDangNhap><Layout /></CanDangNhap>}>
         <Route path="/" element={<TongQuan />} />
         <Route path="/nguoi-dung" element={<NguoiDung />} />
+        <Route path="/nguoi-dung/xac-thuc" element={<XacThucHaiLop />} />
         <Route path="/doi-mat-khau" element={<DoiMatKhau />} />
         <Route path="/vat-tu" element={<DanhMucVatTu />} />
         <Route path="/don-hang" element={<DonHangList />} />
@@ -56,6 +58,7 @@ export default function App() {
         <Route path="/khach-hang" element={<KhachHangList />} />
         <Route path="/khach-hang/bao-cao" element={<BaoCaoChamSoc />} />
         <Route path="/khach-hang/:id" element={<KhachHangChiTiet />} />
+        <Route path="/tro-ly/kien-thuc" element={<TroLyKienThuc />} />
         <Route path="/nha-cung-cap" element={<NhaCungCapList />} />
         <Route path="/nha-cung-cap/so-sanh-gia" element={<SoSanhGia />} />
         <Route path="/nha-cung-cap/phan-tich" element={<PhanTichNcc />} />

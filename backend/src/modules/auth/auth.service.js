@@ -41,9 +41,13 @@ export async function dangNhap(username, matKhau, ip = '') {
   }
   lanSai.delete(khoa);
   if (user.trang_thai !== 'active') throw new AppError(403, 'Tài khoản đã bị khoá');
-  // Da bat 2FA, hoac vai tro bat buoc (Admin/Ke toan): chua cap token, chuyen sang buoc 2.
-  if (user.co_2fa) return { buoc: 'nhap_ma_2fa', ma_tam: haiLop.kyMaTam(user, 'xac_minh') };
-  if (haiLop.batBuoc(user)) return { buoc: 'cai_2fa', ma_tam: haiLop.kyMaTam(user, 'cai_dat') };
+  // Vai tro dang bat 2FA (Admin cau hinh): chua cap token, chuyen sang buoc 2 (da cai -> nhap ma, chua cai -> quet QR).
+  // Vai tro tat 2FA: chi can mat khau, khoa da cai van giu de bat lai khong phai cai lai.
+  if (await haiLop.canXacThuc(user.vai_tro)) {
+    return user.co_2fa
+      ? { buoc: 'nhap_ma_2fa', ma_tam: haiLop.kyMaTam(user, 'xac_minh') }
+      : { buoc: 'cai_2fa', ma_tam: haiLop.kyMaTam(user, 'cai_dat') };
+  }
   return phienDangNhap(user);
 }
 
