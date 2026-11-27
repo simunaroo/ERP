@@ -82,6 +82,7 @@ class "tro_ly_hoi_thoai" as HT <<entity>> {
   -tieu_de
   -created_at
   -cap_nhat_luc
+  -loai
   --
   +Tao cuoc tro chuyen (lan hoi dau)()
 }
@@ -92,6 +93,8 @@ class "tro_ly_tin_nhan" as TN <<entity>> {
   -noi_dung
   -so_anh
   -created_at
+  -noi_dung_ai
+  -ma_tien
   --
   +Lay 10 luot hoi dap gan nhat()
   +Luu cau hoi va cau tra loi()

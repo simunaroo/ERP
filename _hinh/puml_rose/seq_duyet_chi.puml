@@ -26,18 +26,20 @@ skinparam packageStyle rectangle
 autonumber
 hide footbox
 actor "Admin" as U
+actor "Ke toan" as KT
 boundary "DeXuatChiUI" as UI
 control "DeXuatChiController" as C
 boundary "TelegramBot" as TG
 entity "de_xuat_chi" as DX
 entity "de_xuat_chi_duyet_log" as LOG
+entity "phieu_thanh_toan" as PTT
+entity "mua_hang_dong" as MH
 entity "thong_bao" as TB
 U -> UI : Kich nut "Chi & cong no"()
 UI -> C : Lay danh sach de xuat()
 C -> DX : Lay de xuat cho duyet()
 DX --> C : return danh sach
 C --> UI : return ket qua
-UI -> UI : Hien thi danh sach de xuat cho duyet()
 U -> UI : Chon de xuat
 UI -> UI : Hien thi chi tiet de xuat kem ma QR()
 U -> UI : Kich nut "Duyet"()
@@ -51,9 +53,26 @@ C -> LOG : Ghi nguoi duyet()
 C -> TB : Gui thong bao cho Ke toan()
 C -> TG : Sua tin nhan thanh "Da duyet"()
 C --> UI : return ket qua
-UI -> UI : Hien thi trang thai "Da duyet"()
+note right of KT
+Ke toan quet QR bang ung dung ngan hang
+va chuyen khoan
+end note
+KT -> UI : Kich nut "Da chi" va tai anh bill
+UI -> C : Xac nhan da chi()
+C -> C : Kiem tra anh bill()
+C -> PTT : Them phieu thanh toan()
+C -> DX : Cap nhat trang thai "Da chi"()
+note right of C
+Neu la tien coc: vat tu chuyen "San hang"
+va tu lap de xuat quyet toan phan con lai
+end note
+C -> MH : Chuyen trang thai "San hang"()
+C -> DX : Tao de xuat quyet toan con lai()
+C -> TB : Gui thong bao cho nguoi lap()
+C --> UI : return ket qua
+UI -> UI : Hien thi trang thai "Da chi"()
 note right of UI
 Tu choi: bat buoc nhap ly do.
-Nguoi duyet chi co the bam "Duyet" ngay tren Telegram
+Duyet va xac nhan da chi deu lam duoc ngay tren Telegram
 end note
 @enduml

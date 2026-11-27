@@ -25,15 +25,28 @@ skinparam NoteBorderColor #990033
 skinparam packageStyle rectangle
 autonumber
 hide footbox
+actor "Sale" as U
 actor "Ngan hang" as NH
 actor "Ke toan" as KT
+boundary "ThuTienUI" as UI
 boundary "NganHangWebhook" as WH
-boundary "DoiSoatUI" as UI
-control "NganHangController" as C
-entity "giao_dich_ngan_hang" as GD
+boundary "DoiSoatUI" as DS
+control "ThuTienController" as C
+entity "don_hang" as DH
 entity "thanh_toan_khach" as TT
+entity "giao_dich_ngan_hang" as GD
 entity "de_xuat_chi" as DX
 entity "thong_bao" as TB
+U -> UI : Kich nut "Thu tien"()
+UI -> C : Lay ma QR thu tien()
+C -> DH : Tinh so con phai thu()
+DH --> C : return so tien
+C --> UI : return ma QR (noi dung la ma don)
+U -> UI : Nhap so tien, tai anh bill va kich nut "Luu"
+UI -> C : Ghi nhan thanh toan()
+C -> TT : Them phieu "Cho xac nhan"()
+C -> TB : Gui thong bao cho Ke toan()
+C --> UI : return ket qua
 NH -> WH : Gui giao dich (so tien, noi dung chuyen khoan)
 WH -> C : Xu ly giao dich()
 C -> C : Kiem tra khoa API()
@@ -52,15 +65,15 @@ note right of C
 Khong tim thay don / khong khop:
 giao dich "Chua khop", bao Ke toan
 end note
-KT -> UI : Kich nut "Doi soat ngan hang"()
-UI -> C : Lay giao dich chua khop()
+KT -> DS : Kich nut "Doi soat ngan hang"()
+DS -> C : Lay giao dich chua khop()
 C -> GD : Lay giao dich chua khop()
 GD --> C : return danh sach
-C --> UI : return ket qua
-UI -> UI : Hien thi danh sach giao dich()
-KT -> UI : Chon don va kich nut "Khop tay"
-UI -> C : Khop tay giao dich()
+C --> DS : return ket qua
+KT -> DS : Chon don va kich nut "Khop tay"
+DS -> C : Khop tay giao dich()
 C -> GD : Cap nhat trang thai "Da khop"()
-C --> UI : return ket qua
-UI -> UI : Hien thi ket qua doi soat()
+C -> TT : Xac nhan phieu thu()
+C --> DS : return ket qua
+DS -> DS : Hien thi ket qua doi soat()
 @enduml

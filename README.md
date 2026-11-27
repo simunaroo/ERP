@@ -2,15 +2,25 @@
 
 Đồ án tốt nghiệp.
 
-Hệ thống ERP cho doanh nghiệp NST: Node.js/Express + PostgreSQL + React (Vite, Zustand), tích hợp trợ lý AI (Gemini API): mỗi sản phẩm (Cửa, Sàn, Tấm ốp) một trợ lý tư vấn cho Sale, và AI nhận xét số liệu phân tích.
+Hệ thống ERP cho doanh nghiệp NST (vật liệu hoàn thiện: cửa, sàn, tấm ốp): Node.js/Express + PostgreSQL + React (Vite, Zustand), tích hợp Gemini API:
+
+- **Trợ lý sản phẩm** (Cửa, Sàn, Tấm ốp): khung chat nổi ở mọi màn hình, tư vấn cho Sale theo tài liệu kiến thức Admin soạn, hỏi bằng chữ hoặc ảnh.
+- **Trợ lý Quản lý** (tình hình chăm sóc khách của Sale) và **trợ lý NCC** (giá nhập, chọn nhà cung cấp, công nợ NCC): dùng function calling. AI chỉ chọn công cụ và tham số; số liệu do truy vấn SQL chỉ đọc tính ra, nên AI không bịa được số.
+- **AI nhận xét** báo cáo chăm sóc khách và phân tích giá NCC, có hậu kiểm số liệu.
+
+Dữ liệu nhạy cảm không gửi ra dịch vụ AI:
+- Khách chỉ được nhắc bằng mã `KH-<id>`, không kèm tên, SĐT, địa chỉ. Ghi chú của Sale được che SĐT và tên khách.
+- Tên NCC được đổi thành `NCC-<id>`. Số tiền được đổi thành mã `[[Tn]]`, kể cả tên NCC (cả tên gọi tắt) và số tiền người dùng tự gõ trong câu hỏi.
+- Câu trả lời của AI được đổi lại tên và số thật trước khi hiển thị.
 
 ## Cấu trúc
 
 ```
-backend/    API REST, kiến trúc routes → controller → service → repository
-frontend/   Giao diện React (SPA)
-sql/        schema.sql (cấu trúc CSDL), seed.sql (dữ liệu mẫu giả lập)
-_hinh/      Mã nguồn sơ đồ UML (PlantUML) và mockup giao diện cho báo cáo
+backend/            API REST (23 module), kiến trúc routes → controller → service → repository; test/ là bộ kiểm thử tự động
+frontend/           Giao diện React (SPA)
+sql/                schema.sql (cấu trúc CSDL), seed.sql (dữ liệu mẫu giả lập), migrations/ (các thay đổi CSDL theo thứ tự)
+_hinh/              Sơ đồ cho báo cáo: PlantUML (biểu đồ trình tự) và script vẽ SVG (use case, lớp, mô hình CSDL)
+_cong_cu_bao_cao/   Script vẽ bản thiết kế giao diện, chụp màn hình và chỉnh báo cáo Word (python-docx)
 ```
 
 ## Chạy ở máy local
@@ -33,13 +43,32 @@ npm install
 npm run dev                 # http://localhost:5173
 ```
 
-Duyệt chi qua Telegram (không bắt buộc): tạo bot bằng @BotFather lấy `TELEGRAM_BOT_TOKEN`, thêm bot vào nhóm duyệt, điền `TELEGRAM_CHAT_ID_DUYET`, `TELEGRAM_NGUOI_DUYET` (username được bấm Duyệt) vào `backend/.env`; chạy máy cá nhân để `TELEGRAM_CHE_DO=polling`. Không cấu hình thì Admin duyệt trên web.
+`npm run db:migrate` chỉ chạy các migration chưa chạy (ghi trong bảng `schema_migrations`). DB tạo bằng `db:reset` đã được đánh dấu đủ migration.
 
-`npm run db:migrate` chỉ chạy migration chưa chạy (ghi trong bảng `schema_migrations`); DB tạo bằng `db:reset` đã được đánh dấu đủ migration.
+**Trợ lý AI**:
+- Tạo API key miễn phí tại Google AI Studio, rồi thêm `GEMINI_API_KEY=...` vào `backend/.env`.
+- `.env.example` đặt model chính là `GEMINI_MODEL=gemini-3.5-flash-lite`, model dự phòng là `GEMINI_MODEL_DU_PHONG=gemini-3.8-flash` (dùng khi model chính quá tải hoặc quá thời gian). Bỏ trống `GEMINI_MODEL` thì code dùng `gemini-3.8-flash`.
+- Không có key thì phần còn lại vẫn chạy bình thường, chỉ các nút AI báo chưa cấu hình.
+- Nạp tài liệu kiến thức mẫu cho trợ lý sản phẩm: `npm run db:nap-kien-thuc`. Lệnh này chỉ điền trợ lý còn trống; thêm `-- --ghi-de` để ghi đè.
+- Trợ lý Quản lý (quyền `tro_ly.quan_ly`) và trợ lý NCC (quyền `tro_ly.ncc`) mặc định chỉ Admin dùng được. Cấp thêm cho vai trò khác ở trang Phân quyền.
 
-Trợ lý AI: tạo API key miễn phí tại Google AI Studio, thêm `GEMINI_API_KEY=...` vào `backend/.env`; `GEMINI_MODEL` (mặc định `gemini-3.8-flash`) và `GEMINI_MODEL_DU_PHONG` dùng khi model chính quá tải. Không có key thì phần còn lại vẫn chạy bình thường, chỉ các nút AI báo chưa cấu hình. Nạp tài liệu kiến thức mẫu cho trợ lý sản phẩm: `npm run db:nap-kien-thuc` (chỉ điền trợ lý còn trống; thêm `-- --ghi-de` để ghi đè).
+**Duyệt chi qua Telegram** (không bắt buộc):
+- Tạo bot bằng @BotFather để lấy `TELEGRAM_BOT_TOKEN`, rồi thêm bot vào nhóm duyệt.
+- Điền `TELEGRAM_CHAT_ID_DUYET` và `TELEGRAM_NGUOI_DUYET` (username được bấm Duyệt) vào `backend/.env`.
+- Chạy trên máy cá nhân thì để `TELEGRAM_CHE_DO=polling`.
+- Không cấu hình thì Admin duyệt trên web.
 
-Tài khoản demo — mật khẩu là tên tài khoản + `123456` (ví dụ `thilan123456`):
+**Đối soát ngân hàng** (không bắt buộc):
+- Đặt `NGAN_HANG_WEBHOOK_KEY` trong `backend/.env`.
+- Cấu hình webhook SePay gọi `POST /api/ngan-hang/webhook` với header `Authorization: Apikey <khoá>`.
+- Tiền về được khớp với đơn theo mã đơn trong nội dung chuyển khoản. Nếu có phiếu thu đang chờ đúng số tiền thì phiếu đó được xác nhận; nếu không thì tạo phiếu mới. Giao dịch chưa khớp được báo cho Kế toán.
+
+**Sao lưu**:
+- Backend tự sao lưu CSDL và ảnh bill hằng ngày (mặc định 2 giờ sáng, giữ 7 bản gần nhất; xem các biến `SAO_LUU_*`).
+- Chạy tay: `npm run db:sao-luu`.
+- Khôi phục vào một database mới (không ghi đè DB đang chạy): `npm run db:khoi-phuc -- <file .dump> [ten_db_moi]`.
+
+Tài khoản demo: mật khẩu là tên tài khoản + `123456` (ví dụ `thilan123456`).
 
 | Vai trò | Tài khoản |
 |---|---|
@@ -50,7 +79,7 @@ Tài khoản demo — mật khẩu là tên tài khoản + `123456` (ví dụ `t
 
 ## Tiến độ
 
-- [x] Thiết kế CSDL (20 bảng)
+- [x] Thiết kế CSDL: 42 bảng, 1 view, 20 trigger; thay đổi qua 39 migration
 - [x] Đăng nhập (JWT + bcrypt), phân quyền theo vai trò
 - [x] Đơn hàng: danh sách, tạo đơn, chi tiết, phương án vận chuyển – thi công, yêu cầu chỉnh sửa
 - [x] Khách hàng: trạng thái chăm sóc, lịch sử chăm sóc
@@ -74,4 +103,12 @@ Tài khoản demo — mật khẩu là tên tài khoản + `123456` (ví dụ `t
 - [x] Thông báo trong hệ thống (nút chuông): thao tác xong báo người liên quan
 - [x] Đặt hàng NCC (gửi nhóm Telegram NCC / chép gửi Zalo), NCC cho xuất hoặc yêu cầu cọc → tự lập đề xuất cọc/quyết toán
 - [x] Công nợ khách hàng: phiếu thu (Kế toán xác nhận tiền về), điều kiện tạm ứng trước giao hàng, QR thu tiền
-- [x] Bộ kiểm thử tự động 158 ca (`cd backend && npm test`, báo cáo: `npm run test:bao-cao`)
+- [x] Nhập số khách tiềm năng (Excel .xlsx / CSV / TXT, API đẩy số tự động), chia số cho Sale theo tỷ lệ, chuyển số bắt buộc ghi lý do
+- [x] Báo cáo chăm sóc khách theo Sale (tốc độ gọi, tỷ lệ liên hệ / chốt, tồn đọng) + AI nhận xét, lưu nhật ký các lần phân tích
+- [x] Trợ lý AI Quản lý và trợ lý AI NCC (function calling, truy vấn chỉ đọc), ẩn danh tên NCC, số tiền, thông tin khách trước khi gửi AI
+- [x] Đối soát ngân hàng qua webhook SePay: tiền về tự khớp phiếu thu theo mã đơn
+- [x] Báo cáo lãi/lỗ theo đơn; xuất Excel (lãi/lỗ, danh sách đơn, đề xuất chi)
+- [x] Phân quyền theo chức năng: 30 quyền, Admin bật/tắt cho từng vai trò
+- [x] Nhật ký thay đổi dữ liệu: trigger ghi thêm / sửa / xoá trên 18 bảng (ai làm, qua kênh nào, dữ liệu trước / sau)
+- [x] Sao lưu CSDL + ảnh bill tự động hằng ngày, khôi phục bằng lệnh
+- [x] Bộ kiểm thử tự động 169 ca (`cd backend && npm test`, báo cáo: `npm run test:bao-cao`)

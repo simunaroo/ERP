@@ -1,0 +1,91 @@
+{
+ "luc": "2026-11-13T13:38:06.105Z",
+ "du_lieu": {
+  "don": 1504,
+  "khach": 736,
+  "dong_vt": 3689,
+  "dxc": 4002,
+  "phieu_thu": 2294,
+  "cham_soc": 1405,
+  "log_tien_do": 9614
+ },
+ "ket_qua": [
+  {
+   "ten": "Đăng nhập (bcrypt)",
+   "trung_vi_ms": 221,
+   "cham_nhat_ms": 248,
+   "kb": 0,
+   "kieu": "json"
+  },
+  {
+   "ten": "Trang Tổng quan (Admin)",
+   "trung_vi_ms": 1119,
+   "cham_nhat_ms": 1145,
+   "kb": 1,
+   "kieu": "json"
+  },
+  {
+   "ten": "Danh sách đơn hàng (lọc, phân trang 20)",
+   "trung_vi_ms": 1129,
+   "cham_nhat_ms": 1340,
+   "kb": 10,
+   "kieu": "json"
+  },
+  {
+   "ten": "Chi tiết đơn hàng",
+   "trung_vi_ms": 24,
+   "cham_nhat_ms": 47,
+   "kb": 3,
+   "kieu": "json"
+  },
+  {
+   "ten": "Danh sách khách hàng của Sale",
+   "trung_vi_ms": 8,
+   "cham_nhat_ms": 9,
+   "kb": 8,
+   "kieu": "json"
+  },
+  {
+   "ten": "Công nợ khách hàng",
+   "trung_vi_ms": 2152,
+   "cham_nhat_ms": 2355,
+   "kb": 32,
+   "kieu": "json"
+  },
+  {
+   "ten": "Công nợ nhà cung cấp",
+   "trung_vi_ms": 18,
+   "cham_nhat_ms": 22,
+   "kb": 3,
+   "kieu": "json"
+  },
+  {
+   "ten": "Báo cáo lãi/lỗ 12 tháng",
+   "trung_vi_ms": 3804,
+   "cham_nhat_ms": 4039,
+   "kb": 9,
+   "kieu": "json"
+  },
+  {
+   "ten": "Xuất Excel lãi/lỗ 12 tháng",
+   "trung_vi_ms": 3879,
+   "cham_nhat_ms": 4024,
+   "kb": 111,
+   "kieu": "file"
+  },
+  {
+   "ten": "Phân tích vật tư và giá NCC (số liệu)",
+   "trung_vi_ms": 10,
+   "cham_nhat_ms": 33,
+   "kb": 3,
+   "kieu": "json"
+  },
+  {
+   "ten": "Báo cáo chăm sóc khách hàng",
+   "trung_vi_ms": 10,
+   "cham_nhat_ms": 12,
+   "kb": 3,
+   "kieu": "json"
+  }
+ ]
+}

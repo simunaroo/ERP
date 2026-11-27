@@ -25,24 +25,59 @@ skinparam NoteBorderColor #990033
 skinparam packageStyle rectangle
 hide circle
 skinparam classAttributeIconSize 0
+class "ThuTienUI" as UI <<boundary>> {
+  --
+  +Kich nut 'Thu tien'()
+  +Nhap so tien, tai anh bill va kich nut 'Luu'()
+}
 class "NganHangWebhook" as WH <<boundary>> {
   --
   +Gui giao dich (so tien, noi dung chuyen khoan)
 }
-class "DoiSoatUI" as UI <<boundary>> {
+class "DoiSoatUI" as DS <<boundary>> {
   --
   +Kich nut 'Doi soat ngan hang'()
-  +Hien thi danh sach giao dich()
   +Chon don va kich nut 'Khop tay'()
   +Hien thi ket qua doi soat()
 }
-class "NganHangController" as C <<control>> {
+class "ThuTienController" as C <<control>> {
   --
+  +Lay ma QR thu tien()
+  +Ghi nhan thanh toan()
   +Xu ly giao dich()
   +Kiem tra khoa API()
   +Tim ma don trong noi dung chuyen khoan()
   +Lay giao dich chua khop()
   +Khop tay giao dich()
+}
+class "don_hang" as DH <<entity>> {
+  -id
+  -ma_don
+  -khach_hang_id
+  -sale_id
+  -vanhanh_phu_trach_id
+  -trang_thai
+  -giai_doan
+  -hinh_thuc
+  -ma_hop_dong
+  -...
+  --
+  +Tinh so con phai thu()
+}
+class "thanh_toan_khach" as TT <<entity>> {
+  -id
+  -don_hang_id
+  -loai
+  -so_tien
+  -hinh_thuc
+  -ngay_thu
+  -bill_anh
+  -ghi_chu
+  -trang_thai
+  -...
+  --
+  +Them phieu 'Cho xac nhan'()
+  +Xac nhan phieu thu()
 }
 class "giao_dich_ngan_hang" as GD <<entity>> {
   -id
@@ -60,20 +95,6 @@ class "giao_dich_ngan_hang" as GD <<entity>> {
   +Them giao dich()
   +Lay giao dich chua khop()
   +Cap nhat trang thai 'Da khop'()
-}
-class "thanh_toan_khach" as TT <<entity>> {
-  -id
-  -don_hang_id
-  -loai
-  -so_tien
-  -hinh_thuc
-  -ngay_thu
-  -bill_anh
-  -ghi_chu
-  -trang_thai
-  -...
-  --
-  +Xac nhan phieu thu()
 }
 class "de_xuat_chi" as DX <<entity>> {
   -id
@@ -100,14 +121,20 @@ class "thong_bao" as TB <<entity>> {
   -da_doc_luc
   -created_at
   --
+  +Gui thong bao cho Ke toan()
   +Gui thong bao()
 }
-WH "1" -- "1" C
 UI "1" -- "1" C
-C "1" -- "*" GD
+WH "1" -- "1" C
+DS "1" -- "1" C
+C "1" -- "*" DH
 C "1" -- "*" TT
+C "1" -- "*" GD
 C "1" -- "*" DX
 C "1" -- "*" TB
+DH "1" -- "*" DX
+DH "1" -- "*" TT
+DH "1" -- "*" GD
 TT "1" -- "*" GD
 DX "1" -- "*" GD
 GD "1" -- "*" TT

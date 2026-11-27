@@ -44,6 +44,7 @@ entity tro_ly_hoi_thoai {
   tieu_de : text
   created_at : timestamptz
   cap_nhat_luc : timestamptz
+  loai : varchar
 }
 entity tro_ly_tin_nhan {
   * id : bigint <<PK>>
@@ -52,6 +53,8 @@ entity tro_ly_tin_nhan {
   noi_dung : text
   so_anh : smallint
   created_at : timestamptz
+  noi_dung_ai : text
+  ma_tien : jsonb
 }
 entity loai_vat_tu #EEEEEE;text:black
 entity users #EEEEEE;text:black

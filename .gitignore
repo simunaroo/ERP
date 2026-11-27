@@ -8,6 +8,7 @@ KTPM_*.docx
 # File tam cua Word
 ~$*
 ~WRL*.tmp
+mso*.tmp
 
 # Thu vien cai bang npm (cai lai duoc bang npm install)
 node_modules/

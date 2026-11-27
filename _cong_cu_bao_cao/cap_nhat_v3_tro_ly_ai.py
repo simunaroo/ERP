@@ -565,6 +565,12 @@ for media, nguon in [
     ('image29.png', f'{HINH}/puml_rose/png/uc_ketoan.png'), ('image30.png', f'{HINH}/puml_rose/png/uc_admin.png'),
     ('image31.png', f'{HINH}/puml_rose/png/seq_dang_nhap.png'), ('image32.png', f'{HINH}/puml_rose/png/cls_dang_nhap.png'),
     ('image37.png', f'{HINH}/puml_rose/png/seq_tao_don_xoay.png'), ('image38.png', f'{HINH}/puml_rose/png/cls_tao_don.png'),
+    # Bieu do lop ve lai bang ve_lop.cjs: bo cuc ngang, net thang
+    ('image34.png', f'{HINH}/puml_rose/png/cls_nhap_so.png'), ('image36.png', f'{HINH}/puml_rose/png/cls_cham_soc.png'),
+    ('image40.png', f'{HINH}/puml_rose/png/cls_dat_hang.png'), ('image42.png', f'{HINH}/puml_rose/png/cls_duyet_chi.png'),
+    ('image44.png', f'{HINH}/puml_rose/png/cls_xac_nhan_chi.png'), ('image46.png', f'{HINH}/puml_rose/png/cls_thi_cong.png'),
+    ('image48.png', f'{HINH}/puml_rose/png/cls_thu_tien.png'), ('image50.png', f'{HINH}/puml_rose/png/cls_doi_soat.png'),
+    ('image52.png', f'{HINH}/puml_rose/png/cls_bao_cao_cs.png'),
     ('image53.png', f'{HINH}/puml_ch2/png/erd.png'),
     ('image54.png', f'{HINH}/puml_rose/png/erd_1_khach_hang.png'), ('image55.png', f'{HINH}/puml_rose/png/erd_2_don_hang_thi_cong.png'),
     ('image56.png', f'{HINH}/puml_rose/png/erd_3_vat_tu_mua_hang.png'), ('image57.png', f'{HINH}/puml_rose/png/erd_4_tien_quan_tri.png'),

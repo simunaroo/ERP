@@ -21,7 +21,7 @@
  ],
  [
   "duyet_chi",
-  "Duyet de xuat chi"
+  "Duyet va chi de xuat chi"
  ],
  [
   "xac_nhan_chi",
@@ -37,7 +37,7 @@
  ],
  [
   "doi_soat",
-  "Doi soat giao dich ngan hang"
+  "Thu tien khach va doi soat ngan hang"
  ],
  [
   "bao_cao_cs",
@@ -46,5 +46,9 @@
  [
   "tro_ly",
   "Hoi tro ly AI san pham"
+ ],
+ [
+  "tro_ly_ncc",
+  "Hoi tro ly AI quan ly va NCC"
  ]
 ]

@@ -130,17 +130,25 @@ chucNang('dat_hang', 'Dat hang nha cung cap', [
   ['note', 'C', 'Neu NCC "Yeu cau coc": hoi so tien coc,\ntao de xuat coc, vat tu chuyen "Cho coc"'],
   ['C', 'UI', 'return ket qua', 'r'], ['UI', 'UI', 'Hien thi trang thai dat hang()']]);
 
-chucNang('duyet_chi', 'Duyet de xuat chi', [
-  ['U', 'actor', 'Admin'], ['UI', 'boundary', 'DeXuatChiUI'], ['C', 'control', 'DeXuatChiController'], ['TG', 'boundary', 'TelegramBot'],
-  ['DX', 'entity', 'de_xuat_chi'], ['LOG', 'entity', 'de_xuat_chi_duyet_log'], ['TB', 'entity', 'thong_bao']], [
+// UC07 gom duyet va xac nhan da chi (truoc la 2 bieu do: duyet_chi + xac_nhan_chi)
+chucNang('duyet_chi', 'Duyet va chi de xuat chi', [
+  ['U', 'actor', 'Admin'], ['KT', 'actor', 'Ke toan'], ['UI', 'boundary', 'DeXuatChiUI'], ['C', 'control', 'DeXuatChiController'],
+  ['TG', 'boundary', 'TelegramBot'], ['DX', 'entity', 'de_xuat_chi'], ['LOG', 'entity', 'de_xuat_chi_duyet_log'],
+  ['PTT', 'entity', 'phieu_thanh_toan'], ['MH', 'entity', 'mua_hang_dong'], ['TB', 'entity', 'thong_bao']], [
   ['U', 'UI', 'Kich nut "Chi & cong no"()'], ['UI', 'C', 'Lay danh sach de xuat()'], ['C', 'DX', 'Lay de xuat cho duyet()'],
-  ['DX', 'C', 'return danh sach', 'r'], ['C', 'UI', 'return ket qua', 'r'], ['UI', 'UI', 'Hien thi danh sach de xuat cho duyet()'],
+  ['DX', 'C', 'return danh sach', 'r'], ['C', 'UI', 'return ket qua', 'r'],
   ['U', 'UI', 'Chon de xuat'], ['UI', 'UI', 'Hien thi chi tiet de xuat kem ma QR()'], ['U', 'UI', 'Kich nut "Duyet"()'],
   ['UI', 'C', 'Duyet de xuat chi()'], ['C', 'DX', 'Cap nhat trang thai "Da duyet"()'],
   ['note', 'C', 'Chi cap nhat khi de xuat con "Cho duyet"\n(hai nguoi bam cung luc chi mot nguoi thanh cong)'],
   ['C', 'LOG', 'Ghi nguoi duyet()'], ['C', 'TB', 'Gui thong bao cho Ke toan()'], ['C', 'TG', 'Sua tin nhan thanh "Da duyet"()'],
-  ['C', 'UI', 'return ket qua', 'r'], ['UI', 'UI', 'Hien thi trang thai "Da duyet"()'],
-  ['note', 'UI', 'Tu choi: bat buoc nhap ly do.\nNguoi duyet chi co the bam "Duyet" ngay tren Telegram']]);
+  ['C', 'UI', 'return ket qua', 'r'],
+  ['note', 'KT', 'Ke toan quet QR bang ung dung ngan hang\nva chuyen khoan'],
+  ['KT', 'UI', 'Kich nut "Da chi" va tai anh bill'], ['UI', 'C', 'Xac nhan da chi()'], ['C', 'C', 'Kiem tra anh bill()'],
+  ['C', 'PTT', 'Them phieu thanh toan()'], ['C', 'DX', 'Cap nhat trang thai "Da chi"()'],
+  ['note', 'C', 'Neu la tien coc: vat tu chuyen "San hang"\nva tu lap de xuat quyet toan phan con lai'],
+  ['C', 'MH', 'Chuyen trang thai "San hang"()'], ['C', 'DX', 'Tao de xuat quyet toan con lai()'], ['C', 'TB', 'Gui thong bao cho nguoi lap()'],
+  ['C', 'UI', 'return ket qua', 'r'], ['UI', 'UI', 'Hien thi trang thai "Da chi"()'],
+  ['note', 'UI', 'Tu choi: bat buoc nhap ly do.\nDuyet va xac nhan da chi deu lam duoc ngay tren Telegram']]);
 
 chucNang('xac_nhan_chi', 'Xac nhan da chi', [
   ['U', 'actor', 'Ke toan'], ['UI', 'boundary', 'DeXuatChiUI'], ['C', 'control', 'DeXuatChiController'], ['DX', 'entity', 'de_xuat_chi'],
@@ -178,19 +186,25 @@ chucNang('thu_tien', 'Ghi nhan thanh toan cua khach', [
   ['C', 'UI', 'return ket qua', 'r'], ['UI', 'UI', 'Cap nhat so con phai thu()'],
   ['note', 'UI', 'Neu Ke toan "Chua thay tien":\nbat buoc ghi ly do, bao nguoi ghi nhan']]);
 
-chucNang('doi_soat', 'Doi soat giao dich ngan hang', [
-  ['NH', 'actor', 'Ngan hang'], ['KT', 'actor', 'Ke toan'], ['WH', 'boundary', 'NganHangWebhook'], ['UI', 'boundary', 'DoiSoatUI'],
-  ['C', 'control', 'NganHangController'], ['GD', 'entity', 'giao_dich_ngan_hang'], ['TT', 'entity', 'thanh_toan_khach'], ['DX', 'entity', 'de_xuat_chi'],
+// UC09 gom ghi nhan thanh toan cua khach va doi soat ngan hang (truoc la 2 bieu do: thu_tien + doi_soat)
+chucNang('doi_soat', 'Thu tien khach va doi soat ngan hang', [
+  ['U', 'actor', 'Sale'], ['NH', 'actor', 'Ngan hang'], ['KT', 'actor', 'Ke toan'], ['UI', 'boundary', 'ThuTienUI'],
+  ['WH', 'boundary', 'NganHangWebhook'], ['DS', 'boundary', 'DoiSoatUI'], ['C', 'control', 'ThuTienController'],
+  ['DH', 'entity', 'don_hang'], ['TT', 'entity', 'thanh_toan_khach'], ['GD', 'entity', 'giao_dich_ngan_hang'], ['DX', 'entity', 'de_xuat_chi'],
   ['TB', 'entity', 'thong_bao']], [
+  ['U', 'UI', 'Kich nut "Thu tien"()'], ['UI', 'C', 'Lay ma QR thu tien()'], ['C', 'DH', 'Tinh so con phai thu()'], ['DH', 'C', 'return so tien', 'r'],
+  ['C', 'UI', 'return ma QR (noi dung la ma don)', 'r'], ['U', 'UI', 'Nhap so tien, tai anh bill va kich nut "Luu"'],
+  ['UI', 'C', 'Ghi nhan thanh toan()'], ['C', 'TT', 'Them phieu "Cho xac nhan"()'], ['C', 'TB', 'Gui thong bao cho Ke toan()'],
+  ['C', 'UI', 'return ket qua', 'r'],
   ['NH', 'WH', 'Gui giao dich (so tien, noi dung chuyen khoan)'], ['WH', 'C', 'Xu ly giao dich()'], ['C', 'C', 'Kiem tra khoa API()'],
   ['C', 'GD', 'Kiem tra giao dich da xu ly()'], ['C', 'GD', 'Them giao dich()'], ['C', 'C', 'Tim ma don trong noi dung chuyen khoan()'],
   ['note', 'C', 'Tien vao: xac nhan phieu thu cua don\nTien ra: ghi "Da chi" cho de xuat khop'],
   ['C', 'TT', 'Xac nhan phieu thu()'], ['C', 'DX', 'Ghi "Da chi"()'], ['C', 'TB', 'Gui thong bao()'], ['C', 'WH', 'return thanh cong', 'r'],
   ['note', 'C', 'Khong tim thay don / khong khop:\ngiao dich "Chua khop", bao Ke toan'],
-  ['KT', 'UI', 'Kich nut "Doi soat ngan hang"()'], ['UI', 'C', 'Lay giao dich chua khop()'], ['C', 'GD', 'Lay giao dich chua khop()'],
-  ['GD', 'C', 'return danh sach', 'r'], ['C', 'UI', 'return ket qua', 'r'], ['UI', 'UI', 'Hien thi danh sach giao dich()'],
-  ['KT', 'UI', 'Chon don va kich nut "Khop tay"'], ['UI', 'C', 'Khop tay giao dich()'], ['C', 'GD', 'Cap nhat trang thai "Da khop"()'],
-  ['C', 'UI', 'return ket qua', 'r'], ['UI', 'UI', 'Hien thi ket qua doi soat()']]);
+  ['KT', 'DS', 'Kich nut "Doi soat ngan hang"()'], ['DS', 'C', 'Lay giao dich chua khop()'], ['C', 'GD', 'Lay giao dich chua khop()'],
+  ['GD', 'C', 'return danh sach', 'r'], ['C', 'DS', 'return ket qua', 'r'],
+  ['KT', 'DS', 'Chon don va kich nut "Khop tay"'], ['DS', 'C', 'Khop tay giao dich()'], ['C', 'GD', 'Cap nhat trang thai "Da khop"()'],
+  ['C', 'TT', 'Xac nhan phieu thu()'], ['C', 'DS', 'return ket qua', 'r'], ['DS', 'DS', 'Hien thi ket qua doi soat()']]);
 
 chucNang('bao_cao_cs', 'Bao cao cham soc khach hang', [
   ['U', 'actor', 'Admin'], ['UI', 'boundary', 'BaoCaoChamSocUI'], ['C', 'control', 'BaoCaoChamSocController'], ['AI', 'boundary', 'GeminiAPI'],
@@ -220,6 +234,21 @@ chucNang('tro_ly', 'Hoi tro ly AI san pham', [
   ['C', 'HT', 'Tao cuoc tro chuyen (lan hoi dau)()'], ['C', 'TN', 'Luu cau hoi va cau tra loi()'],
   ['C', 'UI', 'return cau tra loi', 'r'], ['UI', 'UI', 'Hien thi cau tra loi va nut "Chep tin nhan gui khach"()']]);
 
+// Tro ly quan ly / NCC: function calling + bi danh (ten NCC, so tien -> ma truoc khi gui AI).
+chucNang('tro_ly_ncc', 'Hoi tro ly AI quan ly va NCC', [
+  ['U', 'actor', 'Admin'], ['UI', 'boundary', 'TroLyChatUI'], ['C', 'control', 'TroLyCongCuController'], ['BD', 'control', 'BiDanh'],
+  ['AI', 'boundary', 'GeminiAPI'], ['NCC', 'entity', 'nha_cung_cap'], ['BG', 'entity', 'ncc_bang_gia'], ['TN', 'entity', 'tro_ly_tin_nhan']], [
+  ['U', 'UI', 'Chon tro ly "NCC", nhap cau hoi va kich nut "Gui"'], ['UI', 'C', 'Hoi tro ly co cong cu()'],
+  ['C', 'TN', 'Lay lich su ban da ma hoa va bang ma tien()'], ['TN', 'C', 'return lich su', 'r'],
+  ['C', 'NCC', 'Lay danh sach NCC()'], ['C', 'BD', 'Thay ten NCC trong cau hoi bang ma NCC-id()'],
+  ['C', 'AI', 'Gui cau hoi, lich su va danh sach ham tra cuu()'], ['AI', 'C', 'return yeu cau goi ham (ten ham, tham so)', 'r'],
+  ['C', 'BG', 'Truy van chi doc (so sanh gia, lich su gia, cong no)()'], ['BG', 'C', 'return ket qua', 'r'],
+  ['C', 'BD', 'Doi so tien thanh ma T1, T2..., NCC thanh NCC-id, kem ty le %()'],
+  ['C', 'AI', 'Gui ket qua ham()'], ['AI', 'C', 'return cau tra loi (chi chua ma)', 'r'],
+  ['note', 'C', 'Lap lai toi da 6 buoc goi ham;\nAI khong biet ten NCC va so tien that'],
+  ['C', 'BD', 'Doi ma ve ten NCC va so tien that()'], ['C', 'TN', 'Luu ban hien thi va ban da ma hoa()'],
+  ['C', 'UI', 'return cau tra loi va nguon da tra', 'r'], ['UI', 'UI', 'Hien thi cau tra loi()']]);
+
 fs.writeFileSync(path.join(DIR, 'chuc_nang.json'), JSON.stringify(CN, null, 1));
 
 // ======================= LOP PHAN TICH + ERD (doc cot tu DB test) =======================
@@ -229,13 +258,14 @@ fs.writeFileSync(path.join(DIR, 'chuc_nang.json'), JSON.stringify(CN, null, 1));
   const pg = req('pg');
   const c = new pg.Client({ host: process.env.PG_HOST, port: +process.env.PG_PORT, user: process.env.PG_USER, password: process.env.PG_PASSWORD, database: 'datn_erp_test' });
   await c.connect();
-  const cot = (await c.query(`SELECT table_name t, column_name c, data_type d FROM information_schema.columns WHERE table_schema='public' ORDER BY table_name, ordinal_position`)).rows;
+  const cot = (await c.query(`SELECT table_name t, column_name c, data_type d, is_nullable n FROM information_schema.columns WHERE table_schema='public' ORDER BY table_name, ordinal_position`)).rows;
   const pk = new Set((await c.query(`SELECT tc.table_name||'.'||kcu.column_name k FROM information_schema.table_constraints tc JOIN information_schema.key_column_usage kcu USING (constraint_name, table_schema) WHERE tc.constraint_type='PRIMARY KEY' AND tc.table_schema='public'`)).rows.map((r) => r.k));
   const fk = (await c.query(`SELECT cl.relname AS bang, a.attname AS cot, cf.relname AS den FROM pg_constraint co JOIN pg_class cl ON cl.oid = co.conrelid JOIN pg_class cf ON cf.oid = co.confrelid JOIN pg_attribute a ON a.attrelid = co.conrelid AND a.attnum = co.conkey[1] WHERE co.contype = 'f'`)).rows;
   await c.end();
   const cotCua = (b) => cot.filter((x) => x.t === b);
 
   // Lop phan tich: boundary/control chi co thao tac; entity co thuoc tinh (toi da 9 cot) + thao tac.
+  const lopVe = [];
   for (const { ma, p, op, loai, tenDt } of chucNangLop) {
     let s = 'hide circle\nskinparam classAttributeIconSize 0\n';
     for (const [k, l, t] of p) {
@@ -263,7 +293,20 @@ fs.writeFileSync(path.join(DIR, 'chuc_nang.json'), JSON.stringify(CN, null, 1));
       }
     }
     ghi(`cls_${ma}`, s);
+    // Du lieu cho ve_lop.cjs (tu xep cho, net thang, bo cuc ngang)
+    lopVe.push({
+      ten: `cls_${ma}`,
+      lop: p.filter(([, l]) => l !== 'actor').map(([k, l, t]) => {
+        const cs = l === 'entity' ? cotCua(t) : [];
+        return { k, loai: l, ten: t, thuoc: [...cs.slice(0, 9).map((x) => `-${x.c}`), ...(cs.length > 9 ? ['-...'] : [])], thao: op[k].map((o) => `+${o}`) };
+      }),
+      lien: [...ui.map((b) => [b, ctrl, '1', '1']), ...ents.map(([k]) => [ctrl, k, '1', '*']),
+        ...fk.filter((r) => tenSangMa[r.bang] && tenSangMa[r.den] && r.bang !== r.den)
+          .map((r) => [tenSangMa[r.den], tenSangMa[r.bang], '1', '*'])
+          .filter((x, i, a) => a.findIndex((y) => y[0] === x[0] && y[1] === x[1]) === i)],
+    });
   }
+  fs.writeFileSync(path.join(DIR, 'lop_ve.json'), JSON.stringify(lopVe, null, 1));
 
   // ERD theo phan he: day du cot (giong so do cua cong cu quan tri CSDL); bang ngoai phan he chi ve ten.
   const PH = {
@@ -292,5 +335,13 @@ fs.writeFileSync(path.join(DIR, 'chuc_nang.json'), JSON.stringify(CN, null, 1));
     for (const b of ngoai) s += `entity ${b} #EEEEEE;text:black\n`; // bang ngoai phan he: nen xam, chu den cho de doc
     ghi(ten, s + qh);
   }
+  // Du lieu cho ve_erd.cjs (ERD kieu Rational Rose, net thang): cot (kieu rut gon, PK/FK, cho phep NULL) + khoa ngoai
+  const kieu = (d) => d.replace('timestamp with time zone', 'timestamptz').replace('character varying', 'varchar').replace('USER-DEFINED', 'enum');
+  const bangErd = {};
+  for (const x of cot) {
+    if (x.t === 'schema_migrations') continue;
+    (bangErd[x.t] ||= []).push({ c: x.c, d: kieu(x.d), pk: pk.has(`${x.t}.${x.c}`), fk: fk.some((f) => f.bang === x.t && f.cot === x.c), null: x.n === 'YES' });
+  }
+  fs.writeFileSync(path.join(DIR, 'erd_ve.json'), JSON.stringify({ bang: bangErd, fk: fk.filter((f) => bangErd[f.bang] && bangErd[f.den]), ph: PH }, null, 1));
   console.log('Da sinh', CN.length, 'chuc nang + 5 ERD phan he');
 })();
