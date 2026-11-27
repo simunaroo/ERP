@@ -1,4 +1,6 @@
 import * as service from './tro_ly.service.js';
+import * as quanLy from './quan_ly.service.js';
+import * as ncc from './ncc.service.js';
 
 export async function dsTroLy(req, res) {
   res.json(await service.dsTroLy());
@@ -31,4 +33,22 @@ export async function xoaHoiThoai(req, res) {
 
 export async function hoi(req, res) {
   res.json(await service.hoi(req.user, req.body));
+}
+
+// ---- Tro ly quan ly (cham soc khach cua Sale)
+export async function dsHoiThoaiQuanLy(req, res) {
+  res.json(await quanLy.dsHoiThoai(req.user));
+}
+
+export async function hoiQuanLy(req, res) {
+  res.json(await quanLy.hoi(req.user, req.body || {}));
+}
+
+// ---- Tro ly nha cung cap (gia nhap, chon NCC, cong no NCC)
+export async function dsHoiThoaiNcc(req, res) {
+  res.json(await ncc.dsHoiThoai(req.user));
+}
+
+export async function hoiNcc(req, res) {
+  res.json(await ncc.hoi(req.user, req.body || {}));
 }

@@ -1,6 +1,7 @@
 import { AppError } from '../../utils/AppError.js';
 import { sinhJson } from '../../integrations/gemini.client.js';
 import * as repo from './phan_tich.repository.js';
+import { BiDanh, maNcc } from '../../utils/an_danh.js';
 
 const NGAY_MS = 86400000;
 const homNay = () => new Date().toLocaleDateString('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' });
@@ -36,7 +37,7 @@ export async function tongHop(query) {
       so_luong: soLuong, doanh_thu: Number(v.doanh_thu), so_don: v.so_don,
       tang_truong_pct: phanTram(Number(v.doanh_thu), Number(v.doanh_thu_truoc)),
       gia_ban_tb: giaBanTb,
-      gia_mua_re_nhat: m ? Number(m.re_nhat) : null, ncc_re_nhat: m?.ncc_re_nhat ?? null,
+      gia_mua_re_nhat: m ? Number(m.re_nhat) : null, ncc_re_nhat: m?.ncc_re_nhat ?? null, ncc_re_nhat_id: m?.ncc_re_nhat_id ?? null,
       lai_gop_uoc_tinh_pct: laiGop,
     };
   }).filter((v) => v.so_luong > 0 || v.doanh_thu > 0);
@@ -79,28 +80,38 @@ Nhiệm vụ: đọc bảng số liệu JSON đã được hệ thống tính s�
 
 Quy tắc bắt buộc:
 - CHỈ dùng con số có trong dữ liệu. Không tự tính tổng, trung bình hay tỷ lệ mới; không đoán số liệu thị trường bên ngoài.
-- Khi nhắc tới vật tư hoặc nhà cung cấp, chép ĐÚNG tên như trong dữ liệu.
+- Khi nhắc tới vật tư, chép ĐÚNG tên như trong dữ liệu. Nhà cung cấp được ghi bằng mã (NCC-12): luôn gọi NCC bằng đúng mã đó, hệ thống tự đổi sang tên thật khi hiển thị.
+- Dữ liệu chỉ có số tương đối (%, chỉ số, số lần), không có số tiền: không suy đoán số tiền.
 - "chi_so_gia" của NCC: 100 = ngang giá trung vị thị trường; nhỏ hơn 100 là rẻ hơn, lớn hơn 100 là đắt hơn.
 - "tang_truong_pct" so với kỳ trước cùng độ dài; null nghĩa là kỳ trước không bán.
+- "ty_trong_doanh_thu_pct": phần trăm doanh thu kỳ này của vật tư; "ty_trong_tien_mua_pct": phần trăm tổng tiền mua của NCC.
 - "lai_gop_uoc_tinh_pct" chỉ là ước tính (giá bán trung bình so với giá mua rẻ nhất hiện tại), hãy nói rõ là ước tính.
 - Dữ liệu ít (ít đơn, ít NCC cho một mặt hàng) thì nói rõ mức độ tin cậy thấp, không kết luận mạnh.
 - ncc_de_xuat: với các vật tư bán chạy mua ngoài, đề xuất NCC nên ưu tiên và lý do (giá, ổn định giá, đã mua nhiều). Tối đa 5 dòng.
 - Viết số đúng như trong dữ liệu (không làm tròn, không đổi đơn vị); hệ thống sẽ tự định dạng khi hiển thị.
 - diem_noi_bat tối đa 4 ý, canh_bao tối đa 3 ý, hanh_dong tối đa 4 ý, mỗi ý một câu.`;
 
-// Chi gui so lieu tong hop (khong co ten/sdt khach hang) va gioi han do dai de tiet kiem token.
+// Du lieu gui AI: KHONG co thong tin khach hang va KHONG co bi mat kinh doanh.
+// - Ten NCC -> ma "NCC-<id>" (doi lai ten that sau khi AI tra loi).
+// - Khong gui so tien (doanh thu, gia nhap, tien mua NCC): chi gui so tuong doi (ty trong %, tang truong %, chi so gia, lai gop %).
+const pt = (a, tong) => (tong > 0 ? Math.round((a / tong) * 1000) / 10 : null);
 function duLieuChoAi(th) {
+  const dt = th.tong.doanh_thu;
+  const tm = th.tong.tien_mua_ncc;
   return {
     ky: th.ky,
-    tong: th.tong,
+    tong: {
+      doanh_thu_tang_pct: th.tong.doanh_thu_tang_pct, so_don: th.tong.so_don, so_don_truoc: th.tong.so_don_truoc,
+      so_don_tang_pct: th.tong.so_don_tang_pct, so_ncc: th.ncc.length,
+    },
     vat_tu_ban_chay: th.vat_tu.slice(0, 12).map((v) => ({
-      ten: v.ten, loai: v.loai, nguon_goc: v.nguon_goc, don_vi_tinh: v.don_vi_tinh, so_luong: v.so_luong, doanh_thu: v.doanh_thu,
-      so_don: v.so_don, tang_truong_pct: v.tang_truong_pct, gia_mua_re_nhat: v.gia_mua_re_nhat, ncc_re_nhat: v.ncc_re_nhat,
-      lai_gop_uoc_tinh_pct: v.lai_gop_uoc_tinh_pct,
+      ten: v.ten, loai: v.loai, nguon_goc: v.nguon_goc, don_vi_tinh: v.don_vi_tinh, so_luong: v.so_luong,
+      ty_trong_doanh_thu_pct: pt(v.doanh_thu, dt), so_don: v.so_don, tang_truong_pct: v.tang_truong_pct,
+      ncc_re_nhat: v.ncc_re_nhat_id ? maNcc(v.ncc_re_nhat_id) : null, lai_gop_uoc_tinh_pct: v.lai_gop_uoc_tinh_pct,
     })),
     ncc: th.ncc.map((n) => ({
-      ten: n.ncc, chi_so_gia: n.chi_so_gia, so_mat_hang: n.so_mat_hang, so_mat_hang_re_nhat: n.so_mat_hang_re_nhat,
-      so_lan_doi_gia: n.so_lan_doi_gia, doi_gia_tb_pct: n.doi_gia_tb_pct, tien_mua: n.tien_mua, so_lan_mua: n.so_lan_mua,
+      ma: maNcc(n.ncc_id), chi_so_gia: n.chi_so_gia, so_mat_hang: n.so_mat_hang, so_mat_hang_re_nhat: n.so_mat_hang_re_nhat,
+      so_lan_doi_gia: n.so_lan_doi_gia, doi_gia_tb_pct: n.doi_gia_tb_pct, ty_trong_tien_mua_pct: pt(n.tien_mua, tm), so_lan_mua: n.so_lan_mua,
     })),
   };
 }
@@ -108,7 +119,7 @@ function duLieuChoAi(th) {
 // ---- Hau kiem: khong tin tuyet doi AI ----
 // So trong cau chu cua AI (bo ngay thang, bo so nho < 10 nhu "2 cánh", "1 ngày").
 function soTrongCau(text) {
-  return (String(text).replace(/\d{4}-\d{2}-\d{2}/g, ' ').match(/\d+(?:[.,]\d+)?/g) || [])
+  return (String(text).replace(/\d{4}-\d{2}-\d{2}/g, ' ').replace(/\bNCC-\d+\b/g, ' ').match(/\d+(?:[.,]\d+)?/g) || [])
     .map((x) => Number(x.replace(',', '.')))
     .filter((n) => Number.isFinite(n) && Math.abs(n) >= 10);
 }
@@ -136,7 +147,7 @@ export function dinhDangSo(text) {
 // Bo dong nhac toi vat tu/NCC khong co trong du lieu (AI "bia" ten); liet ke so khong kiem chung duoc.
 function locKetQua(kq, th, duLieu) {
   const tenVt = new Set(th.vat_tu.map((v) => v.ten));
-  const tenNcc = new Set(th.ncc.map((n) => n.ncc));
+  const tenNcc = new Set(th.ncc.map((n) => maNcc(n.ncc_id)));
   const ds = (a, n) => (Array.isArray(a) ? a.filter((x) => typeof x === 'string' && x.trim()).slice(0, n) : []);
   const vatTuGoc = Array.isArray(kq.vat_tu) ? kq.vat_tu : [];
   const nccGoc = Array.isArray(kq.ncc_de_xuat) ? kq.ncc_de_xuat : [];
@@ -157,13 +168,17 @@ function locKetQua(kq, th, duLieu) {
     ...kqLoc.ncc_de_xuat.map((d) => d.ly_do), ...kqLoc.canh_bao, ...kqLoc.hanh_dong];
   const soLa = [...new Set(tatCaCau.flatMap(soTrongCau).filter((n) => !khop(n)))];
 
+  // Doi ma NCC-<id> trong moi cau chu ve ten that (dinh dang so truoc de "NCC-12" khong bi doi dau).
+  const bd = new BiDanh();
+  th.ncc.forEach((n) => bd.nhaCungCap(n.ncc_id, n.ncc));
+  const ra = (t) => bd.giaiMa(dinhDangSo(t));
   return {
-    tom_tat: dinhDangSo(kqLoc.tom_tat),
-    diem_noi_bat: kqLoc.diem_noi_bat.map(dinhDangSo),
-    vat_tu: kqLoc.vat_tu.map((v) => ({ ...v, nhan_xet: dinhDangSo(v.nhan_xet) })),
-    ncc_de_xuat: kqLoc.ncc_de_xuat.map((d) => ({ ...d, ly_do: dinhDangSo(d.ly_do) })),
-    canh_bao: kqLoc.canh_bao.map(dinhDangSo),
-    hanh_dong: kqLoc.hanh_dong.map(dinhDangSo),
+    tom_tat: ra(kqLoc.tom_tat),
+    diem_noi_bat: kqLoc.diem_noi_bat.map(ra),
+    vat_tu: kqLoc.vat_tu.map((v) => ({ ...v, nhan_xet: ra(v.nhan_xet) })),
+    ncc_de_xuat: kqLoc.ncc_de_xuat.map((d) => ({ ...d, ncc: bd.giaiMa(d.ncc), ly_do: ra(d.ly_do) })),
+    canh_bao: kqLoc.canh_bao.map(ra),
+    hanh_dong: kqLoc.hanh_dong.map(ra),
     kiem_chung: {
       so_dong_ten_khong_co: (vatTuGoc.length - vatTuGoc.filter((v) => tenVt.has(v.ten)).length)
         + (nccGoc.length - nccGoc.filter((d) => tenVt.has(d.vat_tu) && tenNcc.has(d.ncc)).length),

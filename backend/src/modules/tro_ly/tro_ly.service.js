@@ -127,7 +127,7 @@ export async function dsHoiThoai(user, { san_pham }) {
 
 export async function chiTietHoiThoai(user, id) {
   const ht = await layHoiThoaiCuaToi(user, id);
-  return { ...ht, tin_nhan: await repo.tinNhan(ht.id) };
+  return { ...ht, tin_nhan: (await repo.tinNhan(ht.id)).map(({ noi_dung_ai: _a, ma_tien: _t, ...m }) => m) };
 }
 
 export async function xoaHoiThoai(user, id) {

@@ -616,3 +616,8 @@ textarea.kien-thuc { width: 100%; font-family: ui-monospace, Consolas, monospace
 
 /* Chua cho nut tro ly noi: khong che nut phan trang / nut luu cuoi trang */
 body:has(.chat-noi-nut) .content { padding-bottom: 84px; }
+
+/* Tro ly quan ly: cau hoi goi y bam duoc, nguon du lieu da tra */
+.chat-goi-y-nut { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin-top: 8px; }
+.chat-goi-y-nut .chip { text-align: left; white-space: normal; line-height: 1.35; }
+.chat-nguon { margin-top: 4px; }

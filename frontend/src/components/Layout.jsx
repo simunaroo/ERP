@@ -108,7 +108,7 @@ export default function Layout() {
         </main>
       </div>
       {/* Khung chat tro ly san pham: nam ngoai Outlet nen giu nguyen khi chuyen trang */}
-      {(user.quyen ? user.quyen.includes('tro_ly.ai') : ['sale', 'admin'].includes(user.vai_tro)) && <TroLyChat />}
+      {(user.quyen ? ['tro_ly.ai', 'tro_ly.quan_ly', 'tro_ly.ncc'].some((q) => user.quyen.includes(q)) : ['sale', 'admin'].includes(user.vai_tro)) && <TroLyChat />}
     </div>
   );
 }

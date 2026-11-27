@@ -52,6 +52,16 @@ export async function dsHoiThoai(nguoiId, sanPhamId) {
   return rows;
 }
 
+// Cuoc tro chuyen voi tro ly co cong cu (quan_ly / ncc) cua chinh nguoi hoi.
+export async function dsHoiThoaiTheoLoai(nguoiId, loai) {
+  const { rows } = await query(
+    `SELECT id, tieu_de, cap_nhat_luc FROM tro_ly_hoi_thoai
+      WHERE nguoi_id = $1 AND loai = $2 ORDER BY cap_nhat_luc DESC LIMIT 30`,
+    [nguoiId, loai],
+  );
+  return rows;
+}
+
 export async function hoiThoai(id) {
   const { rows } = await query(
     `SELECT h.*, k.ten AS khach_hang FROM tro_ly_hoi_thoai h LEFT JOIN khach_hang k ON k.id = h.khach_hang_id WHERE h.id = $1`,
@@ -62,26 +72,30 @@ export async function hoiThoai(id) {
 
 export async function tinNhan(hoiThoaiId, gioiHan = 200) {
   const { rows } = await query(
-    `SELECT * FROM (SELECT id, vai_tro, noi_dung, so_anh, created_at FROM tro_ly_tin_nhan
+    `SELECT * FROM (SELECT id, vai_tro, noi_dung, noi_dung_ai, ma_tien, so_anh, created_at FROM tro_ly_tin_nhan
                      WHERE hoi_thoai_id = $1 ORDER BY id DESC LIMIT $2) x ORDER BY id`,
     [hoiThoaiId, gioiHan],
   );
   return rows;
 }
 
-export async function taoHoiThoai(client, { nguoiId, sanPhamId, khachHangId, tieuDe }) {
+export async function taoHoiThoai(client, { nguoiId, sanPhamId, khachHangId, tieuDe, loai = 'san_pham' }) {
   const { rows } = await client.query(
-    `INSERT INTO tro_ly_hoi_thoai (nguoi_id, loai_vat_tu_id, khach_hang_id, tieu_de) VALUES ($1, $2, $3, $4) RETURNING id`,
-    [nguoiId, sanPhamId, khachHangId, tieuDe],
+    `INSERT INTO tro_ly_hoi_thoai (nguoi_id, loai_vat_tu_id, khach_hang_id, tieu_de, loai) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+    [nguoiId, sanPhamId, khachHangId, tieuDe, loai],
   );
   return rows[0].id;
 }
 
 // Ghi ca cau hoi + cau tra loi cung luc (sau khi AI tra loi thanh cong) -> khong de lai cau hoi "mo coi" khi AI loi.
-export async function ghiLuot(client, hoiThoaiId, { cauHoi, soAnh, traLoi }) {
+// cauHoiAi / traLoiAi: ban an danh (chi tro ly quan ly / NCC) de lan hoi sau gui lai AI ma khong lo ten, so tien that.
+// maTienHoi: ma tien cua so tien nguoi dung go trong cau hoi; maTien: ma tien AI dung trong cau tra loi.
+export async function ghiLuot(client, hoiThoaiId, { cauHoi, soAnh, traLoi, cauHoiAi = null, traLoiAi = null, maTienHoi = null, maTien = null }) {
+  const json = (x) => (x ? JSON.stringify(x) : null);
   await client.query(
-    `INSERT INTO tro_ly_tin_nhan (hoi_thoai_id, vai_tro, noi_dung, so_anh) VALUES ($1, 'user', $2, $3), ($1, 'model', $4, 0)`,
-    [hoiThoaiId, cauHoi, soAnh, traLoi],
+    `INSERT INTO tro_ly_tin_nhan (hoi_thoai_id, vai_tro, noi_dung, so_anh, noi_dung_ai, ma_tien)
+     VALUES ($1, 'user', $2, $3, $5, $8), ($1, 'model', $4, 0, $6, $7)`,
+    [hoiThoaiId, cauHoi, soAnh, traLoi, cauHoiAi, traLoiAi, json(maTien), json(maTienHoi)],
   );
   await client.query('UPDATE tro_ly_hoi_thoai SET cap_nhat_luc = now() WHERE id = $1', [hoiThoaiId]);
 }

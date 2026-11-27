@@ -136,7 +136,7 @@ const SYSTEM_PROMPT = `Bạn là trưởng phòng kinh doanh của doanh nghiệ
 - so_duoc_chia: số khách được giao; da_lien_he / ty_le_lien_he_pct: đã gọi ít nhất một lần.
 - phan_hoi_tb_gio: số giờ trung bình từ lúc nhận số đến lần gọi đầu (càng nhỏ càng tốt; gọi trong 2 giờ là tốt); ty_le_lien_he_2_gio_pct.
 - so_lan_cs_tb: số lần chăm sóc trung bình mỗi khách đã liên hệ.
-- chot / ty_le_chot_pct: khách đã chốt đơn; so_don, doanh_thu: đơn và doanh thu từ các khách này.
+- chot / ty_le_chot_pct: khách đã chốt đơn; so_don: số đơn từ các khách này; ty_trong_doanh_thu_pct: phần trăm doanh thu của Sale trong tổng doanh thu kỳ (hệ thống không gửi số tiền).
 - chua_lien_lac_duoc: không nghe máy hoặc thuê bao; khong_quan_tam; sai_so (sai số nhiều có thể do nguồn số kém, không phải lỗi Sale).
 - Tồn đọng hiện tại: qua_1_ngay_chua_goi, quan_tam_qua_3_ngay (khách quan tâm bị bỏ quên), hen_qua_gio (lỡ hẹn gọi lại).
 
@@ -175,8 +175,11 @@ export async function nhanXetAi(user, body = {}) {
     const th = await tongHop(k);
     const coSo = th.sale.filter((x) => x.so_duoc_chia > 0);
     if (!coSo.length) throw new AppError(400, 'Trong kỳ chưa có số nào được chia để phân tích');
-    // Chi gui so lieu tong hop theo Sale (khong co ten/SDT khach).
-    const duLieu = { ky: th.ky, tong: th.tong, sale: th.sale.map(({ sale_id: _b, ...x }) => x) };
+    // Chi gui so lieu tong hop theo Sale (khong co ten/SDT khach). Doanh thu la bi mat kinh doanh: chi gui ty trong %.
+    const tongDt = Number(th.tong.doanh_thu);
+    const tyTrong = (dt) => (tongDt > 0 ? Math.round((Number(dt) / tongDt) * 1000) / 10 : 0);
+    const { doanh_thu: _t, ...tong } = th.tong;
+    const duLieu = { ky: th.ky, tong, sale: th.sale.map(({ sale_id: _b, doanh_thu, ...x }) => ({ ...x, ty_trong_doanh_thu_pct: tyTrong(doanh_thu) })) };
     const userText = `Số liệu chăm sóc khách kỳ ${k.tu} đến ${k.den}:\n${JSON.stringify(duLieu)}`;
     let kq = await sinhJson({ systemPrompt: SYSTEM_PROMPT, userText, schema: SCHEMA });
     // Model doi khi tra tieng Viet khong dau -> sinh lai 1 lan voi nhac nho manh hon.

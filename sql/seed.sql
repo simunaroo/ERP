@@ -174,6 +174,7 @@ INSERT INTO quyen (ma, ten, nhom, thu_tu, chi_admin) VALUES
   ('don_hang.lap',        'Lập / sửa đơn nháp, gửi báo giá, yêu cầu sửa đơn', 'Bán hàng', 14, false),
   ('tro_ly.ai',           'Hỏi trợ lý AI sản phẩm',                           'Bán hàng', 15, false),
   ('tro_ly.kien_thuc',    'Soạn kiến thức cho trợ lý AI sản phẩm',            'Bán hàng', 16, false),
+  ('tro_ly.quan_ly',      'Hỏi trợ lý AI quản lý (tình hình chăm sóc khách của Sale)', 'Bán hàng', 17, false),
   ('don_hang.dieu_phoi',  'Lên phương án, xử lý yêu cầu sửa đơn',             'Điều phối', 20, false),
   ('don_hang.chuyen_buoc','Chuyển bước tiến độ đơn',                          'Điều phối', 21, false),
   ('don_hang.boc_kl',     'Xác nhận tính KLVT (khối lượng vật tư)',            'Điều phối', 22, false),
@@ -194,6 +195,7 @@ INSERT INTO quyen (ma, ten, nhom, thu_tu, chi_admin) VALUES
   ('ncc.sua',             'Sửa nhà cung cấp, bảng giá',                       'Danh mục & báo cáo', 41, false),
   ('vat_tu.sua',          'Sửa danh mục vật tư',                              'Danh mục & báo cáo', 42, false),
   ('bao_cao.xem',         'Xem báo cáo lãi/lỗ, phân tích NCC',                'Danh mục & báo cáo', 43, false),
+  ('tro_ly.ncc',          'Hỏi trợ lý AI nhà cung cấp (giá nhập, chọn NCC, công nợ NCC)', 'Danh mục & báo cáo', 44, false),
   ('he_thong.quan_tri',   'Quản trị người dùng, phân quyền, cấu hình, nhật ký','Hệ thống', 90, true);
 
 INSERT INTO vai_tro_quyen (vai_tro, ma_quyen) VALUES
@@ -209,7 +211,7 @@ INSERT INTO vai_tro_quyen (vai_tro, ma_quyen) VALUES
   ('admin', 'don_hang.huy'), ('admin', 'don_hang.phu_trach'), ('admin', 'mua_hang.xem'), ('admin', 'mua_hang.lay_hang'), ('admin', 'thi_cong.xem'),
   ('admin', 'thi_cong.thao_tac'), ('admin', 'chi.xem'), ('admin', 'chi.duyet'), ('admin', 'mua_hang.da_mua'), ('admin', 'thu.ghi_nhan'),
   ('admin', 'thu.xac_nhan'), ('admin', 'ncc.xem'), ('admin', 'ncc.sua'), ('admin', 'vat_tu.sua'), ('admin', 'bao_cao.xem'), ('admin', 'he_thong.quan_tri'),
-  ('admin', 'tro_ly.ai'), ('admin', 'tro_ly.kien_thuc');
+  ('admin', 'tro_ly.ai'), ('admin', 'tro_ly.kien_thuc'), ('admin', 'tro_ly.quan_ly'), ('admin', 'tro_ly.ncc');
 
 -- Ma hop dong "SĐT khách_STT đơn" cho cac don da chot (cung quy tac voi backend/src/modules/don_hang/ma_hop_dong.js)
 WITH g AS (

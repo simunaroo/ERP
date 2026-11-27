@@ -845,11 +845,14 @@ CREATE TRIGGER tg_nhat_ky AFTER INSERT OR UPDATE OR DELETE ON tro_ly_san_pham FO
 CREATE TABLE tro_ly_hoi_thoai (
     id              SERIAL PRIMARY KEY,
     nguoi_id        INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    loai_vat_tu_id  INTEGER NOT NULL REFERENCES loai_vat_tu(id) ON DELETE CASCADE,
+    loai_vat_tu_id  INTEGER REFERENCES loai_vat_tu(id) ON DELETE CASCADE,   -- NULL: tro ly quan ly (migration 038)
     khach_hang_id   INTEGER REFERENCES khach_hang(id) ON DELETE SET NULL,
     tieu_de         TEXT NOT NULL,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
-    cap_nhat_luc    TIMESTAMPTZ NOT NULL DEFAULT now()
+    cap_nhat_luc    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    loai            VARCHAR(10) NOT NULL DEFAULT 'san_pham',
+    CONSTRAINT tro_ly_hoi_thoai_loai_check CHECK (loai IN ('san_pham', 'quan_ly', 'ncc')),  -- migration 038, 039
+    CONSTRAINT ck_tro_ly_ht_loai CHECK ((loai = 'san_pham') = (loai_vat_tu_id IS NOT NULL))
 );
 CREATE INDEX idx_tro_ly_hoi_thoai_nguoi ON tro_ly_hoi_thoai(nguoi_id, loai_vat_tu_id, cap_nhat_luc DESC);
 
@@ -860,7 +863,9 @@ CREATE TABLE tro_ly_tin_nhan (
     vai_tro         VARCHAR(5) NOT NULL CHECK (vai_tro IN ('user', 'model')),
     noi_dung        TEXT NOT NULL,
     so_anh          SMALLINT NOT NULL DEFAULT 0 CHECK (so_anh BETWEEN 0 AND 3),
-    created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
+    noi_dung_ai     TEXT,   -- ban an danh gui lai cho AI (tro ly quan ly / NCC), migration 039
+    ma_tien         JSONB   -- {"[[T3]]": 185000}: gia tri cac ma tien trong cau tra loi, migration 039
 );
 CREATE INDEX idx_tro_ly_tin_nhan_hoi_thoai ON tro_ly_tin_nhan(hoi_thoai_id, id);
 

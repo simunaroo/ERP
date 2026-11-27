@@ -5,10 +5,12 @@ import { batDau } from './helpers/moi_truong.js';
 let ctx; const tk = {}; const id = {}; let goc; // goc: so lieu truoc khi tao du lieu thu (seed da co san khach)
 // Gia lap Gemini: tra JSON co ca ten Sale khong ton tai va 1 so AI tu bia (9999) de kiem tra hau kiem.
 let goiAi = 0;
+let guiAi = '';  // noi dung request gui Gemini lan gan nhat
 const fetchGoc = globalThis.fetch;
 globalThis.fetch = async (url, opt) => {
   if (String(url).includes('generativelanguage.googleapis.com')) {
     goiAi++;
+    guiAi = opt.body;
     const kq = {
       tom_tat: 'Kỳ này có 3 số được chia, Sale cần gọi nhanh hơn; ước tính 9999 cuộc gọi.',
       sale: [{ ten: 'Nguyễn Thị Lan', danh_gia: 'can_cai_thien', nhan_xet: 'Còn số quá 1 ngày chưa gọi.' }, { ten: 'Sale Ma', danh_gia: 'tot', nhan_xet: 'x' }],
@@ -78,6 +80,9 @@ describe('Báo cáo chăm sóc khách theo Sale', () => {
     assert.deepEqual(r.d.sale.map((x) => x.ten), ['Nguyễn Thị Lan']);
     assert.equal(r.d.kiem_chung.so_ten_sale_khong_co, 1);
     assert.ok(r.d.kiem_chung.so_khong_co_trong_du_lieu.includes(9999));
+    // Doanh thu la bi mat kinh doanh: AI chi nhan ty trong %, khong nhan so tien.
+    assert.ok(!guiAi.includes('\\"doanh_thu\\"'), 'không gửi doanh thu cho AI');
+    assert.ok(guiAi.includes('\\"ty_trong_doanh_thu_pct\\"'));
     const lan2 = await ctx.api(tk.ngocson, 'POST', '/cham-soc/ai-nhan-xet', {});
     assert.equal(lan2.d.tu_bo_nho_dem, true);
     assert.equal(goiAi, 1);

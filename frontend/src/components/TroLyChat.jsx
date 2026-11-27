@@ -3,16 +3,50 @@ import { Link } from 'react-router-dom';
 import { api, loiCua } from '../api/client.js';
 import { ngayGio, thuNhoAnh } from '../utils.js';
 import { useTroLyStore } from '../store/troLyStore.js';
+import { useAuthStore } from '../store/authStore.js';
 import Icon from './Icon.jsx';
 
 const ANH_TOI_DA = 3;
+// Tro ly "co cong cu" (AI tu tra du lieu that qua function calling), hien them sau cac tro ly san pham theo quyen.
+const TRO_LY_CONG_CU = [
+  {
+    id: 'quan_ly', ten: 'Quản lý', quyen: 'tro_ly.quan_ly', so_ky_tu: 1, duongDan: '/tro-ly/quan-ly',
+    moTa: <>Hỏi về tình hình <b>chăm sóc, tư vấn khách</b> của các Sale. Trợ lý tự tra số liệu và ghi chú chăm sóc trong hệ thống; khách được nhắc bằng mã (bấm để mở hồ sơ).</>,
+    goiY: [
+      'Các Sale đang chăm sóc khách thế nào trong 30 ngày qua?',
+      'Lan đang tư vấn khách như thế nào? Có khách nào bị bỏ quên không?',
+      'Tuần này ai gọi khách mới chậm nhất?',
+      'Khách nào đang quan tâm mà quá 3 ngày chưa được gọi lại?',
+      'Tháng này ai chốt được nhiều đơn và doanh thu cao nhất?',
+    ],
+    placeholder: 'Hỏi về Sale, khách, đơn hàng...',
+    chuThich: 'Số liệu do hệ thống tính; nhận xét là của AI, nên xem lại hồ sơ khách trước khi kết luận.',
+  },
+  {
+    id: 'ncc', ten: 'NCC', quyen: 'tro_ly.ncc', so_ky_tu: 1, duongDan: '/tro-ly/ncc',
+    moTa: <>Hỏi về <b>nhà cung cấp, giá nhập, chọn NCC</b> cho vật tư, lịch sử giá và công nợ NCC. Tên NCC và số tiền được mã hoá trước khi gửi AI, hệ thống tự đổi lại khi hiển thị.</>,
+    goiY: [
+      'Sàn SPC vân gỗ 4mm nên mua của NCC nào?',
+      'Giá nhập tấm ốp nano 8mm thay đổi thế nào?',
+      'Xếp hạng các nhà cung cấp trong tháng này',
+      'Mặt hàng bán chạy nào đang có lãi gộp thấp?',
+      'Đang còn nợ nhà cung cấp nào nhiều nhất?',
+    ],
+    placeholder: 'Hỏi về NCC, giá nhập, công nợ NCC...',
+    chuThich: 'Giá, công nợ do hệ thống tính; đề xuất chọn NCC là của AI, nên hỏi lại giá trước khi đặt.',
+  },
+];
 
 // In dam **...** / in nghieng *...* trong mot dong (khong dung dangerouslySetInnerHTML -> cau tra loi AI khong chen duoc HTML).
+function MaKhach({ text }) {
+  return text.split(/(\bKH-\d+\b)/g).map((p, i) => (/^KH-\d+$/.test(p)
+    ? <Link key={i} to={`/khach-hang/${p.slice(3)}`}>{p}</Link> : <Fragment key={i}>{p}</Fragment>));
+}
 function DongChu({ text }) {
   return text.split(/(\*\*[^*]+\*\*|\*[^*\s][^*]*\*)/g).map((p, i) => {
-    if (p.length > 4 && p.startsWith('**') && p.endsWith('**')) return <b key={i}>{p.slice(2, -2)}</b>;
-    if (p.length > 2 && p.startsWith('*') && p.endsWith('*')) return <i key={i}>{p.slice(1, -1)}</i>;
-    return <Fragment key={i}>{p}</Fragment>;
+    if (p.length > 4 && p.startsWith('**') && p.endsWith('**')) return <b key={i}><MaKhach text={p.slice(2, -2)} /></b>;
+    if (p.length > 2 && p.startsWith('*') && p.endsWith('*')) return <i key={i}><MaKhach text={p.slice(1, -1)} /></i>;
+    return <MaKhach key={i} text={p} />;
   });
 }
 
@@ -54,7 +88,9 @@ function NutChep({ text }) {
 function LichSu({ sanPhamId, tenSp, hoiThoaiId, onChon, onDong }) {
   const [ds, setDs] = useState(null);
   const [loi, setLoi] = useState('');
-  const tai = () => api.get('/tro-ly/hoi-thoai', { params: { san_pham: sanPhamId } }).then((r) => setDs(r.data)).catch((e) => setLoi(loiCua(e)));
+  const cc = TRO_LY_CONG_CU.find((t) => t.id === sanPhamId);
+  const tai = () => (cc ? api.get(`${cc.duongDan}/hoi-thoai`) : api.get('/tro-ly/hoi-thoai', { params: { san_pham: sanPhamId } }))
+    .then((r) => setDs(r.data)).catch((e) => setLoi(loiCua(e)));
   useEffect(() => { tai(); }, [sanPhamId]);
   const xoa = async (id) => {
     if (!window.confirm('Xoá cuộc trò chuyện này?')) return;
@@ -84,6 +120,9 @@ function LichSu({ sanPhamId, tenSp, hoiThoaiId, onChon, onDong }) {
 // Moi san pham (Cửa / Sàn / Tấm ốp) la mot tro ly rieng, chon bang cac nut tren dau khung.
 export default function TroLyChat() {
   const { mo, sanPhamId: spLuu, hoiThoaiId, khachHangId, moTroLy, dong, chonSanPham, chonHoiThoai, moi, boKhach } = useTroLyStore();
+  const quyen = useAuthStore((st) => st.user?.quyen) || [];
+  const coSanPham = quyen.includes('tro_ly.ai');
+  const dsCongCu = TRO_LY_CONG_CU.filter((t) => quyen.includes(t.quyen));
   const [dsTroLy, setDsTroLy] = useState([]);
   const [tinNhan, setTinNhan] = useState([]);
   const [khach, setKhach] = useState(null);
@@ -99,12 +138,15 @@ export default function TroLyChat() {
 
   const sanPhamId = dsTroLy.some((t) => t.id === spLuu) ? spLuu : dsTroLy[0]?.id ?? null;
   const troLy = dsTroLy.find((t) => t.id === sanPhamId);
+  const cc = TRO_LY_CONG_CU.find((t) => t.id === troLy?.id) || null;
+  const laQuanLy = !!cc; // tro ly co cong cu: khong gui anh, khong gan khach
   const chuaCoKienThuc = troLy && troLy.so_ky_tu === 0;
 
   // Chi tai danh sach tro ly khi mo lan dau (khong goi API o moi trang khi khung chat dang dong).
   useEffect(() => {
     if (!mo || dsTroLy.length) return;
-    api.get('/tro-ly/san-pham').then((r) => setDsTroLy(r.data)).catch((e) => setLoi(loiCua(e)));
+    (coSanPham ? api.get('/tro-ly/san-pham').then((r) => r.data) : Promise.resolve([]))
+      .then((ds) => setDsTroLy([...ds, ...dsCongCu])).catch((e) => setLoi(loiCua(e)));
   }, [mo]);
 
   useEffect(() => {
@@ -144,31 +186,34 @@ export default function TroLyChat() {
     } catch (e) { setLoi(e.message); }
   };
 
-  const gui = async () => {
-    const nd = cauHoi.trim();
+  const gui = async (cauSan) => {
+    const nd = (typeof cauSan === 'string' ? cauSan : cauHoi).trim();
     if ((!nd && !anh.length) || dangHoi || !sanPhamId) return;
     setLoi(''); setDangHoi(true);
     const anhGui = anh;
-    setTinNhan((ds) => [...ds, { id: `tam-${Date.now()}`, vai_tro: 'user', noi_dung: nd, so_anh: anhGui.length, xemTruoc: anhGui.map((a) => a.xemTruoc) }]);
+    const idTam = `tam-${Date.now()}`;
+    setTinNhan((ds) => [...ds, { id: idTam, vai_tro: 'user', noi_dung: nd, so_anh: anhGui.length, xemTruoc: anhGui.map((a) => a.xemTruoc) }]);
     setCauHoi(''); setAnh([]);
     try {
-      const { data } = await api.post('/tro-ly/hoi', {
-        san_pham_id: sanPhamId, hoi_thoai_id: hoiThoaiId || undefined, khach_hang_id: hoiThoaiId ? undefined : khachHangId || undefined,
-        noi_dung: nd, anh: anhGui.map(({ mime, data: d }) => ({ mime, data: d })),
-      });
-      setTinNhan((ds) => [...ds, { id: `tl-${Date.now()}`, vai_tro: 'model', noi_dung: data.tra_loi }]);
+      const { data } = laQuanLy
+        ? await api.post(`${cc.duongDan}/hoi`, { hoi_thoai_id: hoiThoaiId || undefined, noi_dung: nd })
+        : await api.post('/tro-ly/hoi', {
+          san_pham_id: sanPhamId, hoi_thoai_id: hoiThoaiId || undefined, khach_hang_id: hoiThoaiId ? undefined : khachHangId || undefined,
+          noi_dung: nd, anh: anhGui.map(({ mime, data: d }) => ({ mime, data: d })),
+        });
+      setTinNhan((ds) => [...ds, { id: `tl-${Date.now()}`, vai_tro: 'model', noi_dung: data.tra_loi, nguon: data.nguon }]);
       if (!hoiThoaiId) { vuaTao.current = data.hoi_thoai_id; chonHoiThoai(data.hoi_thoai_id); }
     } catch (e) {
       setLoi(loiCua(e));
-      // Tra lai cau hoi + anh de gui lai, bo tin nhan tam.
-      setTinNhan((ds) => ds.filter((m) => !String(m.id).startsWith('tam-')));
+      // Tra lai cau hoi + anh de gui lai, chi bo tin nhan tam cua lan gui nay (cac cau hoi truoc van giu).
+      setTinNhan((ds) => ds.filter((m) => m.id !== idTam));
       setCauHoi(nd); setAnh(anhGui);
     } finally { setDangHoi(false); }
   };
 
   if (!mo) {
     return (
-      <button type="button" className="chat-noi-nut" onClick={() => moTroLy()} aria-label="Mở trợ lý sản phẩm" title="Trợ lý sản phẩm (AI)">
+      <button type="button" className="chat-noi-nut" onClick={() => moTroLy()} aria-label="Mở trợ lý AI" title="Trợ lý AI">
         <Icon n="sparkles" size={22} /><span>Trợ lý</span>
       </button>
     );
@@ -178,26 +223,28 @@ export default function TroLyChat() {
     <section className="chat-noi" role="dialog" aria-label="Trợ lý sản phẩm"
       onPaste={(e) => {
         const files = [...(e.clipboardData?.files || [])];
-        if (files.some((f) => f.type.startsWith('image/'))) { e.preventDefault(); themAnh(files); }
+        if (!laQuanLy && files.some((f) => f.type.startsWith('image/'))) { e.preventDefault(); themAnh(files); }
       }}
       onDragOver={(e) => { e.preventDefault(); setKeoTha(true); }}
       onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setKeoTha(false); }}
-      onDrop={(e) => { e.preventDefault(); setKeoTha(false); themAnh(e.dataTransfer.files); }}>
+      onDrop={(e) => { e.preventDefault(); setKeoTha(false); if (!laQuanLy) themAnh(e.dataTransfer.files); }}>
       <header className="chat-noi-dau">
         <b><Icon n="sparkles" /> Trợ lý {troLy?.ten || 'sản phẩm'}</b>
         <span className="grow" />
-        <button type="button" className="icon-btn" title="Cuộc trò chuyện trước" aria-label="Cuộc trò chuyện trước" onClick={() => setXemLichSu((x) => !x)}><Icon n="clipboard" size={16} /></button>
-        <button type="button" className="icon-btn" title="Cuộc trò chuyện mới" aria-label="Cuộc trò chuyện mới" onClick={() => { moi(); setXemLichSu(false); setLoi(''); }}><Icon n="plus" size={16} /></button>
+        {/* Dang cho tra loi: khoa doi cuoc tro chuyen / doi tro ly, tranh cau tra loi ve nham khung (sai hoi_thoai_id). */}
+        <button type="button" className="icon-btn" title="Cuộc trò chuyện trước" aria-label="Cuộc trò chuyện trước" disabled={dangHoi} onClick={() => setXemLichSu((x) => !x)}><Icon n="clipboard" size={16} /></button>
+        <button type="button" className="icon-btn" title="Cuộc trò chuyện mới" aria-label="Cuộc trò chuyện mới" disabled={dangHoi} onClick={() => { moi(); setXemLichSu(false); setLoi(''); }}><Icon n="plus" size={16} /></button>
         <button type="button" className="icon-btn" title="Thu nhỏ (Esc)" aria-label="Thu nhỏ trợ lý" onClick={dong}>×</button>
       </header>
       <div className="chat-noi-sp" role="tablist" aria-label="Chọn trợ lý theo sản phẩm">
         {dsTroLy.map((t) => (
           <button key={t.id} type="button" role="tab" aria-selected={t.id === sanPhamId} className={t.id === sanPhamId ? 'chip on' : 'chip'}
+            disabled={dangHoi && t.id !== sanPhamId}
             onClick={() => { if (t.id !== sanPhamId) { chonSanPham(t.id); setXemLichSu(false); setLoi(''); } }}>{t.ten}</button>
         ))}
       </div>
 
-      {khach && !hoiThoaiId && (
+      {khach && !hoiThoaiId && !laQuanLy && (
         <div className="chat-noi-khach small">
           Đang tư vấn: <Link to={`/khach-hang/${khach.id}`}><b>{khach.ten}</b></Link>{khach.nhu_cau && <span className="muted"> — “{khach.nhu_cau}”</span>}
           <button type="button" className="link small" onClick={boKhach}>Bỏ gắn</button>
@@ -210,7 +257,15 @@ export default function TroLyChat() {
       ) : (
         <div className={`chat-tin ${keoTha ? 'keo-tha' : ''}`}>
           {chuaCoKienThuc && <div className="banner">Trợ lý {troLy.ten} chưa được nạp kiến thức — nhờ Admin cập nhật ở mục “Kiến thức trợ lý AI”.</div>}
-          {tinNhan.length === 0 && !dangHoi && troLy && !chuaCoKienThuc && (
+          {tinNhan.length === 0 && !dangHoi && laQuanLy && (
+            <div className="muted small chat-goi-y">
+              <p>{cc.moTa}</p>
+              <div className="chat-goi-y-nut">
+                {cc.goiY.map((g) => <button key={g} type="button" className="chip" onClick={() => gui(g)}>{g}</button>)}
+              </div>
+            </div>
+          )}
+          {tinNhan.length === 0 && !dangHoi && troLy && !laQuanLy && !chuaCoKienThuc && (
             <div className="muted small chat-goi-y">
               <p>Hỏi về <b>{troLy.ten}</b>: mẫu nào hợp, giá tham khảo, cách tính khối lượng, bảo hành... hoặc gửi ảnh hiện trạng / mẫu khách thích (📷, Ctrl+V, kéo thả).</p>
               <p>Ví dụ: “Phòng 4x5m lát sàn chống nước hết khoảng bao nhiêu?”</p>
@@ -225,7 +280,11 @@ export default function TroLyChat() {
                   {m.noi_dung && !/^\[Gửi \d+ ảnh\]$/.test(m.noi_dung) && <div className="chat-chu">{m.noi_dung}</div>}
                 </>
               ) : (
-                <><VanBanAI text={m.noi_dung} /><NutChep text={m.noi_dung} /></>
+                <>
+                  <VanBanAI text={m.noi_dung} />
+                  {m.nguon?.length > 0 && <div className="muted small chat-nguon">Đã tra: {m.nguon.join(', ')}</div>}
+                  <NutChep text={m.noi_dung} />
+                </>
               )}
             </div>
           ))}
@@ -246,17 +305,19 @@ export default function TroLyChat() {
         </div>
       )}
       <div className="chat-nhap">
-        <button type="button" className="btn sec" title="Gửi ảnh (hoặc Ctrl+V / kéo thả)" aria-label="Gửi ảnh"
-          disabled={anh.length >= ANH_TOI_DA || dangHoi || chuaCoKienThuc} onClick={() => inputFile.current.click()}>📷</button>
+        {!laQuanLy && (
+          <button type="button" className="btn sec" title="Gửi ảnh (hoặc Ctrl+V / kéo thả)" aria-label="Gửi ảnh"
+            disabled={anh.length >= ANH_TOI_DA || dangHoi || chuaCoKienThuc} onClick={() => inputFile.current.click()}>📷</button>
+        )}
         <input ref={inputFile} type="file" accept="image/jpeg,image/png,image/webp" multiple hidden
           onChange={(e) => { themAnh(e.target.files); e.target.value = ''; }} />
         <textarea ref={oNhap} rows={2} value={cauHoi} disabled={chuaCoKienThuc || xemLichSu}
-          placeholder={`Hỏi trợ lý ${troLy?.ten || ''}...`} aria-label="Câu hỏi"
+          placeholder={cc ? cc.placeholder : `Hỏi trợ lý ${troLy?.ten || ''}...`} aria-label="Câu hỏi"
           onChange={(e) => setCauHoi(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); gui(); } }} />
         <button type="button" className="btn" disabled={dangHoi || chuaCoKienThuc || xemLichSu || (!cauHoi.trim() && !anh.length)} onClick={gui}>Gửi</button>
       </div>
-      <p className="muted chat-noi-chu-thich">Enter gửi · Shift+Enter xuống dòng. AI có thể sai — kiểm tra giá, thông số trước khi báo khách.</p>
+      <p className="muted chat-noi-chu-thich">Enter gửi · Shift+Enter xuống dòng. {cc ? cc.chuThich : 'AI có thể sai — kiểm tra giá, thông số trước khi báo khách.'}</p>
     </section>
   );
 }
